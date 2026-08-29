@@ -16,6 +16,8 @@
   function defaults(){
     return {
       on:0,
+      name:"",
+      tix:0, dex:{}, dexc:{}, gacha:0,
       res:{g:0,xp:0,tama:0,mat:0,ke:0},
       lv:1,
       gauge:0,
@@ -53,6 +55,11 @@
     var s=obj(raw)?raw:{};
     var out=defaults();
     out.on=s.on?1:0;
+    out.tix=int(s.tix,0,0,9999); out.gacha=int(s.gacha,0,0,1e7);
+    out.dex={}; var sdx=obj(s.dex)||{}; var SPD=(MM.DATA&&MM.DATA.speciesById)||{};
+    for(var dk in sdx){ if(SPD[dk]&&sdx[dk])out.dex[dk]=1; }
+    out.dexc={}; var sdc=obj(s.dexc)||{}; for(var ck in sdc){ if(sdc[ck])out.dexc[String(ck).slice(0,8)]=1; }
+    out.name=(typeof s.name==="string")?s.name.replace(/[<>"]/g,"").slice(0,12):"";
     var r=obj(s.res)||{};
     out.res={ g:int(r.g,0,0,1e12), xp:int(r.xp,0,0,1e12), tama:int(r.tama,0,0,9999),
               mat:int(r.mat,0,0,1e9), ke:int(r.ke,0,0,1e9) };

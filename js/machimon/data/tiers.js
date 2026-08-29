@@ -11,7 +11,7 @@
   var MM=G.MM=G.MM||{}; var D=MM.DATA=MM.DATA||{};
 
   D.tiers=[
-  {id:"office", name:"小さな社労士事務所",ke:0,    adds:["incident","hatch"],    mvp:true,
+  {id:"office", name:"小さな社労士事務所",ke:0,    adds:["incident","hatch","place"],    mvp:true,
    desc:"机がひとつ。ここから始まる"},
   {id:"shotengai",name:"商店街",          ke:120,  adds:["upgrade"],            mvp:true,
    desc:"建物を強化できるようになる"},

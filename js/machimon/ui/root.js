@@ -19,6 +19,7 @@
   UI.open=function(){
     var r=MM.game.enter({});
     UI.lastIdle=r.idle;
+    if(!r.c.mm.ms.intro){ UI.go("intro",{page:1}); return; }
     UI.go("town");
   };
   /* 既存アプリへ戻る。★単体配布(__MM_STANDALONE)では MACHIMON だけのゲーム=
@@ -58,7 +59,7 @@
       +'</div>';
   };
   UI.tabs=function(active){
-    var T=[["town","🏠","街"],["mons","👾","マチモン"],["build","🔨","建設"],["boss","⚔️","ボス"],["record","📊","記録"]];
+    var T=[["town","🏠","街"],["mons","👾","マチモン"],["gacha","🔮","ガチャ"],["zukan","📖","図鑑"],["build","🔨","建設"]];
     var h='<nav class="mm-tabs" aria-label="MACHIMONナビ">';
     for(var i=0;i<T.length;i++){
       h+='<button type="button" class="'+(T[i][0]===active?"mm-act":"")+'" onclick="MM.ui.go(\''+T[i][0]+'\')">'
@@ -75,7 +76,8 @@
   /* 効果音・ハプティクス(既存の合成音基盤へ流すだけ。無い環境では何もしない) */
   UI.play=function(a){
     if(!a)return;
-    try{ if(G.SFX){ if(a.step>=7&&G.SFX.big)G.SFX.big(); else if(a.step>=3&&G.SFX.good)G.SFX.good(); else if(G.SFX.tap)G.SFX.tap(); } }catch(e){}
+    try{ if(a.sfx&&MM.sfx&&MM.sfx[a.sfx]){ MM.sfx[a.sfx](a.arg); }
+         else if(a.step!=null&&MM.sfx){ if(a.step>=7)MM.sfx.big(); else if(a.step>=3)MM.sfx.levelup(); else MM.sfx.tap(); } }catch(e){}
     try{
       if(a.haptic&&G.Capacitor&&G.Haptics&&G.Haptics.impact)G.Haptics.impact({style:a.haptic});
       else if(a.haptic&&G.navigator&&G.navigator.vibrate)G.navigator.vibrate(a.haptic==="heavy"?24:(a.haptic==="medium"?14:8));

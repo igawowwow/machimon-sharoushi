@@ -36,7 +36,7 @@
     var audio=ok?MM.audio.layerFor(c.mm.combo):MM.audio.onWrong();
     save();
     return { c:c, reward:r.reward, gain:r.gain, lvUp:r.lvUp, resolved:r.resolved,
-             flavor:r.flavor, milestones:ms2, audio:audio,
+             flavor:r.flavor, big:r.big||null, milestones:ms2, audio:audio,
              stepUp:ok&&MM.audio.stepUp(prev,c.mm.combo), combo:c.mm.combo };
   }
 

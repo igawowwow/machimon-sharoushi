@@ -46,7 +46,8 @@
       var cls=(s.t==="crack")?"mm-crack":(s.t==="hush")?"mm-hush":(s.t==="burst")?"mm-burst":"";
       var art=(s.t==="born")?MM.px(r.sp,96):(ART[s.t]||"🥚");
       box.innerHTML='<div class="mm-wrap"><div class="mm-egg '+cls+'">'+art+'</div></div>';
-      if(!s.silent&&(s.t==="burst"||s.t==="born"))UI.play({step:r.rare?7:3,fx:r.rare?"gold":"glow",haptic:r.rare?"heavy":"light"});
+      if(s.t==="crack"&&MM.sfx)MM.sfx.crack();
+      if(!s.silent&&(s.t==="burst"||s.t==="born")){ if(MM.sfx)MM.sfx.reveal(r.rar); UI.play({haptic:r.rare?"heavy":"light"}); }
       setTimeout(next,s.ms);
     })();
   }

@@ -1,4 +1,4 @@
-const C = "machimon-v2";
+const C = "machimon-v4";
 const ASSETS = [
   "./", "./index.html", "./manifest.json", "./privacy.html",
   "./icon-192.png", "./icon-512.png", "./icon-180.png", "./assets/icon-maskable.svg",
@@ -41,10 +41,10 @@ const ASSETS = [
   "./js/machimon/core/incident.js",
   "./js/machimon/core/boss.js",
   "./js/machimon/core/combo-audio.js",
-  "./js/machimon/core/onboard.js",
+  "./js/machimon/core/onboard.js", "./js/machimon/core/tutorial.js", "./js/machimon/core/gacha.js", "./js/machimon/core/zukan.js", "./js/machimon/core/sfx.js",
   "./js/machimon/core/exam.js",
   "./js/machimon/core/game.js",
-  "./js/machimon/ui/root.js", "./js/machimon/ui/scene.js",
+  "./js/machimon/ui/root.js", "./js/machimon/ui/coach.js", "./js/machimon/ui/intro.js", "./js/machimon/ui/celebrate.js", "./js/machimon/ui/gacha.js", "./js/machimon/ui/zukan.js", "./js/machimon/ui/scene.js",
   "./js/machimon/ui/town.js",
   "./js/machimon/ui/incident.js",
   "./js/machimon/ui/mons.js",

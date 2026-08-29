@@ -69,6 +69,9 @@
     }
     /* 事件の並びは科目がばらけるようにシャッフル(同じ科目が続くと世界が単調になる) */
     shuffle(list,c.rand);
+    /* 1日1つの大事件(解放済みエリアからランダム)。先頭には置かない(初日の1問目は普通の事件) */
+    var oa=[]; for(var aid in c.mm.areas){ if(D().areaById[aid])oa.push(D().areaById[aid]); }
+    if(oa.length){ var big=makeBig(c,oa[Math.floor(c.rand()*oa.length)]); if(big)list.splice(Math.min(2,list.length),0,big); }
     c.mm.inc.d=c.dstr; c.mm.inc.list=list; c.mm.inc.done=0;
     return list;
   }
@@ -84,8 +87,19 @@
   }
 
   var seq=0;
-  /* 同じ住民の声が同日に並ぶと「バグ」に見えるので、その日に未使用の声を優先して選ぶ */
-  function pickLine(c,sub){
+  /* 相談内容は問題文から決める(問題と相談が食い違わない)。当たらなければ科目の声へ */
+  function pickLine(c,sub,qid){
+    var q=(typeof G.qById==="function"&&qid!=null)?G.qById(qid):null;
+    var text=q?String(q.q||q.question||""):"";
+    var T=D().incTopics||[];
+    for(var t=0;t<T.length;t++){ if(T[t][0].test(text))return T[t][1]; }
+    /* 対応表に無い問題: 問題文の先頭の語(助詞の手前)を使って「〇〇のことで相談」にする=絶対に食い違わない */
+    if(text){
+      text=text.replace(/^(使用者|労働者|事業主|事業者|会社|被保険者|受給資格者|国|政府|都道府県労働局長|厚生労働大臣)(は|が|の|に|を)/,"");
+      var m=text.match(/^[「『]?([^、。,\s]{2,14}?)(について|に関して|の場合|とは|には|は|が|を|に|で|の)/);
+      var key=m?m[1]:text.slice(0,10);
+      if(key)return key+"のことで相談があるモン！";
+    }
     var lines=D().incLines[sub]||["助けてほしいモン！"];
     var used=(c.mm.inc&&c.mm.inc.d===c.dstr)?usedLines(c):{};
     var free=lines.filter(function(l){ return !used[l]; });
@@ -97,9 +111,25 @@
     for(var i=0;i<l.length;i++)out[l[i].line]=1;
     return out;
   }
+  /* 相談に来る住民の顔: 全種族からランダム(同じ顔が並ばないよう直前と変える) */
+  var lastFace="";
+  function pickFace(c){
+    var sp=D().species||[], id="m01";
+    for(var g=0;g<4;g++){ id=sp[Math.floor(c.rand()*sp.length)].id; if(id!==lastFace)break; }
+    lastFace=id; return id;
+  }
   function make(c,kind,area,qids){
     return { id:"i"+(++seq)+"-"+area.id, area:area.id, sub:area.sub, kind:kind,
-             line:pickLine(c,area.sub), qids:qids, done:0 };
+             line:pickLine(c,area.sub,qids[0]), face:pickFace(c), qids:qids, done:0 };
+  }
+  /* 大事件: 同じ科目の問題を5問。連続正解でのみ解決、1問でも外すと最初から */
+  function makeBig(c,area){
+    var ids=MM.learn.pick(D().BIG_NEED*2,c,{ sub:area.sub });
+    if(ids.length<D().BIG_NEED)return null;
+    var inc=make(c,"big",area,ids.slice(0,D().BIG_NEED));
+    inc.line="大事件モン！ "+inc.line.replace(/モン[！…？]?$/,"")+"…みんな困ってるモン！";
+    inc.need=D().BIG_NEED; inc.prog=0; inc.fail=0;
+    return inc;
   }
 
   /* 問題の学習状態から事件の種類(理由バッジ)を決める */
@@ -135,11 +165,18 @@
     var rw=MM.learn.commit(qid,ok,ms,c);
     var gain=MM.economy.grant(rw,c);
     var lvUp=MM.evolve.gainXp(c,(inc?inc.sub:subOf(qid)),ok);
-    if(inc&&ok)inc.done=1;
+    var big=null;
+    if(inc&&inc.kind==="big"){
+      if(ok){ inc.prog=(inc.prog||0)+1; if(inc.prog>=inc.need){ inc.done=1; var B=D().BIG_BONUS; MM.economy.apply({g:B.g,xp:0,ke:B.ke,mat:B.mat,tama:B.tama},c); gain.g+=B.g; gain.ke+=B.ke; gain.mat+=B.mat; gain.tama+=B.tama; } }
+      else { inc.prog=0; inc.fail=(inc.fail||0)+1; }
+      big={ prog:inc.prog, need:inc.need, cleared:!!inc.done, failed:!ok };
+    }else if(inc&&ok)inc.done=1;
     if(inc&&inc.done)c.mm.inc.done=(c.mm.inc.done||0)+1;
     var res=D().incResolve[Math.floor(c.rand()*D().incResolve.length)];
-    return { reward:rw, gain:gain, lvUp:lvUp, resolved:!!(inc&&inc.done), flavor:res };
+    return { reward:rw, gain:gain, lvUp:lvUp, resolved:!!(inc&&inc.done), flavor:res, big:big };
   }
+  /* 事件のいま出すべき問題(大事件は進行中の番号) */
+  function currentQid(inc){ return inc.qids[inc.kind==="big"?(inc.prog||0):0]; }
   function subOf(qid){
     var q=(typeof G.qById==="function")?G.qById(qid):null;
     return q?q.s:0;
@@ -159,5 +196,5 @@
   }
 
   MM.incident={ slots:slots, quota:quota, generate:generate, pending:pending, byArea:byArea,
-                find:find, answer:answer, more:more, make:make };
+                find:find, answer:answer, more:more, make:make, makeBig:makeBig, currentQid:currentQid };
 })();

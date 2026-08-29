@@ -69,6 +69,13 @@
     if(!uids.length){
       h+='<span class="mm-walker" style="left:42%"><i class="mm-bub" style="animation-delay:2s">だれか来ないかな…</i>🥚</span>';
     }
+    /* 持っているタマゴ: 割れそうに揺れる。タップで孵化へ */
+    if((c.mm.res.tama||0)>0){
+      var st=UI.coachStep?UI.coachStep(c):null;
+      h+='<button class="mm-egg-btn'+(UI.hl?UI.hl(st,"egg"):"")+'" onclick="MM.ui.go(\'hatch\',{})" aria-label="タマゴを割る">'
+        +'<span class="mm-egg-wob">🥚</span><i class="mm-egg-n">×'+c.mm.res.tama+'</i><i class="mm-egg-tap">タップ!</i></button>';
+    }
+    if(c.mm.name)h+='<span class="mm-townname">'+esc(c.mm.name)+'</span>';
     h+='<div class="mm-ground"></div></div>';
     return h;
   };

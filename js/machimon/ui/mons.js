@@ -91,13 +91,18 @@
     if(!MM.town.has(c,"place")){
       h+='<div class="mm-q" style="font-size:12px">階層「町」になると、マチモンを施設で働かせられます。</div>';
     }else{
+      var me=c.mm.mons[p.uid];
+      if(me.place)h+='<div class="mm-q" style="font-size:12px;padding:8px">いま <b>'+esc((MM.DATA.bldById[(c.mm.slots[me.place]||{}).b]||{}).name||"")+'</b> で働き中 → <b style="color:#B58900">+'+(Math.round(MM.town.monProd(c,p.uid)*10)/10)+' 🪙/時</b>(放置収入)'
+        +' <button class="small-btn" style="min-height:36px;margin-left:6px" onclick="MM.ui.unplace(\''+p.uid+'\')">はずす</button></div>';
+      else h+='<div class="mm-q" style="font-size:12px;padding:8px">働かせると、いない間も 🪙 を稼ぐ。科目が同じ建物なら×1.5、適性◎なら×1.2</div>';
       h+='<div class="mm-slots">';
       for(var k in c.mm.slots){
         var s=c.mm.slots[k], b=MM.DATA.bldById[s.b]||{name:"?"};
         var fit=MM.town.fits(sp,b);
-        h+='<button class="mm-slot" onclick="MM.ui.place(\''+p.uid+'\',\''+k+'\')">'
+        var occ=s.mon&&s.mon!==p.uid?c.mm.mons[s.mon]:null;
+        h+='<button class="mm-slot'+(s.mon===p.uid?' mm-hl':'')+'" onclick="MM.ui.place(\''+p.uid+'\',\''+k+'\')">'
           +'<b>'+esc(b.name)+'</b><span class="mm-sub">'+esc(placeName(c,k))+(fit?' ◎適性':'')+'</span>'
-          +(s.mon===p.uid?'<span class="mm-on">ここで働いています</span>':'')+'</button>';
+          +(s.mon===p.uid?'<span class="mm-on">ここで働いています(タップではずす)</span>':(occ?'<span class="mm-sub">'+esc((MM.DATA.speciesById[occ.sp]||{}).name||"")+' と交代</span>':'<span class="mm-on">空き → ここで働く</span>'))+'</button>';
       }
       h+='</div>';
     }
@@ -123,11 +128,12 @@
   };
   UI.place=function(uid,key){
     var c=UI.ctx();
-    if(c.mm.slots[key]&&c.mm.slots[key].mon===uid)MM.town.unplace(c,uid);
-    else MM.town.place(c,uid,key);
+    if(c.mm.slots[key]&&c.mm.slots[key].mon===uid){ MM.town.unplace(c,uid); UI.play({sfx:"tap"}); }
+    else if(MM.town.place(c,uid,key)){ UI.play({sfx:"place",haptic:"medium"}); }
     MM.game.save();
     UI.go("mon",{uid:uid});
   };
+  UI.unplace=function(uid){ var c=UI.ctx(); MM.town.unplace(c,uid); MM.game.save(); UI.play({sfx:"tap"}); UI.go("mon",{uid:uid}); };
   /* 「この子を育てる」= その科目の事件を作って直行する(育成→学習の最短導線) */
   UI.train=function(sub){
     var c=UI.ctx();

@@ -52,8 +52,27 @@
         +'<div class="mm-sub">'+esc(b.desc||"")+'</div>'
         +'<div class="mm-sub">生産 '+(b.prod*d.lv)+' /時</div>'
         +'<div class="mm-sub" style="margin-top:6px">🔨 この建物は、あなたが '+d.q+' 問解いた日に建ちました</div>'
-        +(d.mon&&c.mm.mons[d.mon]?'<div class="mm-on">👾 '+esc((MM.DATA.speciesById[c.mm.mons[d.mon].sp]||{}).name)+' が働いています</div>':'')
         +'</div>';
+      /* 働き手: メリット(+N/時)を数字で見せる。はずす/入れ替えも1タップ */
+      h+='<div class="mm-h">👾 はたらくマチモン</div>';
+      if(d.mon&&c.mm.mons[d.mon]){
+        var wm=c.mm.mons[d.mon], wsp=MM.DATA.speciesById[wm.sp]||{name:"?"};
+        h+='<div class="mm-q" style="display:flex;align-items:center;gap:10px;padding:10px">'+MM.px(wm.sp,44)+'<div style="flex:1"><b>'+esc(wsp.name)+' Lv'+wm.lv+'</b>'
+          +'<div class="mm-sub">この子の生産 <b style="color:#B58900">+'+(Math.round(MM.town.monProd(c,d.mon)*10)/10)+' 🪙/時</b>'+(MM.town.fits(wsp,b)?' ◎適性':'')+((MM.DATA.areaById[aid]||{}).sub===wsp.sub?' ◎科目一致×1.5':'')+'</div></div>'
+          +'<button class="small-btn" style="min-height:40px" onclick="MM.ui.unplaceSlot(\''+key+'\')">はずす</button></div>';
+      }else{
+        var free=[]; for(var fu in c.mm.mons){ if(!c.mm.mons[fu].place)free.push(fu); }
+        if(!free.length)h+='<div class="mm-q" style="font-size:12px">空き枠。手のあいたマチモンがいません(ガチャ/タマゴで仲間を増やそう)</div>';
+        else{
+          h+='<div class="mm-q" style="font-size:12px;padding:8px">配置すると、いない間も 🪙 を稼ぐ(放置収入)。科目が同じ子は×1.5</div><div class="mm-slots">';
+          for(var fi=0;fi<free.length&&fi<8;fi++){
+            var fm=c.mm.mons[free[fi]], fsp=MM.DATA.speciesById[fm.sp]||{name:"?"};
+            var est=fsp.prod*(1+(fm.lv-1)*0.02)*((MM.DATA.areaById[aid]||{}).sub===fsp.sub?1.5:1)*(MM.town.fits(fsp,b)?1.2:1);
+            h+='<button class="mm-slot" onclick="MM.ui.placeGuided(\''+free[fi]+'\',\''+key+'\')">'+MM.px(fm.sp,28)+' <b style="display:inline">'+esc(fsp.name)+'</b><span class="mm-sub">+'+(Math.round(est*10)/10)+' 🪙/時 → 配置</span></button>';
+          }
+          h+='</div>';
+        }
+      }
       if(!MM.town.has(c,"upgrade")){
         h+='<div class="mm-q" style="font-size:12px">階層「商店街」になると強化できます。</div>';
       }else if(d.lv>=MM.DATA.BLD_LV_MAX){
@@ -79,17 +98,25 @@
 
   UI.build=function(key,bid){
     var c=UI.ctx();
-    if(MM.town.build(c,key,bid)){ MM.game.save(); UI.play({step:3,fx:"glow",haptic:"medium"}); }
+    if(MM.town.build(c,key,bid)){ MM.game.save(); var b=MM.DATA.bldById[bid]||{name:"建物"};
+      UI.go("town"); if(UI.celebrate)UI.celebrate({icon:MM.DATA.bldIcon[bid]||"🏠",title:b.name+" が建った！",sub:"街Lv"+c.mm.lv+" ・ 生産 "+MM.town.production(c)+"/時 ・ 事件枠 +"+MM.DATA.INC_PER_BLD,sfx:"build"}); return; }
+    UI.go("build",{slot:key});
+  };
+  UI.unplaceSlot=function(key){
+    var c=UI.ctx(), d=c.mm.slots[key];
+    if(d&&d.mon){ MM.town.unplace(c,d.mon); MM.game.save(); UI.play({sfx:"tap"}); }
     UI.go("build",{slot:key});
   };
   UI.upgrade=function(key){
     var c=UI.ctx();
-    if(MM.town.upgrade(c,key)){ MM.game.save(); UI.play({step:3,fx:"glow",haptic:"medium"}); }
+    if(MM.town.upgrade(c,key)){ MM.game.save(); var d=c.mm.slots[key], b=MM.DATA.bldById[d.b]||{name:"建物"};
+      UI.go("build",{slot:key}); if(UI.celebrate)UI.celebrate({icon:MM.DATA.bldIcon[d.b]||"🏠",title:b.name+" Lv"+d.lv+" に強化！",sub:"生産 "+MM.town.production(c)+"/時",sfx:"build"}); return; }
     UI.go("build",{slot:key});
   };
   UI.upTier=function(){
     var c=UI.ctx();
-    if(MM.town.upTier(c)){ MM.game.save(); UI.play({step:7,fx:"gold",haptic:"heavy"}); }
+    if(MM.town.upTier(c)){ MM.game.save(); var t=MM.town.tier(c);
+      UI.go("town"); if(UI.celebrate)UI.celebrate({icon:"🌏",title:"世界が広がった！ 「"+t.name+"」",sub:t.desc,sfx:"big"}); return; }
     UI.go("build");
   };
 })();
