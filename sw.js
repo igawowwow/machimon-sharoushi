@@ -1,4 +1,4 @@
-const C = "mm-v230";
+const C = "machimon-v2";
 const ASSETS = [
   "./", "./index.html", "./manifest.json", "./privacy.html",
   "./icon-192.png", "./icon-512.png", "./icon-180.png", "./assets/icon-maskable.svg",
@@ -75,10 +75,10 @@ const ASSETS = [
    旧HTML+新JSの混在ロードが起き、無音の真っ白の温床になる(2026-07-12/14の事象)。
    新バージョンは「全タブを閉じた次の起動」から適用される(1セッション内は常に同一バージョン) */
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 /* ページ主導の安全な即時切替: 起動直後(load後・プレイ開始前)に main.js から要求された時だけ
    waiting を解除する。SW都合の無差別 skipWaiting と違い、要求元ページは直後に自らリロードする */

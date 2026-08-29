@@ -40,7 +40,7 @@
     try{ html=fn(UI.route.params)||""; }
     catch(e){ html='<div class="mm-wrap"><div class="mm-q">画面の表示に失敗しました。<br><button class="small-btn" onclick="MM.ui.go(\'town\')">街へ戻る</button></div></div>'; console.warn(e); }
     box.innerHTML=html;
-    try{ if(typeof G.setBgmScene==="function")G.setBgmScene(UI.route.screen==="boss"?"boss":"town"); }catch(e){}
+    try{ if(typeof G.setBgmScene==="function")G.setBgmScene(UI.route.screen==="boss"?"mmboss":"mmtown"); }catch(e){}
   };
 
   /* --- 共通パーツ --- */

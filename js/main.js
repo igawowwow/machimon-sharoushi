@@ -111,6 +111,7 @@ else { __srqBootDispatch(); }
    iosScheme=capacitor では location.hostname が "localhost" になり下の条件を
    通過してしまうため明示的に除外する(通すと、同梱していない sw.js を取りにいって404になる)。 */
 const __srqNative=!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==="function"&&window.Capacitor.isNativePlatform());
+if("serviceWorker" in navigator){try{let __mmSwapped=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(__mmSwapped)return;__mmSwapped=true;if(!sessionStorage.getItem("mm-swap")){sessionStorage.setItem("mm-swap","1");location.reload();}else{sessionStorage.removeItem("mm-swap");}});}catch(e){}}
 if(!__srqNative && "serviceWorker" in navigator && (location.protocol==="https:"||["localhost","127.0.0.1"].includes(location.hostname))){
   addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(reg=>{
     /* 起動直後に waiting の新SWがいたら、プレイ開始前の今だけ安全に切替えて1回リロード。
