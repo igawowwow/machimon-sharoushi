@@ -17,6 +17,12 @@
     var h='<div class="mm-wrap">'+UI.resBar(c);
     /* 街の生活シーン: マチモンが歩き・働き・つぶやく(動くのはここだけ) */
     if(UI.scene)h+=UI.scene(c);
+    /* 世界マップ: 13段のどこにいるか。タップで建設画面の「世界の階層」へ */
+    var ti=c.mm.tier||0, TL=MM.DATA.tierLook||[], nt=MM.town.nextTier(c);
+    h+='<button class="mm-world" onclick="MM.ui.go(\'build\')"><span class="mm-world-row">';
+    for(var wi=0;wi<MM.DATA.tiers.length;wi++)h+='<i class="'+(wi<ti?"mm-w-done":(wi===ti?"mm-w-now":"mm-w-lock"))+'">'+((TL[wi]||{}).icon||"?")+'</i>';
+    h+='</span><span class="mm-world-txt">🌏 <b>'+esc(MM.town.tier(c).name)+'</b>'+(nt?' → '+esc(nt.name)+' まで ✨'+Math.max(0,nt.ke-c.mm.res.ke):' (最終段)')+'</span>'
+      +(nt?UI.bar(c.mm.res.ke,nt.ke):'')+'</button>';
     /* 相棒のコーチ(いま何をすべきか1行)と、つぎの目標(進捗バー) */
     if(UI.coach)h+=UI.coach(c,st);
     if(UI.goal)h+=UI.goal(c);

@@ -1,4 +1,4 @@
-const C = "machimon-v5";
+const C = "machimon-v6";
 const ASSETS = [
   "./", "./index.html", "./manifest.json", "./privacy.html",
   "./icon-192.png", "./icon-512.png", "./icon-180.png", "./assets/icon-maskable.svg",

@@ -25,8 +25,15 @@
     var esc=UI.esc, D=MM.DATA;
     var hr=new Date(c.now).getHours();
     var sky=(hr>=6&&hr<16)?"mm-sky-day":(hr<19?"mm-sky-eve":"mm-sky-night");
-    var h='<div class="mm-scene '+sky+'">';
-    h+='<span class="mm-sun">'+((hr>=6&&hr<18)?"☀️":"🌙")+'</span>';
+    var ti=c.mm.tier||0, look=(D.tierLook||[])[ti]||{icon:"🏢",h:170,deco:[]};
+    if(look.space)sky="mm-sky-space";
+    var h='<div class="mm-scene '+sky+' mm-tier-'+ti+'" style="height:'+look.h+'px">';
+    h+='<span class="mm-sun">'+(look.space?"🌍":((hr>=6&&hr<18)?"☀️":"🌙"))+'</span>';
+    if(look.space)for(var st=0;st<14;st++)h+='<i class="mm-star" style="left:'+((st*37)%100)+'%;top:'+((st*23)%70)+'%;animation-delay:-'+(st*.4)+'s"></i>';
+    if(look.far)h+='<div class="mm-far">'+look.far+'</div>';
+    for(var di=0;di<(look.deco||[]).length;di++)h+='<span class="mm-deco" style="left:'+(4+di*26)+'%">'+look.deco[di]+'</span>';
+    if(look.car)h+='<span class="mm-car">🚗</span>';
+    if(look.train)h+='<span class="mm-train">🚃🚃🚃</span>';
     h+='<span class="mm-cloud" style="left:14%;top:10px">☁️</span>'
       +'<span class="mm-cloud" style="left:62%;top:4px;animation-delay:-14s">☁️</span>';
 

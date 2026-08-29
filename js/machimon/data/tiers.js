@@ -38,6 +38,22 @@
   {id:"universe",name:"宇宙",             ke:34400,adds:["multiqual"],          mvp:false,
    desc:"ほかの資格の惑星が、同じ宇宙に加わる"}
   ];
+  /* 階層ごとの世界の見た目(街シーン・世界マップ) */
+  D.tierLook=[
+   {icon:"🏢",h:170,deco:["🌱","🌱"],far:""},
+   {icon:"🏪",h:180,deco:["🌳","🏪","🌳","🪧"],far:""},
+   {icon:"🏘️",h:190,deco:["🌳","🏘️","⛲","🌳","🚏"],far:""},
+   {icon:"🏙️",h:200,deco:["🌳","🚏","⛲","🏬"],far:"🏢🏬🏢🏨🏢",car:true},
+   {icon:"🌆",h:210,deco:["🚏","🏬","🗼","⛲"],far:"🏢🏨🏢🗼🏢🏬🏢",car:true,train:true},
+   {icon:"🗾",h:220,deco:["⛲","🏬","🚉","🌳"],far:"🗻🏢🏢🌉🏢",car:true,train:true},
+   {icon:"🏯",h:230,deco:["🏛️","🚉","⛲","🏬"],far:"🏯🏢🗼🏢🌉",car:true,train:true},
+   {icon:"🌍",h:230,deco:["🏛️","🚉","✈️","🏬"],far:"🗻🏙️🌉🏙️🗻",car:true,train:true},
+   {icon:"🪐",h:240,deco:["🏛️","🛸","🚀","🏬"],far:"🏙️🛰️🏙️🚀🏙️",space:true},
+   {icon:"🌌",h:240,deco:["🛸","🚀","🛰️","🏛️"],far:"🪐🛰️🌍🚀🪐",space:true},
+   {icon:"☀️",h:250,deco:["🛸","🚀","🛰️","🪐"],far:"🌍🪐☀️🪐🌍",space:true},
+   {icon:"🌠",h:250,deco:["🛸","🌠","🛰️","🪐"],far:"🌌🌠🌌🌠🌌",space:true},
+   {icon:"🌌",h:260,deco:["🌠","🛸","🪐","🌠"],far:"🌌🌍🌌🪐🌌",space:true}
+  ];
   D.tierById=Object.create(null);
   for(var i=0;i<D.tiers.length;i++){ D.tiers[i].idx=i; D.tierById[D.tiers[i].id]=D.tiers[i]; }
 })();
