@@ -1,0 +1,157 @@
+/* ============================================================
+   css/machimon.css — MACHIMON 専用スタイル(名前空間は .mm- のみ)
+   ★通常時は低刺激(彩度・輝度を抑える)。演出はコンボ段階でのみ加算する
+     = 「静→動 / 暗→明 / 無音→音 / 小→大」のコントラストを作る(失敗⑨の遮断)。
+   ★既存画面のクラスには一切触れない。
+   ============================================================ */
+.mm-wrap{ padding:8px 10px 76px; color:var(--ink,#33303E); }
+
+/* --- リソースバー: 5種のみ。知識エネルギーだけ色と光で区別する --- */
+.mm-res{ display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+  background:#fff; border:2px solid var(--ink,#33303E); border-radius:14px; padding:6px 8px; }
+.mm-res b{ font-size:13px; }
+.mm-res .mm-chip{ font-size:11px; padding:2px 6px; border-radius:9px; background:#F3F0E8; white-space:nowrap; }
+.mm-res .mm-ke{ background:linear-gradient(135deg,#FFF3C4,#FFE1EB); box-shadow:0 0 0 2px #FFC53C inset; font-weight:900; }
+
+/* --- 見出し・エリア --- */
+.mm-h{ font-weight:900; font-size:15px; margin:12px 0 6px; display:flex; align-items:center; gap:6px; }
+.mm-sub{ font-size:11px; color:#8A8494; }
+.mm-area{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:8px; margin:8px 0; }
+.mm-area.mm-locked{ background:#F3F0E8; opacity:.85; }
+.mm-gate{ width:100%; text-align:left; border:2px dashed #8A8494; border-radius:14px; background:#FBF8F1;
+  padding:10px; font-size:12px; min-height:44px; }
+.mm-gate.mm-can{ border-style:solid; border-color:#FFC53C; background:linear-gradient(135deg,#FFF9E0,#FFF); }
+
+/* --- スロット(建物) --- */
+.mm-slots{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
+.mm-slot{ border:2px solid var(--ink,#33303E); border-radius:12px; background:#FBF8F1; padding:8px;
+  min-height:56px; text-align:left; font-size:12px; }
+.mm-slot.mm-empty{ border-style:dashed; color:#8A8494; text-align:center; }
+.mm-slot b{ display:block; font-size:13px; }
+.mm-slot .mm-on{ font-size:11px; color:#5B8DFF; }
+
+/* --- 事件(唯一アニメーションする要素。街の他は静止) --- */
+.mm-inc{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:14px;
+  background:#fff; padding:10px; margin:6px 0; min-height:44px; animation:mm-float 1.6s ease-in-out infinite; }
+.mm-inc .mm-badge{ font-size:10px; font-weight:900; color:#fff; border-radius:8px; padding:1px 6px; margin-right:6px; }
+.mm-inc .mm-line{ font-size:13px; font-weight:700; }
+@keyframes mm-float{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+
+/* --- 事件(出題)画面 --- */
+.mm-q{ background:#fff; border:2px solid var(--ink,#33303E); border-radius:16px; padding:14px; margin:10px 0;
+  font-size:15px; line-height:1.7; }
+.mm-say{ font-size:13px; font-weight:900; color:#8A6FD1; margin:6px 0; }
+.mm-ans{ display:flex; gap:10px; margin-top:14px; }
+.mm-ans button{ flex:1; min-height:64px; font-size:26px; font-weight:900; border-radius:16px;
+  border:3px solid var(--ink,#33303E); background:#fff; box-shadow:0 4px 0 #33303E; }
+.mm-ans button:active{ transform:translateY(3px); box-shadow:0 1px 0 #33303E; }
+
+/* --- 報酬・コンボ(段階が上がった瞬間だけ強くする) --- */
+.mm-gain{ font-size:13px; font-weight:900; }
+.mm-combo{ position:fixed; right:10px; top:8px; font-size:11px; color:#8A8494; }
+.mm-fx1{ animation:mm-spark .35s ease-out; }
+.mm-fx2{ animation:mm-glow .5s ease-out; }
+.mm-fx3{ animation:mm-gold .8s ease-out; }
+@keyframes mm-spark{ from{ filter:brightness(1.25) } to{ filter:none } }
+@keyframes mm-glow{ from{ filter:brightness(1.4) saturate(1.3) } to{ filter:none } }
+@keyframes mm-gold{ 0%{ filter:brightness(1.6) saturate(1.6) } 100%{ filter:none } }
+
+/* --- マチモン --- */
+.mm-mons{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.mm-mon{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px; text-align:left;
+  font-size:12px; min-height:44px; }
+.mm-mon b{ display:block; font-size:13px; }
+.mm-bar{ height:8px; border-radius:6px; background:#EDE9DF; overflow:hidden; margin-top:4px; }
+.mm-bar i{ display:block; height:100%; background:linear-gradient(90deg,#3ED6C0,#5B8DFF); }
+.mm-need{ font-size:11px; color:#8A8494; margin-top:3px; }
+.mm-need.mm-ok{ color:#3ED6C0; font-weight:900; }
+
+/* --- 孵化 --- */
+.mm-egg{ text-align:center; padding:40px 10px; font-size:64px; }
+.mm-egg.mm-crack{ animation:mm-shake .4s ease-in-out; }
+.mm-egg.mm-hush{ opacity:.35; }
+.mm-egg.mm-burst{ animation:mm-pop .6s ease-out; }
+@keyframes mm-shake{ 0%,100%{ transform:rotate(0) } 25%{ transform:rotate(-8deg) } 75%{ transform:rotate(8deg) } }
+@keyframes mm-pop{ 0%{ transform:scale(.9) } 60%{ transform:scale(1.25) } 100%{ transform:scale(1) } }
+
+/* --- ボス --- */
+.mm-hp{ height:14px; border-radius:8px; background:#EDE9DF; overflow:hidden; border:2px solid var(--ink,#33303E); }
+.mm-hp i{ display:block; height:100%; background:linear-gradient(90deg,#FF5A5A,#FF6B9D); transition:width .3s; }
+
+/* --- タブ --- */
+.mm-tabs{ position:fixed; left:0; right:0; bottom:0; display:flex; background:#fff;
+  border-top:2px solid var(--ink,#33303E); z-index:50; }
+.mm-tabs button{ flex:1; min-height:52px; font-size:11px; background:none; border:0; padding:4px 0; }
+.mm-tabs button.mm-act{ background:#FFF3C4; font-weight:900; }
+.mm-tabs span{ display:block; font-size:18px; }
+
+/* --- 記録 --- */
+.mm-row{ display:flex; justify-content:space-between; align-items:center; padding:6px 0;
+  border-bottom:1px solid #EDE9DF; font-size:12px; }
+.mm-mast{ height:10px; border-radius:6px; background:#EDE9DF; overflow:hidden; width:110px; }
+.mm-mast i{ display:block; height:100%; background:linear-gradient(90deg,#FFC53C,#3ED6C0); }
+
+/* --- 動きを減らす設定を尊重(消さずに短縮=進行は止めない) --- */
+@media (prefers-reduced-motion: reduce){
+  .mm-inc,.mm-fx1,.mm-fx2,.mm-fx3,.mm-egg{ animation-duration:.01s !important; }
+}
+
+/* --- 街の生活シーン(マチモンが歩き・建て・つぶやく) --- */
+.mm-scene{ position:relative; height:130px; border:2px solid var(--ink,#33303E); border-radius:16px;
+  overflow:hidden; margin:8px 0 4px; }
+.mm-sky-day{ background:linear-gradient(#BEE3F8 60%,#D8F0E0); }
+.mm-sky-eve{ background:linear-gradient(#F8CFA8 55%,#F0E0C8); }
+.mm-sky-night{ background:linear-gradient(#4A4A6E 55%,#6E6E92); }
+.mm-sun{ position:absolute; right:10px; top:6px; font-size:18px; }
+.mm-cloud{ position:absolute; font-size:16px; opacity:.8; animation:mm-drift 40s linear infinite; }
+@keyframes mm-drift{ from{ transform:translateX(0) } to{ transform:translateX(120px) } }
+.mm-ground{ position:absolute; left:0; right:0; bottom:0; height:26px;
+  background:linear-gradient(#9BD18A,#7FB86F); border-top:2px solid #5E9450; }
+.mm-bld{ position:absolute; bottom:20px; font-size:30px; line-height:1; z-index:1; }
+.mm-bld-lv{ position:absolute; left:50%; transform:translateX(-50%); bottom:-13px;
+  font-size:8px; font-style:normal; font-weight:900; color:#fff; background:#33303E;
+  border-radius:6px; padding:0 4px; white-space:nowrap; }
+.mm-px{ image-rendering:pixelated; vertical-align:bottom; }
+
+/* 歩くマチモン: 左右にてくてく(端で向きを変える)+ぴょこぴょこ */
+.mm-walker{ position:absolute; bottom:16px; z-index:2;
+  animation:mm-walk var(--mm-dur,10s) ease-in-out infinite; }
+@keyframes mm-walk{
+  0%{ transform:translateX(0) scaleX(1) }
+  46%{ transform:translateX(90px) scaleX(1) }
+  50%{ transform:translateX(90px) scaleX(-1) }
+  96%{ transform:translateX(0) scaleX(-1) }
+  100%{ transform:translateX(0) scaleX(1) } }
+.mm-hop{ display:inline-block; animation:mm-hop .46s ease-in-out infinite; }
+@keyframes mm-hop{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+
+/* 働くマチモン: 建物のそばでゆれながら🔨を振る */
+.mm-worker{ position:absolute; bottom:16px; z-index:2; animation:mm-sway 2.6s ease-in-out infinite; }
+@keyframes mm-sway{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-2px) } }
+.mm-tool{ position:absolute; right:-12px; top:2px; font-size:13px; font-style:normal;
+  transform-origin:20% 80%; animation:mm-knock 1.1s ease-in-out infinite; }
+@keyframes mm-knock{ 0%,55%,100%{ transform:rotate(0) } 70%{ transform:rotate(-42deg) } 82%{ transform:rotate(8deg) } }
+
+/* 生活のつぶやき: ときどきふわっと出て消える */
+.mm-bub{ position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%);
+  max-width:150px; width:max-content; font-size:9px; font-style:normal; font-weight:700;
+  color:var(--ink,#33303E); background:#fff; border:1.5px solid var(--ink,#33303E);
+  border-radius:9px; padding:2px 6px; opacity:0; pointer-events:none; z-index:3;
+  animation:mm-bub 16s ease-in-out infinite; }
+@keyframes mm-bub{ 0%,72%{ opacity:0 } 76%,92%{ opacity:1 } 96%,100%{ opacity:0 } }
+
+@media (prefers-reduced-motion: reduce){
+  .mm-walker,.mm-worker,.mm-hop,.mm-tool,.mm-cloud{ animation:none !important; }
+  .mm-bub{ animation:none !important; opacity:1; }
+}
+
+/* マチモン一覧カード: 左に顔・右に情報の2カラム */
+.mm-mon{ display:flex; align-items:center; gap:8px; }
+.mm-mon-face{ flex:0 0 44px; text-align:center; }
+.mm-mon-info{ flex:1; min-width:0; }
+.mm-mon-info b,.mm-mon-info .mm-sub,.mm-mon-info .mm-need{ display:block; }
+
+/* 単体配布のロゴ(MACHIMONだけのゲームであることの旗印) */
+.mm-logo{ font-family:'DotGothic16',monospace; font-weight:900; font-size:18px;
+  letter-spacing:2px; text-align:center; margin:2px 0 6px; color:var(--ink,#33303E); }
+.mm-logo span{ font-size:11px; letter-spacing:4px; margin-left:6px; color:#8A6FD1; }

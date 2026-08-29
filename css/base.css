@@ -1,0 +1,53 @@
+/* ============================================================
+   css/base.css — リセット + 自己ホストフォント基盤(Phase3c)
+   ・軽量リセット(旧UIの見た目を変えないよう、旧インライン CSS を
+     上書きしない範囲に留める。index.html のインライン <style> が
+     後勝ちするため、ここは「土台」= Phase6 で旧インラインを撤去した
+     時に効く基礎)。
+   ・フォントは自己ホスト @font-face(ローカル woff2, font-display:swap)。
+     外部URLフォントは足さない(既存 Google Fonts link は Phase6 で撤去)。
+     woff2 バイナリは assets/fonts/ に配置(未配置でも swap により
+     システムフォントへ劣化=起動やオフラインは壊れない)。
+   ============================================================ */
+
+/* --- 自己ホストフォントの宣言について ---
+   以前ここには 'M PLUS Rounded 1c'(700/900) と 'DotGothic16' の @font-face があり、
+   src に url('../assets/fonts/*.woff2') を指していた。しかしその woff2 は
+   リポジトリに配置されておらず、**起動のたびに3件の404**を出していた
+   (元コメントの「woff2 未配置時は404を避けるため配置後に有効化する運用」という
+   意図に反して、宣言が有効なまま取り残されていた)。
+
+   url を外して local() だけ残す案も試したが、端末にその書体が無いと
+   「解決できない @font-face」が残り document.fonts.load() が拒否される。
+   実害(描画)は無いものの、死んだ宣言を残す意味がないため削除した。
+
+   実体の供給はこう分かれている:
+     ・Web版      … index.html が Google Fonts CDN から読む
+     ・ネイティブ版 … tools/build-www.js が同梱 fonts.css(サブセット375件)へ差し替える
+   自己ホストへ移すとき(Phase6)は、woff2 を実際に assets/fonts へ置いたうえで
+   ここに宣言を戻すこと。置く前に宣言だけ戻すと404が復活する。 */
+
+/* --- 軽量リセット ---
+   旧インライン <style> の `*{margin:0;padding:0;box-sizing:border-box}` と
+   同趣旨。競合しない安全な土台のみ宣言する。 */
+*,*::before,*::after{ box-sizing:border-box; }
+
+/* フォント合成・スムージング(端末での可読性)。旧挙動を変えない範囲。 */
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+/* 画像はコンテナ幅を超えない(横スクロール防止の土台) */
+img{ max-width:100%; }
+
+/* ピクセルアート維持(旧 img.px と同趣旨の土台) */
+img.px{ image-rendering:pixelated; image-rendering:crisp-edges; }
+
+/* ドット書体ユーティリティ(旧 .dot と同趣旨の土台) */
+.dot{ font-family:'DotGothic16',monospace; }
+
+/* フォーカスリング(キーボード操作時のみ。マウス/タップでは出さない) */
+:focus-visible{ outline:3px solid var(--blue); outline-offset:2px; }
+
+/* reduced-motion 尊重の土台(各コンポーネント側でも個別配慮) */
+@media (prefers-reduced-motion:reduce){
+  *{ scroll-behavior:auto !important; }
+}

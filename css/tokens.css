@@ -1,0 +1,77 @@
+/* ============================================================
+   css/tokens.css — デザイントークン基盤(Phase3c)
+   既存9色 + --shadow + --radius を「同値」で維持(旧UIの見た目不変)。
+   新規: 余白 --sp-1..6 / フォント --fs-1..6 / 行間 --lh-* /
+         z-index --z-* / ボーダー幅 --bw / タップ最小 --tap。
+   prefers-color-scheme:dark はトークン素地(この Phase では画面切替なし。
+   index.html のインライン :root が後勝ちするので現行の見た目は変わらない)。
+   ============================================================ */
+:root{
+  /* --- 既存9色(index.html と同値・変更禁止) --- */
+  --bg:#FFF6E5;
+  --ink:#33303E;
+  --pink:#FF6B9D;
+  --yellow:#FFC53C;
+  --mint:#3ED6C0;
+  --blue:#5B8DFF;
+  --red:#FF5A5A;
+  --white:#FFF;
+  --purple:#8A6FD1;
+
+  /* --- 既存の質感トークン(同値) --- */
+  --shadow:0 4px 0 #33303E;
+  --radius:16px;
+
+  /* --- 余白スケール(4/8/12/16/24/32) --- */
+  --sp-1:4px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:24px;
+  --sp-6:32px;
+
+  /* --- フォントサイズスケール --- */
+  --fs-1:10px;   /* 補助・キャプション */
+  --fs-2:12px;   /* 本文小 */
+  --fs-3:14px;   /* 本文 */
+  --fs-4:16px;   /* 見出し小 */
+  --fs-5:20px;   /* 見出し */
+  --fs-6:26px;   /* CTA / 大見出し */
+
+  /* --- 行間 --- */
+  --lh-tight:1.25;
+  --lh-normal:1.55;
+  --lh-loose:1.8;
+
+  /* --- z-index 層(演出 < オーバーレイ < ストーリー) --- */
+  --z-nav:50;
+  --z-fx:100;
+  --z-overlay:200;
+  --z-story:300;
+
+  /* --- ボーダー幅 / タップ領域最小 --- */
+  --bw:2px;      /* ミュートな枠(.card 等) */
+  --bw-strong:3px;/* 強調枠(旧UI互換の太枠) */
+  --tap:44px;    /* iOS 推奨タップ最小 */
+
+  /* --- 意味づけ(コンポーネント用エイリアス) --- */
+  --accent:var(--pink);
+  --accent-ink:#33303E;
+  --muted:#8A7FB0;          /* AA 準拠のミュート文字色(旧 #8A8494 の是正版) */
+  --line:#E4DEF2;           /* 細い区切り線 */
+  --card-bg:var(--white);
+  --paper:var(--bg);
+}
+
+/* prefers-color-scheme:dark — 夜間素地(Phase6 で有効化)。
+   現状は index.html インライン :root が後勝ちするため見た目不変。 */
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg-dark:#1E1B29;
+    --ink-dark:#F3EEFF;
+    --white-dark:#2A2636;
+    --line-dark:#3A3450;
+    --muted-dark:#B4A9D6;
+    --card-bg-dark:#2A2636;
+  }
+}

@@ -1,0 +1,300 @@
+/* ============================================================
+   css/components.css — 共通コンポーネント スタイル(Phase3c)
+   方針:
+   ・新UI用の部品スタイル。旧UIのクラス(.pcard/.ovl-card/.topbar 等)
+     とは衝突しない命名(.card/.chip/.progressbar/.sr-topbar/.sr-overlay)。
+   ・ボタンは「階層」を作る: Primary CTA だけ強く(彩度/影/サイズ最大)、
+     Secondary は中庸、Ghost は最小。乱発の太枠+影で全部が等価に叫ぶのを避ける。
+   ・枠線/影を全要素に同強で付けない。強調は Primary へ集約。余白は広め。
+   ・全ボタンは min-height:44px(過小タップ是正)。テキスト階層/AAコントラスト。
+   ・.btn への上書きは `.btn.btn--x`(specificity 0,2,0)で、読み込み順に依らず
+     旧インライン `.btn`(0,1,0)へ確実に勝つ。旧UIは btn-- 修飾子を使わない=無干渉。
+   ============================================================ */
+
+/* ---------------- Button 階層 ---------------- */
+/* 共通: すべての新ボタンにタップ最小 44px と余白・整列を強制 */
+.btn--primary,
+.btn--secondary,
+.btn--ghost{
+  min-height:var(--tap);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:var(--sp-2);
+  padding:var(--sp-3) var(--sp-4);
+  border-radius:var(--radius);
+  font-weight:900;
+  line-height:var(--lh-tight);
+  text-align:center;
+}
+
+/* Primary = 唯一の強CTA(今日の冒険)。彩度・影・サイズ最大 */
+.btn.btn--primary{
+  background:var(--accent);
+  color:var(--white);
+  border:var(--bw-strong) solid var(--ink);
+  box-shadow:var(--shadow);
+  font-size:var(--fs-4);
+}
+.btn.btn--primary:active{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 var(--ink);
+}
+
+/* Secondary = 中庸。白地・細めの主張 */
+.btn.btn--secondary{
+  background:var(--white);
+  color:var(--ink);
+  border:var(--bw-strong) solid var(--ink);
+  box-shadow:var(--shadow);
+  font-size:var(--fs-3);
+}
+.btn.btn--secondary:active{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 var(--ink);
+}
+
+/* Ghost = 最小。枠/影なし、テキスト主体 */
+.btn.btn--ghost{
+  background:transparent;
+  color:var(--muted);
+  border:0;
+  box-shadow:none;
+  font-size:var(--fs-3);
+  font-weight:700;
+}
+.btn.btn--ghost:active{ opacity:.6; }
+
+.btn--primary:disabled,
+.btn--secondary:disabled,
+.btn--ghost:disabled{ opacity:.45; cursor:default; }
+
+/* CTA ラッパ(Primary の中に主/副ラベルを積む) */
+.cta{
+  width:100%;
+  flex-direction:column;
+  gap:2px;
+  padding:var(--sp-4);
+}
+.cta__label{ font-size:var(--fs-5); line-height:var(--lh-tight); }
+.cta__sub{ font-size:var(--fs-2); font-weight:700; opacity:.92; }
+
+/* ---------------- Card(ミュートな器) ---------------- */
+/* 強調を Primary に集約するため、カードは控えめな枠+淡い影 */
+.card{
+  background:var(--card-bg);
+  border:var(--bw) solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 2px 0 rgba(51,48,62,.10);
+  padding:var(--sp-4);
+  margin-bottom:var(--sp-3);
+}
+.card--flat{ box-shadow:none; }
+.card--accent{ border-color:var(--accent); }
+.card__title{
+  font-size:var(--fs-4);
+  font-weight:900;
+  margin-bottom:var(--sp-2);
+  line-height:var(--lh-tight);
+}
+.card__body{
+  font-size:var(--fs-3);
+  font-weight:700;
+  line-height:var(--lh-normal);
+  color:var(--ink);
+}
+.card__meta{
+  font-size:var(--fs-2);
+  font-weight:700;
+  color:var(--muted);
+}
+
+/* ---------------- Chip(小さなラベル/タグ) ---------------- */
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:var(--sp-1);
+  padding:2px var(--sp-3);
+  border-radius:999px;
+  border:var(--bw) solid var(--line);
+  background:var(--white);
+  color:var(--ink);
+  font-size:var(--fs-2);
+  font-weight:900;
+  line-height:1.6;
+  white-space:nowrap;
+}
+.chip--accent{ background:var(--accent); color:var(--white); border-color:var(--ink); }
+.chip--yellow{ background:var(--yellow); border-color:var(--ink); }
+.chip--mint{ background:var(--mint); border-color:var(--ink); }
+/* タップ可能な chip はタップ最小を確保 */
+.chip--tap{ min-height:var(--tap); cursor:pointer; }
+
+/* ---------------- Progressbar ---------------- */
+.progressbar{
+  height:12px;
+  background:#F0EAE0;
+  border:var(--bw) solid var(--ink);
+  border-radius:8px;
+  overflow:hidden;
+}
+.progressbar--slim{ height:8px; border-radius:6px; }
+.progressbar__fill{
+  height:100%;
+  background:var(--mint);
+  border-radius:inherit;
+  transition:width .3s ease;
+}
+.progressbar__fill--accent{ background:var(--accent); }
+.progressbar__fill--yellow{ background:var(--yellow); }
+@media (prefers-reduced-motion:reduce){
+  .progressbar__fill{ transition:none; }
+}
+
+/* ---------------- Topbar(新UI用・旧 .topbar とは別) ---------------- */
+.sr-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--sp-2);
+  margin-bottom:var(--sp-3);
+}
+.sr-topbar__title{
+  font-size:var(--fs-4);
+  font-weight:900;
+  line-height:var(--lh-tight);
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.sr-topbar__btn{
+  min-height:var(--tap);
+  min-width:var(--tap);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-weight:900;
+  font-size:var(--fs-5);
+  cursor:pointer;
+}
+.sr-topbar__btn:active{ opacity:.6; }
+
+/* ---------------- Overlay(新UI用・旧 .ovl-* とは別) ---------------- */
+.sr-overlay{
+  position:fixed;
+  inset:0;
+  z-index:var(--z-overlay);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:var(--sp-4);
+  background:rgba(51,48,62,.55);
+}
+.sr-overlay__card{
+  background:var(--white);
+  border:var(--bw-strong) solid var(--ink);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:var(--sp-5) var(--sp-4);
+  width:100%;
+  max-width:340px;
+  max-height:86dvh;
+  overflow-y:auto;
+  text-align:center;
+}
+.sr-overlay__title{
+  font-size:var(--fs-5);
+  font-weight:900;
+  margin-bottom:var(--sp-3);
+  line-height:var(--lh-tight);
+}
+.sr-overlay__body{
+  font-size:var(--fs-3);
+  font-weight:700;
+  line-height:var(--lh-normal);
+  margin-bottom:var(--sp-4);
+}
+.sr-overlay__actions{
+  display:flex;
+  flex-direction:column;
+  gap:var(--sp-2);
+}
+
+/* ---------------- Screens: home / result(Phase4c) ---------------- */
+/* 薄いホーム: CTA + 状態サマリ + ヒントのみ。強調は Primary CTA に集約。 */
+.screen{ padding:var(--sp-4); max-width:480px; margin:0 auto; }
+.home-cta{ margin-bottom:var(--sp-4); }
+
+.status-strip{
+  display:flex;
+  gap:var(--sp-2);
+  margin-bottom:var(--sp-3);
+}
+.status-tile{
+  flex:1 1 0;
+  min-width:0;
+  background:var(--card-bg);
+  border:var(--bw) solid var(--line);
+  border-radius:var(--radius);
+  padding:var(--sp-3) var(--sp-2);
+  text-align:center;
+}
+.status-tile--gauge{ flex:1.5 1 0; }
+.status-tile__label{
+  font-size:var(--fs-1);
+  font-weight:700;
+  color:var(--muted);
+  line-height:var(--lh-tight);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.status-tile__val{
+  font-size:var(--fs-5);
+  font-weight:900;
+  color:var(--ink);
+  line-height:var(--lh-tight);
+  margin-top:2px;
+}
+.status-tile__val--sm{ font-size:var(--fs-3); margin-top:var(--sp-1); }
+.status-tile--gauge .progressbar{ margin-top:var(--sp-2); }
+
+.next-hint{
+  font-size:var(--fs-2);
+  font-weight:700;
+  color:var(--muted);
+  line-height:var(--lh-normal);
+}
+
+/* result: サマリ→もう1戦(Primary)→ホーム(ghost) */
+.result-summary{ text-align:center; }
+.result-cta{ margin-bottom:var(--sp-2); }
+.result-sub{ display:flex; justify-content:center; }
+
+/* ============================================================
+   vbrief — 物語の戦闘ブリーフィング(誰と/何の不正/なぜ正すのか/口上)。
+   幅480px・Safe Area 内・タップ44px以上。reduced-motion では動きを出さない。
+   ============================================================ */
+.vbrief{ text-align:left; max-height:64dvh; overflow-y:auto; }
+.vbrief-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.vbrief-id{ flex:1; min-width:0; }
+.vbrief-rank{ display:block; font-size:10px; font-weight:900; color:#7A3BC9; letter-spacing:.04em; }
+.vbrief-name{ display:block; font-size:17px; line-height:1.25; }
+.vbrief-ttl{ display:block; font-size:11px; color:#8A8494; font-weight:800; }
+.vbrief-row{ display:flex; gap:8px; padding:5px 0; border-top:1px solid rgba(0,0,0,.07); }
+.vbrief-k{ flex:0 0 76px; font-size:10px; font-weight:900; color:#8A8494; padding-top:2px; }
+.vbrief-v{ flex:1; min-width:0; font-size:12px; line-height:1.5; word-break:break-word; }
+.vbrief-taunt{ margin-top:8px; padding:8px 10px; border-radius:10px;
+  background:linear-gradient(135deg,#241B33,#4A2E63); color:#F2E7FF;
+  font-size:12px; font-style:italic; line-height:1.5; }
+.vbrief-note{ margin-top:8px; font-size:10.5px; font-weight:800; color:#2B9E82; line-height:1.5; }
+.vbrief-go{ font-size:14px; }
+@media (prefers-reduced-motion: reduce){
+  .vbrief, .vbrief *{ animation:none !important; transition:none !important; }
+}

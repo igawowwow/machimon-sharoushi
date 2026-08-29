@@ -1,0 +1,109 @@
+/* ============================================================
+   css/screens.css — 新画面(battle / explain / adventure)スタイル(Phase4d)
+   ・幅480px前提・タップ min 44px・Safe Area・reduced-motion 安全(常時アニメ無し)。
+   ・強調は Primary CTA へ集約(カード/戦種は控えめな枠)。トークン(tokens.css)を参照。
+   ・フラグ背後の新screensだけが使う命名(b- / exp- / adv-)。旧UIクラスと非衝突。
+   ============================================================ */
+
+/* ---------------- 共通 screen ---------------- */
+.screen{ padding:var(--sp-4); max-width:480px; margin:0 auto; box-sizing:border-box; }
+
+/* ---------------- バトル(battle) ---------------- */
+.b-enemy{ text-align:center; margin-bottom:var(--sp-3); }
+.b-enemy__name{ font-weight:900; font-size:var(--fs-5); color:var(--ink); }
+.b-timer{ height:8px; border-radius:999px; background:var(--line); overflow:hidden; margin-bottom:var(--sp-2); }
+.b-timer__bar{ height:100%; background:var(--yellow); }
+.b-prog{ font-size:var(--fs-2); color:var(--muted); text-align:center; margin-bottom:var(--sp-3); }
+.b-prog .b-life{ color:var(--red); font-weight:900; }
+.b-qcard{ background:var(--card-bg); border:var(--bw) solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-4); margin-bottom:var(--sp-4); }
+.b-qtext{ font-size:var(--fs-4); line-height:var(--lh-normal); color:var(--ink); margin:0; }
+.b-kosuu{ margin-top:var(--sp-3); display:flex; flex-direction:column; gap:var(--sp-2); }
+.b-kosuu-st{ display:flex; gap:var(--sp-2); align-items:flex-start; font-size:var(--fs-3); }
+.b-kosuu-st b{ color:var(--purple); }
+.b-note{ font-size:var(--fs-2); color:var(--muted); margin-bottom:var(--sp-2); }
+.b-reprog{ color:var(--blue); }
+.b-choices{ display:flex; flex-direction:column; gap:var(--sp-2); }
+.b-choices .choice-btn{ min-height:var(--tap); width:100%; text-align:left; justify-content:flex-start;
+  background:var(--white); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:var(--radius);
+  padding:var(--sp-3) var(--sp-4); font-weight:700; line-height:var(--lh-tight); }
+.b-choices .choice-btn.is-picked{ background:var(--line); color:var(--muted); }
+.b-choices .choice-btn b{ color:var(--purple); margin-right:var(--sp-1); }
+.b-tf{ display:flex; gap:var(--sp-3); }
+.b-tf .ans-btn{ flex:1; min-height:64px; font-size:28px; font-weight:900; border-radius:var(--radius);
+  border:var(--bw-strong) solid var(--ink); box-shadow:var(--shadow); }
+.b-tf .maru{ background:var(--mint); color:var(--white); }
+.b-tf .batsu{ background:var(--pink); color:var(--white); }
+.b-tf .ans-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+.b-empty{ text-align:center; color:var(--muted); padding:var(--sp-6) 0; }
+
+/* ---------------- 解説(explain) ---------------- */
+.exp-panel{ background:var(--card-bg); border:var(--bw) solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-4); display:flex; flex-direction:column; gap:var(--sp-3); }
+.exp-panel--ok{ border-color:var(--mint); }
+.exp-panel--ng{ border-color:var(--pink); }
+.exp-head{ font-weight:900; font-size:var(--fs-5); }
+.exp-head--ok{ color:#1E7A57; }
+.exp-head--ng{ color:var(--red); }
+.exp-atk{ font-size:var(--fs-3); color:var(--purple); }
+.exp-reward{ font-weight:900; color:var(--ink); font-size:var(--fs-3); }
+.exp-correct{ font-size:var(--fs-3); color:var(--ink); }
+.exp-correct b{ color:#1E7A57; }
+.exp-l1{ font-size:var(--fs-3); line-height:var(--lh-normal); color:var(--ink); }
+.exp-row{ font-size:var(--fs-3); line-height:var(--lh-normal); color:var(--ink); }
+.exp-more{ border:var(--bw) solid var(--line); border-radius:var(--radius); padding:var(--sp-2) var(--sp-3); }
+.exp-more>summary{ cursor:pointer; font-weight:900; color:var(--blue); min-height:var(--tap);
+  display:flex; align-items:center; list-style:none; }
+.exp-more__in{ display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-2); }
+.exp-due{ font-size:var(--fs-2); color:var(--purple); font-weight:700; }
+.exp-self__q{ font-size:var(--fs-2); color:var(--muted); margin-bottom:var(--sp-2); }
+.exp-self__q small{ display:block; font-size:var(--fs-1); }
+.exp-self__btns{ display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+.exp-self .small-btn{ flex:1; min-height:var(--tap); min-width:88px; border-radius:var(--radius);
+  border:var(--bw) solid var(--ink); background:var(--white); color:var(--ink); font-weight:700; font-size:var(--fs-2); }
+.exp-self--done{ font-weight:900; color:#1E7A57; font-size:var(--fs-3); }
+.exp-next{ margin-top:var(--sp-2); }
+.exp-next .cta{ width:100%; min-height:52px; }
+
+/* ---------------- 冒険(adventure) ---------------- */
+.adv-head{ font-weight:900; font-size:var(--fs-5); color:var(--ink); margin-bottom:var(--sp-4); }
+.adv-head__sub{ font-size:var(--fs-2); color:var(--muted); font-weight:700; }
+.adv-map{ display:flex; flex-direction:column; gap:var(--sp-2); margin-bottom:var(--sp-4); }
+.adv-node{ display:block; width:100%; text-align:left; min-height:var(--tap);
+  background:var(--card-bg); border:var(--bw) solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-3) var(--sp-4); }
+.adv-node__head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-2); }
+.adv-node__name{ font-weight:900; color:var(--ink); }
+.adv-node__st{ font-size:var(--fs-2); color:var(--muted); font-weight:700; }
+.adv-demon{ text-align:center; border:var(--bw-strong) solid var(--ink); border-radius:var(--radius);
+  padding:var(--sp-4); background:#2A2636; color:#F3EEFF; }
+.adv-demon.is-locked{ opacity:.7; }
+.adv-demon__name{ font-weight:900; font-size:var(--fs-5); }
+.adv-demon__meta{ font-size:var(--fs-2); margin-top:var(--sp-1); }
+.adv-sub-head{ display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-4); flex-wrap:wrap; }
+.adv-back{ min-height:var(--tap); }
+.adv-sub-name{ font-weight:900; font-size:var(--fs-4); color:var(--ink); }
+.adv-sub-pct{ font-size:var(--fs-2); color:var(--muted); font-weight:700; margin-left:auto; }
+.adv-wars{ display:flex; flex-direction:column; gap:var(--sp-2); }
+.adv-war{ display:block; width:100%; text-align:left; min-height:var(--tap);
+  background:var(--card-bg); border:var(--bw) solid var(--ink); border-radius:var(--radius); padding:var(--sp-3) var(--sp-4); }
+.adv-war__t{ font-weight:900; color:var(--ink); }
+.adv-war__d{ font-size:var(--fs-2); color:var(--muted); margin-top:2px; }
+.adv-war.is-locked{ opacity:.5; border-color:var(--line); }
+
+/* ---------------- ダーク配色(トークン素地) ---------------- */
+@media (prefers-color-scheme:dark){
+  :root[data-theme="dark"] .b-qcard,
+  :root[data-theme="dark"] .exp-panel,
+  :root[data-theme="dark"] .adv-node,
+  :root[data-theme="dark"] .adv-war{ background:var(--card-bg-dark); border-color:var(--line-dark); }
+}
+:root[data-theme="dark"] .b-qtext,
+:root[data-theme="dark"] .exp-l1,
+:root[data-theme="dark"] .exp-row,
+:root[data-theme="dark"] .adv-node__name{ color:var(--ink-dark); }
+
+/* ---------------- reduced-motion: :active の微移動も止める ---------------- */
+@media (prefers-reduced-motion:reduce){
+  .b-tf .ans-btn:active{ transform:none; }
+}
