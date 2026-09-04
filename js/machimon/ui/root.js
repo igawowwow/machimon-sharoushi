@@ -41,7 +41,7 @@
     try{ html=fn(UI.route.params)||""; }
     catch(e){ html='<div class="mm-wrap"><div class="mm-q">画面の表示に失敗しました。<br><button class="small-btn" onclick="MM.ui.go(\'town\')">街へ戻る</button></div></div>'; console.warn(e); }
     box.innerHTML=html;
-    try{ if(typeof G.setBgmScene==="function")G.setBgmScene(UI.route.screen==="boss"?"mmboss":"mmtown"); }catch(e){}
+    try{ if(typeof G.setBgmScene==="function")G.setBgmScene((UI.route.screen==="boss"||(UI.route.screen==="derby"&&UI.racing&&UI.racing()))?"mmboss":"mmtown"); }catch(e){}
   };
 
   /* --- 共通パーツ --- */
@@ -59,7 +59,7 @@
       +'</div>';
   };
   UI.tabs=function(active){
-    var T=[["town","🏠","街"],["mons","👾","マチモン"],["gacha","🔮","ガチャ"],["zukan","📖","図鑑"],["build","🔨","建設"]];
+    var T=[["town","🏠","街"],["derby","🏇","ダービー"],["mons","👾","マチモン"],["gacha","🔮","ガチャ"],["zukan","📖","図鑑"],["build","🔨","建設"]];
     var h='<nav class="mm-tabs" aria-label="MACHIMONナビ">';
     for(var i=0;i<T.length;i++){
       h+='<button type="button" class="'+(T[i][0]===active?"mm-act":"")+'" onclick="MM.ui.go(\''+T[i][0]+'\')">'

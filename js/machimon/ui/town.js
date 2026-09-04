@@ -26,7 +26,7 @@
     /* 相棒のコーチ(いま何をすべきか1行)と、つぎの目標(進捗バー) */
     if(UI.coach)h+=UI.coach(c,st);
     if(UI.goal)h+=UI.goal(c);
-    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'boss\')">⚔️ ボスに挑む</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
+    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'derby\')" style="background:linear-gradient(135deg,#FFF3C4,#FFE1EB)">🏇 ダービー</button><button onclick="MM.ui.go(\'boss\')">⚔️ ボス</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
 
     /* 放置収益の回収(街に戻った瞬間に自動。タップ不要) */
     var idle=UI.lastIdle; UI.lastIdle=null;

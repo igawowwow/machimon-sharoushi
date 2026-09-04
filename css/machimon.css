@@ -306,3 +306,53 @@
 .mm-world-row i{ font-style:normal; }
 .mm-w-done{ opacity:.55; } .mm-w-now{ transform:scale(1.35); filter:drop-shadow(0 0 4px #FFC53C); } .mm-w-lock{ filter:grayscale(1) opacity(.35); }
 .mm-world-txt{ display:block; font-size:12px; }
+
+/* ============================================================
+   社労士ダービー(ウイニングポスト風): 暦・レース・厩舎・トラック
+   ============================================================ */
+.mm-derby-head{ border:2px solid var(--ink,#33303E); border-radius:14px; padding:8px 10px; margin:8px 0;
+  background:linear-gradient(135deg,#FFF9E0,#E8F4FF); display:flex; flex-direction:column; gap:2px; }
+.mm-derby-head>div:first-child{ display:flex; align-items:baseline; gap:8px; }
+.mm-derby-cal{ font-weight:900; font-size:16px; }
+.mm-grade{ display:inline-block; font-size:10px; font-weight:900; color:#fff; border-radius:6px; padding:1px 6px; margin-right:4px; vertical-align:middle; }
+.mm-race{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff;
+  padding:10px; margin:6px 0; min-height:44px; box-shadow:0 3px 0 #33303E; }
+.mm-race:active{ transform:translateY(2px); box-shadow:0 1px 0 #33303E; }
+.mm-race-g1{ background:linear-gradient(135deg,#FFF9E0,#FFF); border-color:#B58900; }
+.mm-race-off{ opacity:.6; box-shadow:none; }
+.mm-race-top{ display:flex; align-items:center; gap:4px; font-size:14px; }
+.mm-race-top b{ font-size:15px; }
+.mm-crown{ font-size:10px; font-weight:900; color:#B58900; margin-left:auto; }
+.mm-race .mm-sub{ display:block; margin-top:2px; }
+.mm-race-go{ display:block; text-align:right; font-weight:900; font-size:13px; color:#D8534F; margin-top:4px; }
+.mm-race-off .mm-race-go{ color:#8A8494; font-weight:700; }
+.mm-cta-rest{ background:#fff; animation:none; font-size:15px; }
+.mm-stable{ display:grid; grid-template-columns:1fr; gap:6px; }
+.mm-horse{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:2px solid var(--ink,#33303E);
+  border-radius:14px; background:#fff; padding:6px 8px; font-size:12px; min-height:56px; }
+.mm-horse-off{ opacity:.55; }
+.mm-horse-face{ flex:0 0 44px; text-align:center; position:relative; }
+.mm-mark{ position:absolute; right:-4px; top:-4px; font-size:14px; font-weight:900; color:#D8534F; background:#fff; border-radius:50%; width:20px; height:20px; line-height:20px; border:1.5px solid var(--ink,#33303E); }
+.mm-horse-info{ flex:1; display:flex; flex-direction:column; gap:1px; min-width:0; }
+.mm-horse-info b{ font-size:13px; }
+.mm-cond{ font-size:12px; font-weight:900; }
+.mm-spd{ display:block; height:6px; border-radius:4px; background:#EDE9DF; overflow:hidden; margin-top:3px; }
+.mm-spd i{ display:block; height:100%; background:linear-gradient(90deg,#FFC53C,#FF6B9D); }
+/* トラック: 左=名前列 / 中=走路(ゴール線つき) / 右=順位 */
+.mm-track{ border:2px solid var(--ink,#33303E); border-radius:14px; overflow:hidden; margin:8px 0;
+  background:repeating-linear-gradient(0deg,#9BD18A 0 27px,#8FC97E 27px 28px); padding:3px 0; }
+.mm-lane{ display:flex; align-items:center; height:28px; }
+.mm-lane-me{ background:rgba(255,255,255,.4); }
+.mm-lane-name{ flex:0 0 84px; padding-left:6px; font-size:9px; font-weight:900; color:#33303E; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mm-lane-me .mm-lane-name{ opacity:1; color:#D8534F; }
+.mm-lane-run{ position:relative; flex:1; height:28px; border-right:3px dashed #fff; margin-right:4px; }
+.mm-runner{ position:absolute; top:1px; font-size:20px; font-style:normal; line-height:26px; transition:left .9s cubic-bezier(.2,.8,.3,1); z-index:2; }
+.mm-lane-rank{ flex:0 0 22px; text-align:center; font-size:9px; font-weight:900; color:#fff; background:#33303E; border-radius:6px; margin-right:6px; }
+.mm-last{ text-align:center; font-weight:900; color:#D8534F; margin:4px 0; animation:mm-hop .5s ease-in-out infinite; }
+.mm-board{ margin-top:6px; }
+.mm-board-row{ display:flex; gap:8px; align-items:center; padding:4px 6px; border-bottom:1px solid #EDE9DF; font-size:13px; }
+.mm-board-row b{ width:36px; }
+.mm-board-me{ background:linear-gradient(90deg,#FFF3C4,#fff); border-radius:8px; font-weight:900; }
+.mm-award{ display:flex; gap:10px; align-items:center; border:2px solid #B58900; border-radius:14px; background:linear-gradient(135deg,#FFF9E0,#fff); padding:10px; margin:6px 0; font-size:13px; }
+.mm-award-icon{ font-size:32px; }
+@media (prefers-reduced-motion: reduce){ .mm-runner{ transition:none; } .mm-last{ animation:none; } }

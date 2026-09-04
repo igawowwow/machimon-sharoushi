@@ -1,4 +1,4 @@
-const C = "machimon-v6";
+const C = "machimon-v7";
 const ASSETS = [
   "./", "./index.html", "./manifest.json", "./privacy.html",
   "./icon-192.png", "./icon-512.png", "./icon-180.png", "./assets/icon-maskable.svg",
@@ -31,7 +31,7 @@ const ASSETS = [
   "./js/machimon/data/buildings.js",
   "./js/machimon/data/tiers.js",
   "./js/machimon/data/incidents.js",
-  "./js/machimon/data/bosses.js", "./js/machimon/data/sprites.js",
+  "./js/machimon/data/bosses.js", "./js/machimon/data/sprites.js", "./js/machimon/data/races.js",
   "./js/machimon/core/state.js",
   "./js/machimon/core/learn.js",
   "./js/machimon/core/economy.js",
@@ -42,7 +42,7 @@ const ASSETS = [
   "./js/machimon/core/boss.js",
   "./js/machimon/core/combo-audio.js",
   "./js/machimon/core/onboard.js", "./js/machimon/core/tutorial.js", "./js/machimon/core/gacha.js", "./js/machimon/core/zukan.js", "./js/machimon/core/sfx.js",
-  "./js/machimon/core/exam.js",
+  "./js/machimon/core/exam.js", "./js/machimon/core/derby.js",
   "./js/machimon/core/game.js",
   "./js/machimon/ui/root.js", "./js/machimon/ui/coach.js", "./js/machimon/ui/intro.js", "./js/machimon/ui/celebrate.js", "./js/machimon/ui/gacha.js", "./js/machimon/ui/zukan.js", "./js/machimon/ui/scene.js",
   "./js/machimon/ui/town.js",
@@ -51,7 +51,7 @@ const ASSETS = [
   "./js/machimon/ui/hatch.js",
   "./js/machimon/ui/build.js",
   "./js/machimon/ui/boss.js",
-  "./js/machimon/ui/record.js",
+  "./js/machimon/ui/record.js", "./js/machimon/ui/derby.js",
   "./js/core/normalize.js", "./js/core/recommend.js", "./js/core/weekly.js", "./js/core/course.js", "./js/core/addiction.js",
   "./js/ui-quiz.js", "./js/ui-explain.js", "./js/ui-case.js", "./js/ui-mock.js", "./js/ui-nendo.js", "./js/ui-sentaku.js", "./js/ui-stats.js", "./js/ui-quest.js", "./js/region.js", "./js/ui-map.js",
   "./js/data/case-rouki.js", "./js/data/case-anei.js", "./js/data/case-rousai.js", "./js/data/case-kokunen.js", "./js/data/case-kenpo.js", "./js/data/case-kounen.js",

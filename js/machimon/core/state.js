@@ -119,6 +119,8 @@
     var se=obj(s.exam)||{};
     out.exam={ date:(typeof se.date==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(se.date))?se.date:"" };
     out.log=Array.isArray(s.log)?s.log.slice(-20):[];
+    /* 社労士ダービー(core/derby.js)。未ロードなら生のまま持ち越す(derby側で遅延正規化) */
+    try{ out.wp=(MM.derby&&MM.derby.normalize)?MM.derby.normalize(s.wp):(obj(s.wp)||null); }catch(e){ out.wp=null; }
     out.ver=VER;
     return out;
   }
