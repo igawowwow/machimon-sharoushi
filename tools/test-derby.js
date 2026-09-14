@@ -51,9 +51,11 @@ for(let i=0;i<48*2;i++){
   const g=MM.derby.enter(c,def.id,uid);
   if(!g){ console.log("✗ enter failed",def.id); process.exitCode=1; break; }
   ok(g.qids.length===def.n,"qids "+g.qids.length+"/"+def.n+" "+def.name+" (目安 正解"+need+"問, 総合力"+g.pw.total+")");
+  ok(g.rivals.every(r=>r.own&&MM.DATA.ownerById[r.own]),"rivals have owners");
+  const tn=MM.derby.taunt(c,g); ok(tn&&tn.owner&&tn.text.length>3,"taunt: "+(tn&&tn.owner.boss)+"「"+(tn&&tn.text)+"」");
   let over=false, k=0;
-  while(!over){ const r=MM.derby.step(c,g,(k%10)<8,4000+k*300); over=r.over; k++; }   /* 80%正解 */
-  const f=MM.derby.finish(c,g); races++; if(def.grade===1&&races<40)console.log("  G1",def.name,"→",f.pos,"着 total",g.pw.total,"hits",g.hits); if(f.pos===1)wins++; posCount[f.pos]=(posCount[f.pos]||0)+1;
+  while(!over){ const r=MM.derby.step(c,g,(k%10)<8,4000+k*300); const cm=MM.derby.commentary(c,g,r); if(k<2||r.last)ok(cm.text.length>3&&cm.gapText.indexOf("undefined")<0&&cm.gapText.indexOf("NaN")<0,"実況: "+cm.text+" / "+cm.gapText); over=r.over; k++; }   /* 80%正解 */
+  const f=MM.derby.finish(c,g); races++; ok(f.owners&&f.owners.length>=1&&f.owners.every(o=>o.name&&o.text),"owner results "+f.owners.map(o=>o.name+(o.beat?"○":"●")).join(" ")); if(def.grade===1&&races<40)console.log("  G1",def.name,"→",f.pos,"着 total",g.pw.total,"hits",g.hits); if(f.pos===1)wins++; posCount[f.pos]=(posCount[f.pos]||0)+1;
   ok(f.board.length===8&&f.board.filter(b=>b.me).length===1,"board ok "+def.name+" → "+f.pos+"着 prize "+f.prize);
   const wp=MM.derby.W(c); ok(wp.done===1,"done flag");
   const adv=MM.derby.advance(c); if(adv.newYear){ years++; yearAwards=adv.awards; }
@@ -64,15 +66,21 @@ ok(years===2,"2 years passed");
 ok(yearAwards&&yearAwards.length>=1,"year awards: "+JSON.stringify((yearAwards||[]).map(a=>a.name+":"+a.text)));
 const wp=MM.derby.W(c); ok(wp.total.run===races&&wp.total.win===wins,"totals consistent");
 ok(c.mm.res.g>0,"coins earned: "+c.mm.res.g);
+const nm=MM.derby.nemesis(c); ok(nm&&nm.owner&&nm.l>=2,"nemesis after G1 losses: "+(nm&&nm.owner.name+" "+nm.w+"勝"+nm.l+"敗"));
 /* 引退・殿堂・血統 */
 const u0=Object.keys(c.mm.mons)[0]; ok(MM.derby.age(c,u0)===4,"age after 2 years = 4: "+MM.derby.age(c,u0));
 ok(MM.derby.canRetire(c,u0),"can retire");
 const h=MM.derby.retire(c,u0); ok(h&&wp.hall.length===1,"hall entry "+JSON.stringify(h));
 ok(!MM.derby.canRun(c,u0),"retired cannot run");
 const sub=h.sub; ok(MM.derby.legacy(c,sub)===Math.min(15,h.g1*3+h.win),"legacy bonus "+MM.derby.legacy(c,sub));
+/* 牧場の血統: 引退後に生まれた子には父がつく */
+c.mm.res.tama=1; const born=MM.hatch.hatch(c); const sire=MM.derby.sireOf(c,born.uid);
+ok(sire&&sire.name===h.name,"new hatch has sire: "+JSON.stringify(sire)+" (born "+born.name+")");
+ok(MM.derby.power(c,born.uid,null).sire===3,"sire bonus +3 in power");
+ok(!MM.derby.sireOf(c,Object.keys(c.mm.mons)[1]),"old mon has no sire");
 /* 正規化の往復 */
 const json=JSON.parse(JSON.stringify(c.mm));
-const n=MM.state.normalize(json); ok(n.wp&&n.wp.y===wp.y&&n.wp.w===wp.w&&Object.keys(n.wp.rec).length===Object.keys(wp.rec).length&&n.wp.hall.length===1,"normalize round-trip keeps wp");
+const n=MM.state.normalize(json); ok(n.wp&&n.wp.y===wp.y&&n.wp.w===wp.w&&Object.keys(n.wp.rec).length===Object.keys(wp.rec).length&&n.wp.hall.length===1&&Object.keys(n.wp.rv).length>0&&n.wp.rec[born.uid].sire.name===h.name,"normalize round-trip keeps wp (rv, sire)");
 ok(MM.state.normalize({}).wp===null||MM.state.normalize({}).wp.y===1,"normalize with no wp is safe");
 const n2=MM.derby.normalize({y:"x",w:999,rec:{a:{born:-5,fat:99}},hall:"bad"}); ok(n2.y===1&&n2.w===48&&n2.rec.a.born===1&&n2.rec.a.fat===20&&n2.hall.length===0,"normalize clamps garbage");
 /* 秘書 */

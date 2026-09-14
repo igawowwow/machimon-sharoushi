@@ -32,6 +32,8 @@
     var wp=MM.derby.W(c), rs=MM.derby.weekRaces(c), st=MM.derby.stable(c);
     var h='<div class="mm-wrap">'+UI.resBar(c)+head(c);
     h+='<div class="mm-coach">'+MM.px("m01",44,"mm-hop")+'<div class="mm-coach-text">'+esc(MM.derby.secretary(c))+'</div></div>';
+    var nm=MM.derby.nemesis(c);
+    if(nm)h+='<div class="mm-nemesis"><span class="mm-nemesis-icon">🔥</span><span><b>宿敵: '+esc(nm.owner.name)+'</b> <span class="mm-sub">('+esc(nm.owner.boss)+') 通算 '+nm.w+'勝'+nm.l+'敗</span><br><span class="mm-sub">「'+esc(nm.owner.taunt[0])+'」</span></span></div>';
     h+='<div class="mm-h">📅 今週のレース</div>';
     if(wp.done&&wp.last){
       var l=wp.last;
@@ -79,7 +81,7 @@
       +'<div class="mm-q" style="font-size:13px">'
       +row("スピード(進化とLv)",pw.spd,60)+row("知識("+esc(sp.sub>=0?(names()[sp.sub]||""):"全科目")+"の習熟)",pw.know,20)
       +'<div class="mm-row"><span>調子</span><span style="color:'+cd.color+';font-weight:900">'+cd.mark+' '+esc(cd.name)+' ('+(cd.mod>=0?'+':'')+cd.mod+')</span></div>'
-      +'<div class="mm-row"><span>血統ボーナス</span><span>+'+pw.legacy+'</span></div>'
+      +'<div class="mm-row"><span>血統ボーナス'+(r.sire?' (父: '+esc(r.sire.name)+')':'')+'</span><span>+'+pw.legacy+'</span></div>'
       +'<div class="mm-row"><span>総合力</span><b>'+pw.total+'</b></div>'
       +'<div class="mm-row"><span>成績</span><span>'+r.run+'戦'+r.win+'勝 (G1 '+r.g1+'勝) / 賞金 🪙'+fmt(r.prize)+'</span></div>'
       +'</div>';
@@ -125,6 +127,7 @@
     var c=UI.ctx();
     g=MM.derby.enter(c,raceId,uid);
     if(!g)return UI.go("derby");
+    g.taunt=MM.derby.taunt(c,g);
     MM.game.save();
     try{ if(MM.sfx)MM.sfx.roll(6); }catch(e){}
     UI.go("derby");
@@ -153,6 +156,8 @@
     var h='<div class="mm-wrap">'+UI.resBar(c)
       +'<div class="mm-h">'+gradeBadge(g.grade)+' '+esc(g.name)+' <span class="mm-sub">'+(g.i+1)+' / '+g.n+'問'+(g.i?' ・ 現在 '+MM.derby.rank(g)+'番手':'')+'</span></div>'
       +track(c,g,true)
+      +(g.i===0&&g.taunt?'<div class="mm-live mm-live-taunt">🗣 '+esc(g.taunt.owner.boss)+'('+esc(g.taunt.owner.name)+(g.taunt.nemesis?'・宿敵':'')+')「'+esc(g.taunt.text)+'」</div>':'')
+      +(g.i>0&&g.live?'<div class="mm-live">📣 '+esc(g.live.text)+' <span class="mm-sub">'+esc(g.live.gapText)+'</span></div>':'')
       +(last?'<div class="mm-last">🔥 最終直線！ この1問は1.5倍！</div>':'')
       +'<div class="mm-q">'+esc(q.q||q.question||"")+'</div>';
     if(q.choices&&q.choices.length&&q.format!=="true_false"){
@@ -179,6 +184,7 @@
     if(!q)return UI.go("derby");
     var ok=judge(q,v), ms=t0?Date.now()-t0:0;
     var r=MM.derby.step(c,g,ok,ms);
+    g.live=MM.derby.commentary(c,g,r);
     MM.game.save();
     try{ if(MM.sfx){ if(ok)MM.sfx.correct(c.mm.combo); else MM.sfx.wrong(); } }catch(e){}
     UI.play({haptic:ok?"light":"medium"});
@@ -188,6 +194,7 @@
     box.innerHTML='<div class="mm-wrap '+(ok?"mm-fx1":"")+'">'+UI.resBar(c)
       +'<div class="mm-h">'+line+' <span class="mm-sub">'+r.rank+'番手</span></div>'
       +track(c,g,false)
+      +'<div class="mm-live">📣 '+esc(g.live.text)+' <span class="mm-sub">'+esc(g.live.gapText)+'</span></div>'
       +'<div class="mm-reward"><span class="mm-pop">'+(ok?'+'+r.adv+'m':'+'+r.adv+'m…')+'</span>'+(r.gain.g?'<span class="mm-pop" style="animation-delay:.15s">🪙 +'+r.gain.g+'</span>':'')+(r.gain.ke?'<span class="mm-pop mm-pop-ke" style="animation-delay:.3s">✨ 知識 +'+r.gain.ke+'</span>':'')+'</div>'
       +'<div class="mm-q" style="font-size:13px;padding:10px">💡 '+esc(q.e||q.explanation||"")+'</div>'
       +'<button class="mm-cta" onclick="MM.ui.raceNext()">'+(r.over?'ゴール！ 結果を見る ▶':'つぎの問題へ ▶')+'</button></div>';
@@ -210,6 +217,12 @@
         +(r.gain.mat?'<span class="mm-pop" style="animation-delay:.3s">🧩 +'+r.gain.mat+'</span>':'')+(r.tix?'<span class="mm-pop mm-pop-ke" style="animation-delay:.4s">🎫 +'+r.tix+'</span>':'')+'</div>';
     }
     if(r.crown)h+='<div class="mm-bigclear">👑 三冠達成！！ 🎫+'+r.crown.tix+'</div>';
+    if(r.owners&&r.owners.length){
+      h+='<div class="mm-h">🗣 ライバル事務所</div>';
+      for(var oi=0;oi<r.owners.length;oi++){ var o=r.owners[oi];
+        h+='<div class="mm-owner'+(o.beat?' mm-owner-beat':'')+'"><span>'+(o.nemesis?'🔥宿敵 ':'')+'<b>'+esc(o.name)+'</b> に'+(o.beat?'勝った！':'負けた…')+' <span class="mm-sub">通算 '+o.w+'勝'+o.l+'敗</span></span><span class="mm-sub">'+esc(o.boss)+'「'+esc(o.text)+'」</span></div>'; }
+      if(r.nemesis&&!r.owners.some(function(x){ return x.nemesis; }))h+='<div class="mm-sub" style="text-align:center">🔥 '+esc(r.nemesis.owner.name)+' が宿敵になった！ 次に会ったら倒せ</div>';
+    }
     if(!won)h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>'+(r.pos<=3?'惜しかったモン！ 正解が'+(r.hits<r.n?'あと少し':'')+'あれば勝てたモン':'間違えた問題は街の事件でまた出るモン。復習して次は勝つモン！')+'</span></div>';
     h+='<button class="mm-cta" onclick="MM.ui.go(\'derby\')">厩舎へもどる ▶</button></div>';
     if(won)setTimeout(function(){ try{ if(MM.sfx)MM.sfx.big(); }catch(e){} if(UI.celebrate)UI.celebrate({icon:MM.px(c.mm.mons[gg.uid].sp,96),title:esc(r.name)+" 優勝！",sub:(r.grade===1?"G1制覇！ 🎫+1":"賞金 🪙"+fmt(r.prize)),sfx:"fanfare"}); },300);

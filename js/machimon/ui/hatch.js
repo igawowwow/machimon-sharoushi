@@ -52,6 +52,10 @@
     })();
   }
 
+  /* 牧場の血統: 殿堂入りの直仔なら父を表示(ダービーの力+3) */
+  function sire(c,uid){
+    try{ var s=MM.derby&&MM.derby.sireOf(c,uid); if(!s)return ""; return '<div class="mm-sire">🧬 父: '+MM.px(s.sp,20)+' '+UI.esc(s.name)+' の血を引く <span class="mm-sub">(ダービー +'+(MM.DATA.SIRE_BONUS||3)+')</span></div>'; }catch(e){ return ""; }
+  }
   function view(c,uid,rare){
     var m=c.mm.mons[uid];
     if(!m)return UI.screens.mons();
@@ -62,7 +66,8 @@
       +'<div class="mm-egg"><span class="mm-hop" style="display:inline-block">'+MM.px(m.sp,96)+'</span></div>'
       +'<div style="text-align:center"><b style="font-size:20px">'+esc(sp.name)+'</b>'
       +'<div class="mm-sub">'+MM.DATA.rarName[sp.rar]+' / '+esc(sp.type)+'属性 / '+esc(sp.nature)+'</div>'
-      +'<div class="mm-sub">とくい: '+esc(sp.sub>=0?(names[sp.sub]||""):"すべての科目")+'</div></div>'
+      +'<div class="mm-sub">とくい: '+esc(sp.sub>=0?(names[sp.sub]||""):"すべての科目")+'</div>'
+      +sire(c,uid)+'</div>'
       +'<div class="mm-q" style="font-size:13px">'+esc((sp.life&&sp.life.m)||"")+'</div>'
       +'<div style="display:flex;gap:8px">'
       +(c.mm.res.tama>0?'<button class="small-btn" style="flex:1;min-height:48px" onclick="MM.ui.go(\'hatch\',{})">もう1つ割る</button>':'')

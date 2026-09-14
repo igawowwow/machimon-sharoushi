@@ -3,6 +3,7 @@
    machimon/ui/gacha.js — ガチャ画面(1回/10連・演出・結果)
    ============================================================ */
 (function(){
+  function sireLine(c,uid){ try{ var s=uid&&MM.derby&&MM.derby.sireOf(c,uid); return s?'<span class="mm-sub">🧬 父: '+MM.ui.esc(s.name)+'</span>':''; }catch(e){ return ''; } }
   var G=(typeof window!=="undefined")?window:globalThis;
   var MM=G.MM=G.MM||{}; var UI=MM.ui;
   var RN=["N","R","SR","SSR","UR"], RC=["#8A8494","#5B8DFF","#8A6FD1","#FFC53C","#FF5A5A"];
@@ -47,7 +48,7 @@
         h+='<div class="mm-card mm-r'+r.rar+'" style="animation-delay:'+(i*.12)+'s">'
           +'<div class="mm-card-rar" style="background:'+RC[r.rar]+'">'+RN[r.rar]+'</div>'
           +MM.px(r.sp,n===1?120:64,(r.rar>=3?"mm-hop":""))+'<b>'+UI.esc(r.name)+'</b>'
-          +(r.dupe?'<span class="mm-sub">ダブり → 🧩+'+r.mat+'</span>':'<span class="mm-new">NEW!</span>')+'</div>';
+          +(r.dupe?'<span class="mm-sub">ダブり → 🧩+'+r.mat+'</span>':'<span class="mm-new">NEW!</span>'+sireLine(c,r.uid))+'</div>';
       });
       h+='</div><div style="display:grid;gap:8px;margin-top:12px">'
         +'<button class="mm-cta" onclick="MM.ui.go(\'gacha\')">もう一度 ▶</button>'

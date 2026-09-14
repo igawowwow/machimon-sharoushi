@@ -19,14 +19,16 @@
   /* ---------- セーブ(mm.wp) ---------- */
   function defaults(){
     return { y:1, w:1, rec:{}, hist:[], hall:[], awards:[], done:0, entry:"",
-             total:{run:0,win:0,g1:0,prize:0}, last:null };
+             total:{run:0,win:0,g1:0,prize:0}, last:null, rv:{} };
   }
   function normRec(r){
     r=obj(r)||{};
     var cur=obj(r.cur)||{};
     var crown=obj(r.crown)||{};
+    var sire=obj(r.sire);
     var out={ born:int(r.born,1,1,9999), run:int(r.run,0,0,99999), win:int(r.win,0,0,99999), g1:int(r.g1,0,0,9999),
               prize:int(r.prize,0,0,1e12), fat:int(r.fat,0,0,20), ret:r.ret?1:0,
+              sire:sire?{name:String(sire.name||"").slice(0,20),sp:String(sire.sp||"").slice(0,8)}:null,
               cur:{ y:int(cur.y,1,1,9999), run:int(cur.run,0,0,999), win:int(cur.win,0,0,999), g1:int(cur.g1,0,0,99), prize:int(cur.prize,0,0,1e12) },
               crown:{} };
     for(var k in crown){ if(crown[k])out.crown[String(k).slice(0,6)]=1; }
@@ -46,6 +48,8 @@
     var t=obj(s.total)||{};
     out.total={ run:int(t.run,0,0,1e7), win:int(t.win,0,0,1e7), g1:int(t.g1,0,0,1e6), prize:int(t.prize,0,0,1e12) };
     out.last=obj(s.last)||null;
+    out.rv={}; var rv=obj(s.rv)||{};
+    for(var o in rv){ var x=obj(rv[o])||{}; out.rv[String(o).slice(0,12)]={w:int(x.w,0,0,99999),l:int(x.l,0,0,99999)}; }
     return out;
   }
   /* 未正規化の mm(旧セーブ)に出会ったらその場で補完する */
@@ -101,10 +105,20 @@
   /* ---------- 厩舎(マチモン=競走馬) ---------- */
   function rec(c,uid){
     var wp=W(c), r=wp.rec[uid];
-    if(!r){ r=wp.rec[uid]=normRec({born:wp.y,cur:{y:wp.y}}); }
+    if(!r){ r=wp.rec[uid]=normRec({born:wp.y,cur:{y:wp.y},sire:sireFor(c,uid)}); }
     if(r.cur.y!==wp.y){ r.cur={y:wp.y,run:0,win:0,g1:0,prize:0}; }
     return r;
   }
+  /* 牧場の血統: 生まれた時点で、同じ科目(または街ライン)の殿堂入りがいれば「父」になる */
+  function sireFor(c,uid){
+    var m=c.mm.mons[uid]; if(!m)return null;
+    var sp=D().speciesById[m.sp]||{}; var sub=(typeof sp.sub==="number")?sp.sub:-1;
+    var hall=W(c).hall, best=null;
+    for(var i=0;i<hall.length;i++){ var h=hall[i]; if(h.uid===uid)continue; if(h.sub!==sub&&h.sub!==-1&&sub!==-1)continue;
+      var v=(h.g1||0)*3+(h.win||0); if(!best||v>best.v)best={v:v,name:h.name,sp:h.sp}; }
+    return best?{name:best.name,sp:best.sp}:null;
+  }
+  function sireOf(c,uid){ return rec(c,uid).sire||null; }
   function age(c,uid){ var r=rec(c,uid); return W(c).y-r.born+2; }   /* 2歳デビュー */
   function condOf(fat){ return fat<=0?0:(fat<=2?1:(fat<=4?2:3)); }
   function cond(c,uid){ var r=rec(c,uid); return D().cond[condOf(r.fat)]; }
@@ -143,8 +157,9 @@
     var lin=lineage(c)[sp.sub]?5:0;
     /* 適性: 自分の科目のレースなら +6、街ライン(全科目)は常に+3 */
     var fit=(sp.sub===-1)?3:(def&&def.subs.indexOf(sp.sub)>=0?6:0);
-    var total=Math.max(0,spd+know+cd.mod+lg+lin+fit);
-    return { spd:spd, know:know, cond:cd, legacy:lg+lin, fit:fit, total:total, subs:subs };
+    var sire=rec(c,uid).sire?(D().SIRE_BONUS||3):0;      /* 殿堂入りの直仔 */
+    var total=Math.max(0,spd+know+cd.mod+lg+lin+fit+sire);
+    return { spd:spd, know:know, cond:cd, legacy:lg+lin+sire, sire:sire, fit:fit, total:total, subs:subs };
   }
   function stable(c){
     var out=[];
@@ -168,11 +183,45 @@
     var names=D().rivalNames.slice(), out=[], base=rivalPower(c,def), n=(D().RUNNERS||8)-1;
     for(var i=0;i<n;i++){
       var idx=Math.floor(rnd()*names.length); var nm=names.splice(idx,1)[0]||("ライバル"+(i+1));
-      out.push({ name:nm, pw:Math.round(base*(0.72+0.28*(i/(n-1)))), pos:0 });
+      var oi=D().rivalNames.indexOf(nm); var own=D().owners[(oi<0?i:oi)%D().owners.length];
+      out.push({ name:nm, own:own?own.id:"", pw:Math.round(base*(0.72+0.28*(i/(n-1)))), pos:0 });
     }
     out.sort(function(){ return rnd()-0.5; });
     return out;
   }
+  /* ---------- ライバル事務所との因縁 ---------- */
+  function ownersIn(g){ var seen={},out=[]; for(var i=0;i<g.rivals.length;i++){ var o=g.rivals[i].own; if(o&&!seen[o]){ seen[o]=1; out.push(o); } } return out; }
+  function rvRec(c,id){ var rv=W(c).rv; return rv[id]||(rv[id]={w:0,l:0}); }
+  /* 宿敵: いちばん多く負かされた事務所(NEMESIS_MIN回以上) */
+  function nemesis(c){
+    var rv=W(c).rv, best=null;
+    for(var id in rv){ var x=rv[id]; if(x.l>=(D().NEMESIS_MIN||2)&&(!best||(x.l-x.w)>(best.l-best.w)))best={id:id,w:x.w,l:x.l}; }
+    if(!best)return null;
+    var o=D().ownerById[best.id]; return o?{owner:o,w:best.w,l:best.l}:null;
+  }
+  function pick(arr,rand){ return arr[Math.floor((rand||Math.random)()*arr.length)]||""; }
+  /* レース前の挑発(宿敵がいればその事務所、いなければ出走馬主から1人) */
+  function taunt(c,g){
+    var ids=ownersIn(g), nm=nemesis(c), id=(nm&&ids.indexOf(nm.owner.id)>=0)?nm.owner.id:ids[0];
+    var o=D().ownerById[id]; if(!o)return null;
+    return { owner:o, nemesis:!!(nm&&nm.owner.id===id), text:pick(o.taunt,c.rand) };
+  }
+  /* 実況: 1問ごとの状況を1行で */
+  function commentary(c,g,r){
+    var me=spName(c,g.uid), lead=null, second=null;
+    for(var i=0;i<g.rivals.length;i++){ var rv=g.rivals[i]; if(!lead||rv.pos>lead.pos){ second=lead; lead=rv; } else if(!second||rv.pos>second.pos)second=rv; }
+    var prev=g.log.length>=2?g.log[g.log.length-2].rank:null, rk=r.rank, t;
+    if(g.i===1)t=r.ok?pick([me+" 好スタート！ 先頭集団に取りついた",me+" がスッと前へ！ いい出だし"],c.rand):pick([me+" 出遅れた！ 後方からの競馬",me+" ゲートでつまずいた…"],c.rand);
+    else if(r.last)t=r.ok?(rk===1?"最後の直線！ "+me+" が突き放してゴール！":"最後の直線！ "+me+" が猛然と追い込む！"):"ゴール前で "+me+" の脚が止まった…";
+    else if(rk===1&&prev!==1)t=me+" が先頭に立った！ 後続を引き離しにかかる";
+    else if(rk===1)t=pick(["先頭は "+me+"！ 手応え十分",me+" が逃げる逃げる！"],c.rand);
+    else if(prev!==null&&rk<prev)t=me+" が"+rk+"番手に上がった！ "+(lead?lead.name+" を追う":"");
+    else if(prev!==null&&rk>prev)t=(lead?lead.name:"ライバル")+" に交わされた… "+me+" は"+rk+"番手";
+    else t=r.ok?me+" 順調に"+rk+"番手をキープ":me+" 伸びを欠く… "+rk+"番手";
+    var gap=(rk===1)?(second?Math.max(0,g.me-second.pos):0):(lead?Math.max(0,lead.pos-g.me):0);
+    return { text:t, rank:rk, gap:gap, leader:rk===1?me:(lead?lead.name:""), gapText:(rk===1?"2番手と "+gap+"m 差":"先頭まで あと "+gap+"m") };
+  }
+
   /* 1着圏の目安: 正解が何問あればトップのライバルに届くか */
   function needCorrect(c,uid,def){
     var p=power(c,uid,def); if(!p)return def.n;
@@ -243,10 +292,18 @@
     var board=[{name:spName(c,g.uid),pos:g.me,me:true,uid:g.uid}];
     for(var i=0;i<g.rivals.length;i++)board.push({name:g.rivals[i].name,pos:g.rivals[i].pos,me:false});
     board.sort(function(a,b){ return b.pos-a.pos; });
+    /* 事務所ごとの勝ち負け(その事務所のいちばん速い馬と自分の着順で比べる) */
+    var ownerRes=[], ids=ownersIn(g), nmBefore=nemesis(c);
+    for(var oi=0;oi<ids.length;oi++){ var oid=ids[oi], bestPos=0;
+      for(var ri=0;ri<g.rivals.length;ri++){ if(g.rivals[ri].own===oid&&g.rivals[ri].pos>bestPos)bestPos=g.rivals[ri].pos; }
+      var beat=g.me>bestPos, rr=rvRec(c,oid); if(beat)rr.w++; else rr.l++;
+      var od=D().ownerById[oid]; if(!od)continue;
+      ownerRes.push({ id:oid, name:od.name, boss:od.boss, beat:beat, w:rr.w, l:rr.l, nemesis:!!(nmBefore&&nmBefore.owner.id===oid), text:pick(beat?od.lose:od.win,c.rand) });
+    }
     var entry={ y:wp.y, w:wp.w, race:def.name, grade:g.grade, uid:g.uid, sp:c.mm.mons[g.uid].sp, pos:pos, prize:prize, hits:g.hits, n:g.n };
     wp.hist.push(entry); while(wp.hist.length>40)wp.hist.shift();
     wp.last=entry; wp.done=1; wp.entry="";
-    return { pos:pos, prize:prize, gain:gain, tix:tix, crown:crown, board:board, hits:g.hits, n:g.n, first:(pos===1&&r.win===1), grade:g.grade, name:def.name };
+    return { pos:pos, prize:prize, gain:gain, tix:tix, crown:crown, board:board, hits:g.hits, n:g.n, first:(pos===1&&r.win===1), grade:g.grade, name:def.name, owners:ownerRes, nemesis:nemesis(c) };
   }
   function spName(c,uid){ var m=c.mm.mons[uid]; return m?((D().speciesById[m.sp]||{}).name||"?"):"?"; }
 
@@ -299,7 +356,8 @@
     if(!st.length)return "まだ出走できるマチモンがいないモン。街で事件を解いてタマゴを割ろう！";
     var top=st[0];
     if(wp.done){ var l=wp.last; return l?(l.race+"は "+l.pos+"着だったモン。"+(l.pos===1?"おめでとうモン！":"つぎは勝つモン！")+" 休養して次の週へ進もう"):"今週は出走済みモン。次の週へ進もう！"; }
-    if(g1)return "今週は "+g1.name+"(G1)モン！ "+top.sp.name+" の調子は "+top.cond.mark+" だモン";
+    var nm=nemesis(c);
+    if(g1)return "今週は "+g1.name+"(G1)モン！ "+top.sp.name+" の調子は "+top.cond.mark+" だモン"+(nm?"。宿敵 "+nm.owner.name+" も来るモン…":"");
     if(g2)return "今週は "+g2.name+"(G2)があるモン。"+(top.cond.mod<0?"調子が落ちてるから休養もありモン":"いい調子モン！");
     if(top.cond.mod<0)return top.sp.name+" は少し疲れてるモン。休養すると調子が戻るモン";
     return "今週はG3モン。勝って賞金を貯めよう！ "+top.sp.name+" の調子は "+top.cond.mark;
@@ -309,5 +367,6 @@
              rec:rec, age:age, cond:cond, canRun:canRun, legacy:legacy, lineage:lineage, power:power, stable:stable,
              rivals:rivals, rivalPower:rivalPower, needCorrect:needCorrect, timeBonus:timeBonus,
              enter:enter, step:step, rank:rank, finish:finish, advance:advance, rest:rest, yearEnd:yearEnd,
-             canRetire:canRetire, retire:retire, secretary:secretary, AGE_RETIRE:AGE_RETIRE, AGE_MAX:AGE_MAX };
+             canRetire:canRetire, retire:retire, secretary:secretary, AGE_RETIRE:AGE_RETIRE, AGE_MAX:AGE_MAX,
+             sireFor:sireFor, sireOf:sireOf, ownersIn:ownersIn, nemesis:nemesis, taunt:taunt, commentary:commentary };
 })();

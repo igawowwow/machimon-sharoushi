@@ -356,3 +356,12 @@
 .mm-award{ display:flex; gap:10px; align-items:center; border:2px solid #B58900; border-radius:14px; background:linear-gradient(135deg,#FFF9E0,#fff); padding:10px; margin:6px 0; font-size:13px; }
 .mm-award-icon{ font-size:32px; }
 @media (prefers-reduced-motion: reduce){ .mm-runner{ transition:none; } .mm-last{ animation:none; } }
+
+/* 実況・因縁・血統 */
+.mm-live{ border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; padding:6px 10px; font-size:13px; font-weight:900; margin:6px 0; animation:mm-spark .35s ease-out; }
+.mm-live-taunt{ background:linear-gradient(135deg,#FFE1EB,#fff); font-weight:700; }
+.mm-nemesis{ display:flex; gap:8px; align-items:center; border:2px solid #D8534F; border-radius:14px; background:linear-gradient(135deg,#FFE1EB,#fff); padding:8px 10px; margin:6px 0; font-size:13px; }
+.mm-nemesis-icon{ font-size:26px; }
+.mm-owner{ display:flex; flex-direction:column; gap:2px; border:2px solid #8A8494; border-radius:12px; background:#F3F0E8; padding:6px 10px; margin:4px 0; font-size:13px; }
+.mm-owner-beat{ border-color:#3E9B4F; background:linear-gradient(135deg,#DFF5EC,#fff); }
+.mm-sire{ margin-top:6px; font-size:13px; font-weight:900; color:#8A6FD1; }
