@@ -1,0 +1,23 @@
+{
+  "name": "machimon-sharoushi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MACHIMON 社労士。Web版は完全静的(ビルド不要)。iOSネイティブ配布時のみ Capacitor を開発依存として使う。",
+  "scripts": {
+    "build:www": "node tools/build-www.js",
+    "build:appicon": "node tools/make-appicon.js",
+    "ios:sync": "npm run build:www && npm run build:appicon && npx cap sync ios",
+    "ios:open": "npm run ios:sync && npx cap open ios",
+    "ios:release": "bash tools/ios-release.sh",
+    "ios:status": "ASC_BUNDLE_ID=com.ville.machimon node tools/asc-status.js",
+    "test": "node tools/test-derby.js"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.4.2",
+    "@capacitor/preferences": "^8.0.1"
+  }
+}

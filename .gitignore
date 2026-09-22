@@ -1,3 +1,15 @@
 .vercel
 .DS_Store
 .env*
+node_modules/
+
+# Capacitor(iOSネイティブ)の生成物。`npm run ios:sync` で作り直せる。
+# ios/ のネイティブプロジェクト本体は署名設定を保つためコミットする。
+www/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/.sourcemaps
+DerivedData/
+*.xcuserstate
+xcuserdata/
+build/
