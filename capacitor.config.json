@@ -1,0 +1,12 @@
+{
+  "appId": "com.ville.machimon",
+  "appName": "マチモン社労士",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#FFF6E5"
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}

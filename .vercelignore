@@ -1,0 +1,11 @@
+# Web配信に不要(iOSネイティブ用の資材)
+ios
+native-assets
+node_modules
+www
+build
+tools
+docs
+package.json
+package-lock.json
+capacitor.config.json
