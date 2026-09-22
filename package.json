@@ -10,7 +10,7 @@
     "ios:open": "npm run ios:sync && npx cap open ios",
     "ios:release": "bash tools/ios-release.sh",
     "ios:status": "ASC_BUNDLE_ID=com.ville.machimon node tools/asc-status.js",
-    "test": "node tools/test-derby.js"
+    "test": "node tools/test-garden.js"
   },
   "license": "UNLICENSED",
   "devDependencies": {
