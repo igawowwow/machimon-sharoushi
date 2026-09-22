@@ -306,7 +306,8 @@
     var h='<div class="mm-wrap"><div class="mm-h" style="justify-content:center">'+(L.from==="breed"?'🧬 配合の結果':(L.from==="hatch"?'🐣 タマゴが割れた！':'🥚 ガチャの結果'))+'</div>'
       +'<div class="mm-gcapwrap '+cls+'"><div class="mm-gcap">'+(best>=3?'🌈':best>=2?'✨':'🥚')+'</div><div class="mm-sub">'+(best>=3?'確定演出！！':best>=2?'キラッ…！':'')+'</div></div><div class="mm-greveal">';
     L.seeds.forEach(function(s,i){ var ri=GA().rarInfo(s);
-      h+='<div class="mm-gres" style="animation-delay:'+(0.9+i*0.18)+'s;border-color:'+ri.color+'">'+eggPx(s,28)
+      var rk=GA().rarity(s);
+      h+='<div class="mm-gres mm-gres-r'+rk+'" style="animation-delay:'+(0.9+i*0.18)+'s;border-color:'+ri.color+'">'+'<span class="mm-gi'+(s.sh?' mm-gi-shiny':'')+'">'+MM.px(GD().families[s.f].sp[rk>=4?1:0],44)+'</span><span class="mm-sub" style="font-size:10px">'+esc(GD().families[s.f].name)+'</span>'
         +'<span class="mm-grar" style="background:'+ri.color+'">'+ri.name+'</span><span class="mm-gres-n">'+esc(s.n)+'</span>'+(s.tr?'<span class="mm-gres-t">'+GD().traitById[s.tr].icon+esc(GD().traitById[s.tr].name)+'</span>':'')+(s.sh?'<span class="mm-gres-t">✨色違い</span>':'')+(s.mut?'<span class="mm-gres-t">🧬突然変異</span>':'')+'</div>'; });
     h+='</div>';
     if(L.from==="hatch")h+='<div class="mm-gbloom">'+(L.placed>=0?'🏠 おうちに入ったモン！ クイズに正解すると育つモン':'🥚 おうちが満員なのでタマゴ袋に入れたモン')+'</div>';

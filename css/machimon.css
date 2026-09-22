@@ -490,3 +490,7 @@
 .mm-gpbar b{ position:absolute; top:-3px; width:2px; height:16px; background:#D8534F; }
 .mm-gpsub{ display:grid; grid-template-columns:92px 1fr 36px; gap:6px; align-items:center; font-size:11px; }
 .mm-gpsub i{ font-style:normal; text-align:right; font-weight:900; }
+.mm-gres-r2{ background:linear-gradient(160deg,#E3F0FF,#fff); }
+.mm-gres-r3{ background:linear-gradient(160deg,#F1E3FF,#FFE1EB); box-shadow:0 0 12px rgba(179,92,255,.5); }
+.mm-gres-r4{ background:linear-gradient(160deg,#FFF3C4,#FFE1A8); box-shadow:0 0 16px rgba(242,165,22,.7); }
+.mm-gres-r5{ background:linear-gradient(160deg,#FFE1EB,#E3F0FF,#FFF3C4); box-shadow:0 0 20px rgba(255,77,109,.8); }
