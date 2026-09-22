@@ -16,7 +16,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "www");
 const DIRS = ["css", "js", "assets"];
-const FILES = ["index.html", "manifest.json", "privacy.html", "icon-192.png", "icon-512.png", "icon-180.png"];
+const FILES = ["index.html", "manifest.json", "privacy.html", "support.html", "icon-192.png", "icon-512.png", "icon-180.png"];
 
 function copyDir(src, dst) {
   fs.mkdirSync(dst, { recursive: true });
