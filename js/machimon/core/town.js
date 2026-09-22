@@ -141,6 +141,7 @@
       if(b)p+=b.prod*s.lv;
       if(s.mon)p+=monProd(c,s.mon);
     }
+    try{ if(MM.garden&&MM.garden.prod)p+=MM.garden.prod(c); }catch(e){}
     return Math.round(p*10)/10;
   }
   /* 事件発生率ボーナス(科目別) */

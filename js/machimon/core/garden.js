@@ -1,9 +1,9 @@
 "use strict";
 /* ============================================================
-   machimon/core/garden.js — タネ配合 × 植物街 × 品評会(ウイニングポスト式の配合シミュレーション)
+   machimon/core/garden.js — タマゴ配合 × マチモン街 × 大会(ウイニングポスト式の配合シミュレーション)
    ★時間は「正解10問 = 1週」でしか進まない。ボタンで週を送る仕組みは無い
-     = 解けば解くほど季節が巡り、植物が育ち、品評会が開かれ、ライバルの庭も世代交代する。
-   ★コインはクイズ(と街の放置生産)からしか来ない。咲いた植物の「実り」は正解のコインを増やすだけ。
+     = 解けば解くほど季節が巡り、マチモンが育ち、大会が開かれ、ライバルの街も世代交代する。
+   ★コインはクイズ(と街の放置生産)からしか来ない。おとなになったマチモンの「稼ぎ」は正解のコインを増やすだけ。
    ★配合理論(爆発力): ニックス / 隠しニックス / 異系の活力 / 同系の固定 / インブリード /
      季節の相性 / 系統の勢い / 得意の重ね。子の素質 = 0.94×両親平均 + 3 + 爆発力×0.6 + ばらつき。
      平均へ戻る力があるので、理論を使わないと代を重ねても強くならない(=配合を考える意味)。
@@ -30,7 +30,7 @@
              mb:[], rp:[], lines:[], hn:[], hnf:{}, pity:0, pulls:0, breeds:0, water:0,
              done:{}, used:{}, rec:{}, hall:[], awards:[], titles:{}, rv:{}, yr:{pl:{},own:{},mbp:{},lp:{}}, lastYr:{lp:{}},
              total:{run:0,win:0,g1:0,gr:0,pz:0,cats:{}}, ev:[], rank:0, famSeen:{}, pend:[],
-             ent:{w:0,n:0}, medal:0, statue:0, free:"", council:[], trSeen:{}, drops:0, shiny:0 };
+             ent:{w:0,n:0}, daily:{d:"",p:{},got:{},all:0}, streak:{d:"",n:0,claimed:""}, shF:{}, medal:0, statue:0, free:"", council:[], trSeen:{}, drops:0, shiny:0 };
   }
   function normPlant(p){
     p=obj(p); if(!p)return null;
@@ -80,6 +80,8 @@
     var t=obj(s.total)||{}; o.total={run:int(t.run,0,0,1e9),win:int(t.win,0,0,1e9),g1:int(t.g1,0,0,1e9),gr:int(t.gr,0,0,1e9),pz:int(t.pz,0,0,1e13),cats:obj(t.cats)||{}};
     o.ev=Array.isArray(s.ev)?s.ev.slice(-30):[];
     o.pend=Array.isArray(s.pend)?s.pend.filter(obj).slice(-6):[];
+    var dl=obj(s.daily)||{}; o.daily={d:typeof dl.d==="string"?dl.d:"",p:obj(dl.p)||{},got:obj(dl.got)||{},all:dl.all?1:0};
+    var sk=obj(s.streak)||{}; o.streak={d:typeof sk.d==="string"?sk.d:"",n:int(sk.n,0,0,1e6),claimed:typeof sk.claimed==="string"?sk.claimed:""}; o.shF=obj(s.shF)||{};
     var en=obj(s.ent)||{}; o.ent={w:int(en.w,0,0,1e7),n:int(en.n,0,0,99)};
     o.medal=int(s.medal,0,0,1e6); o.statue=int(s.statue,0,0,GD().STATUE_MAX); o.free=typeof s.free==="string"?s.free.slice(0,12):"";
     o.council=Array.isArray(s.council)?s.council.slice(-40):[]; o.trSeen=obj(s.trSeen)||{}; o.drops=int(s.drops,0,0,1e9); o.shiny=int(s.shiny,0,0,1e9);
@@ -97,7 +99,7 @@
   function plotCount(g){ var F=GD().FACILITY.plot; return F.base+F.per*(g.fac.plot||0); }
   function seedCap(g){ var F=GD().FACILITY.seedbox; return F.base+F.per*(g.fac.seedbox||0); }
 
-  /* ---------- 初期化(名木・ライバルの庭・隠しニックス・最初のタネ) ---------- */
+  /* ---------- 初期化(名マチモン・ライバルの街・隠しニックス・最初のタマゴ) ---------- */
   function init(c,g){
     var r=c.rand; g.on=1;
     g.mb=GD().meiboku.map(function(x,i){ return mbFrom(x,i,r); });
@@ -105,13 +107,13 @@
     var L=GD().lines.map(function(l){ return l.id; }), hn={};
     for(var t=0;t<200&&Object.keys(hn).length<GD().HIDDEN_NICKS;t++){ var a=pick(L,r),b=pick(L,r); if(a!==b)hn[pairKey(a,b)]=1; }
     g.hn=Object.keys(hn);
-    /* ライバルの庭: 各園芸家に5株(成長段階はばらばら) */
+    /* ライバルの街: 各ライバルに5株(成長段階はばらばら) */
     GD().rivals.forEach(function(rv){ for(var k=0;k<5;k++)g.rp.push(rivalPlant(c,g,rv,-Math.floor(r()*20))); });
-    /* 最初のタネ3つ(N〜R)。最初の1つは成長の速いクローバー=すぐ咲く体験 */
+    /* 最初のタマゴ3つ(N〜R)。最初の1つは成長の速いクローバー=すぐおとなになる体験 */
     g.seeds.push(genSeed(c,g,{rar:1,fam:3,spec:"s"}));
     g.seeds.push(genSeed(c,g,{rar:0,fam:0}));
     g.seeds.push(genSeed(c,g,{rar:0,fam:6}));
-    ev(g,"🌱","ガーデンがひらいた！ タネを植えて、クイズに正解して育てよう");
+    ev(g,"🐣","マチモン育成がはじまった！ タマゴをかえして、クイズに正解して育てよう");
   }
   function mbFrom(x,i,r){
     var line=lineByIdStatic(x[1]), q=x[2], p={ i:"M"+i, n:x[0], f:line.f, l:line.id, t:Math.floor(r()*3), se:Math.floor(r()*4), c:Math.floor(r()*6), a:[], r:{w:0,g1:0,gr:0,pz:0,run:0} };
@@ -141,7 +143,7 @@
   function genName(r){ return pick(GD().NAME_A,r)+pick(GD().NAME_B,r); }
   function grade(v){ return v>=95?"SS":v>=85?"S":v>=75?"A":v>=62?"B":v>=48?"C":v>=35?"D":"E"; }
 
-  /* ---------- タネを作る ---------- */
+  /* ---------- タマゴを作る ---------- */
   /* o: {rar|band, fam, line, spec, parents:[A,B]} */
   function genSeed(c,g,o){
     var r=c.rand, GA=GD().GACHA;
@@ -158,7 +160,7 @@
     for(var guard=0;guard<30&&sum(p)!==target;guard++){
       var d=target-sum(p), k=pick(KEYS,r); p[k]=clamp(p[k]+(d>0?1:-1)*Math.min(Math.abs(d),3),1,100);
     }
-    /* 血統: その系統の名木を父に、別の名木を母に(=ガチャのタネにも祖先がいる→インブリードが組める) */
+    /* 血統: その系統の名マチモンを父に、別の名マチモンを母に(=ガチャのタマゴにも祖先がいる→インブリードが組める) */
     var sires=g.mb.filter(function(m){ return m.l===line.id; }); if(!sires.length)sires=g.mb.filter(function(m){ return m.f===fam; });
     var A=sires.length?pick(sires,r):null, B=pick(g.mb,r);
     if(A&&B&&A.i!==B.i)p.a=[A.i,B.i,A.a[0]||"",A.a[1]||"",B.a[0]||"",B.a[1]||""];
@@ -169,7 +171,7 @@
   }
 
   function rarityOfSum(s){ var R=GD().RARITY,out=0; for(var i=0;i<R.length;i++)if(s>=R[i].min)out=i; return out; }
-  /* 特性の抽選: レアな特性ほど出にくい。高レアのタネほどレア特性が出やすい */
+  /* 特性の抽選: レアな特性ほど出にくい。高レアのタマゴほどレア特性が出やすい */
   function rollTrait(r,ri,featured){
     if(featured&&r()<0.5)return featured;
     var T=GD().TRAITS, w=T.map(function(t){ return Math.pow(0.45,t.rar)*(1+0.5*ri*(t.rar>=2?1:0)); }), tot=0;
@@ -187,14 +189,15 @@
   function banner(id){ var B=GD().BANNERS; for(var i=0;i<B.length;i++)if(B[i].id===id)return B[i]; return B[0]; }
   function costOf(bn,n){ return n>=10?bn.cost10:bn.cost1; }
   function wallet(c,g,bn){ return bn.currency==="medal"?g.medal:(c.mm.res.g||0); }
-  function canPull(c,n,bid){ var g=W(c), bn=banner(bid||"normal"); return wallet(c,g,bn)>=costOf(bn,n)&&g.seeds.length+(bn.id==="council"&&n>=10?1:n)<=seedCap(g); }
+  function canPull(c,n,bid){ var g=W(c), bn=banner(bid||"normal"); return (wallet(c,g,bn)>=costOf(bn,n)||(bn.id==="normal"&&(c.mm.tix||0)>=n))&&g.seeds.length+(bn.id==="council"&&n>=10?1:n)<=seedCap(g); }
   function freeReady(c){ var g=W(c); return g.free!==c.dstr; }
   function pull(c,n,bid,free){
     var g=W(c), bn=banner(bid||"normal"), cost=costOf(bn,n), cnt=(bn.id==="council"&&n>=10)?1:n;
     if(free){ if(!freeReady(c))return {err:"無料ガチャは1日1回"}; bn=banner("normal"); n=1; cnt=1; cost=0; }
-    if(g.seeds.length+cnt>seedCap(g))return {err:"タネ倉庫がいっぱい("+seedCap(g)+"個)。植えるか手放してね"};
+    if(g.seeds.length+cnt>seedCap(g))return {err:"タマゴ倉庫がいっぱい("+seedCap(g)+"個)。かえすか手放してね"};
     if(!free){
       if(bn.currency==="medal"){ if(g.medal<cost)return {err:"メダルが足りない(🏅"+cost+")。街評議会で入賞しよう"}; g.medal-=cost; }
+      else if(bn.id==="normal"&&(c.mm.tix||0)>=n){ c.mm.tix-=n; cost=0; bn={currency:"tix",id:"normal"}; }
       else if(!MM.economy.spend(c,"g",cost))return {err:"コインが足りない(🪙"+cost+")。クイズに正解して集めよう"};
     } else g.free=c.dstr;
     var out=[], got=false, pf=pickupFam(g);
@@ -210,7 +213,7 @@
       if(bn.id!=="council")g.pity=(rar>=2)?0:g.pity+1; if(rar>=2)got=true;
       g.seeds.push(sd); out.push(sd); noteSeed(g,sd);
     }
-    g.pulls+=cnt;
+    g.pulls+=cnt; dailyAdd(c,g,"g",1);
     titleCheck(c,g);
     return {seeds:out,cost:cost,cur:bn.currency};
   }
@@ -220,25 +223,36 @@
     g.seeds.splice(idx,1); var mat=1+rarity(s); c.mm.res.mat+=mat; return {mat:mat};
   }
 
-  /* ---------- 植える・育つ ---------- */
-  function needOf(p){ return Math.round(90*(1.7-(p.s||50)/100)*(has(p,"sprout")?0.6:1)); }        /* 咲くまでの成長ポイント(成長100で63、成長1で152) */
+  /* ---------- かえす・育つ ---------- */
+  function needOf(p){ return Math.round(90*(1.7-(p.s||50)/100)*(has(p,"sprout")?0.6:1)); }        /* おとなになるまでの成長ポイント(成長100で63、成長1で152) */
   function stage(p){
     if(!p)return -1; if(p.dead)return 6;
     if(p.bw!=null)return 5;
     var f=(p.g||0)/needOf(p); return f<0.1?0:f<0.4?1:f<0.7?2:f<1?3:4;
   }
-  var STAGE_NAME=["タネ","芽","若葉","つぼみ","開花","満開","枯れ"];
+  /* 図鑑: 族の3つの姿を記録(こども=かえした時 / おとな=おとなになった時 / 最終形=全盛期のSSR以上・伝説) */
+  function markDex(c,g,p){
+    try{ var fam=GD().families[p.f], st=stage(p), dex=c.mm.dex||(c.mm.dex={});
+      if(st>=1||p.g!=null)dex[fam.sp[0]]=1;
+      if(st>=4)dex[fam.sp[1]]=1;
+      if(st>=4&&(rarity(p)>=3||p.mut)&&statusText(g,p)==="全盛期")dex[fam.sp[2]]=1;
+      if(rarity(p)>=5)dex[fam.sp[2]]=1;
+      if(p.sh)g.shF[p.f]=1;
+    }catch(e){}
+  }
+  var STAGE_NAME=["タマゴ","ヒナ","こども","わかもの","おとな","全盛期","寿命"];
   function plant(c,seedIdx,plotIdx){
     var g=W(c), s=g.seeds[seedIdx]; if(!s||plotIdx<0||plotIdx>=g.plots.length||g.plots[plotIdx])return null;
     g.seeds.splice(seedIdx,1);
     s.g=0; delete s.bw; delete s.dead; s.cw=aw(g);
     g.plots[plotIdx]=s;
+    markDex(c,g,s); daily(c,g);
     titleCheck(c,g);
     return s;
   }
   function lifeOf(g,p){ var T=GD().TYPES[p.t]; return T.ramp+T.peak+8+Math.round((p.j||50)/12)+(g.fac.green||0)*3+(has(p,"phoenix")?12:0); }
   function age(g,p){ return (p.bw!=null)?Math.max(0,aw(g)-p.bw):0; }
-  /* 開花後の調子(0.55..top)。遅咲きは伸びてから、早咲きはすぐピーク。寿命の終盤で衰える */
+  /* おとな後の調子(0.55..top)。遅育きは伸びてから、早育きはすぐピーク。寿命の終盤で衰える */
   function phase(g,p){
     if(!p||p.dead)return 0.4;
     if(p.bw==null)return 0.35+0.35*Math.min(1,(p.g||0)/needOf(p));
@@ -250,9 +264,9 @@
   function cur(g,p,k){ var m=phase(g,p); if(has(p,"star"))m*=1.06; if(has(p,"cosmos"))m*=1.10; if(k==="o"&&has(p,"giant"))m*=1.15; return Math.round((p[k]||0)*m); }
   function statusText(g,p){
     var st=stage(p); if(st<4)return STAGE_NAME[st]+" "+Math.min(99,Math.floor((p.g||0)/needOf(p)*100))+"%";
-    if(st===6)return "枯れた";
+    if(st===6)return "寿命をむかえた";
     var T=GD().TYPES[p.t], a=age(g,p);
-    if(a<T.ramp)return "咲きはじめ";
+    if(a<T.ramp)return "おとなになりたて";
     if(a<T.ramp+T.peak)return "全盛期";
     return "衰え(あと"+Math.max(0,lifeOf(g,p)-a)+"週)";
   }
@@ -263,23 +277,24 @@
     var g=W(c), ok=!!rw.ok, sub=-1;
     try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&typeof q.s==="number")sub=q.s; }catch(e){}
     var out={grow:0,bloom:[],yield:0,week:null};
-    /* 実り: 咲いている植物がいると正解のコインが増える */
+    /* 稼ぎ: おとなのマチモンがいると正解のコインが増える */
     if(ok&&gain&&gain.g>0){ var base0=gain.g, yb=yieldBonus(g); if(yb>0){ var add=Math.round(base0*yb); gain.g+=add; out.yield=add; gain.gy=add; }
       if(g.statue>0){ var sb=Math.round(base0*0.1*g.statue); gain.g+=sb; out.statue=sb; } }
-    /* 落としダネ: 正解するたびに低確率でタネが落ちてくる(コンボで上がる) */
+    /* 落としタマゴ: 正解するたびに低確率でタマゴが落ちてくる(コンボで上がる) */
     if(ok&&!rw.fluke&&g.seeds.length<seedCap(g)&&c.rand()<GD().DROP*(1+Math.min(2,(c.mm.combo||0)/10))){
       var dr=rollRar(c,g), sd=genSeed(c,g,{rar:dr}); g.seeds.push(sd); noteSeed(g,sd); g.drops++; out.drop=sd;
-      ev(g,"🎁","落としダネ！ "+sd.n+"("+rarInfo(sd).name+(sd.tr?"・"+GD().traitById[sd.tr].name:"")+(sd.sh?"・色違い":"")+")"); }
-    /* 水やり */
+      ev(g,"🎁","落としタマゴ！ "+sd.n+"("+rarInfo(sd).name+(sd.tr?"・"+GD().traitById[sd.tr].name:"")+(sd.sh?"・色違い":"")+")"); }
+    /* 育成 */
     var base=ok?(2+(g.fac.water||0)):0.5, any=false;
     for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(!p||p.dead)continue; any=true;
       if(p.bw!=null)continue;
       var fam=GD().families[p.f], add2=base+(ok&&fam.sub===sub?2:0)+(ok?monBonus(c,p):0)+(ok&&has(p,"sage")?2:0);
       p.g=(p.g||0)+add2; out.grow+=add2;
-      if(p.g>=needOf(p)){ p.bw=aw(g); out.bloom.push(p); g.famSeen[p.f]=1; ev(g,GD().families[p.f].icon,p.n+" が咲いた！("+rarInfo(p).name+")"); }
+      if(p.g>=needOf(p)){ p.bw=aw(g); out.bloom.push(p); g.famSeen[p.f]=1; markDex(c,g,p); ev(g,"🎉",p.n+" がおとなになった！("+rarInfo(p).name+")"); }
     }
     if(ok&&any)g.water++;
-    /* 時間: 正解10問で1週(品評会の最中は週を止める) */
+    /* 時間: 正解10問で1週(大会の最中は週を止める) */
+    if(ok){ dailyAdd(c,g,"q",1); }
     if(ok){ g.qc++; if(g.qc>=GD().WEEK_NEED&&!g.lock){ g.qc=0; out.week=tick(c); } }
     if(out.bloom.length||out.week)titleCheck(c,g);
     gain.garden=out;
@@ -301,7 +316,7 @@
     return true;
   }
 
-  /* ---------- 景観・植物街ランク ---------- */
+  /* ---------- 活気・街ランク ---------- */
   function scenery(c){
     var g=W(c), s=0;
     for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(p&&!p.dead&&p.bw!=null)s+=(cur(g,p,"h")*0.8+cur(g,p,"o")*0.3)*(has(p,"rainbow")?2:1)*(has(p,"cosmos")?1.5:1)*(p.sh?1.5:1); else if(p&&!p.dead)s+=5; }
@@ -316,7 +331,7 @@
     return { idx:i, cur:R[i], next:R[i+1]||null, score:s };
   }
   function rankCheck(c,g){
-    var rk=rankOf(c); if(rk.idx>g.rank){ var up=rk.idx-g.rank; g.rank=rk.idx; c.mm.tix=(c.mm.tix||0)+GD().RANK_TIX*up; ev(g,rk.cur.icon,"植物街ランクUP！「"+rk.cur.name+"」 🎫+"+GD().RANK_TIX*up); return rk; }
+    var rk=rankOf(c); if(rk.idx>g.rank){ var up=rk.idx-g.rank; g.rank=rk.idx; c.mm.tix=(c.mm.tix||0)+GD().RANK_TIX*up; ev(g,rk.cur.icon,"街ランクUP！「"+rk.cur.name+"」 🎫+"+GD().RANK_TIX*up); return rk; }
     return null;
   }
 
@@ -340,7 +355,7 @@
     if(A.f!==B.f&&famNick(A.f,B.f))add("ニックス",T.nick,GD().families[A.f].name+"×"+GD().families[B.f].name+" は相性◎");
     var hk=pairKey(A.l,B.l);
     if(A.l!==B.l&&g.hn.indexOf(hk)>=0){ if(g.hnf[hk]===2)add("隠しニックス",T.hiddenNick,"評議会で教わった黄金配合"); else if(g.hnf[hk])add("隠しニックス",T.hiddenNick,"発見済みの黄金配合"); else add("？？？",T.hiddenNick,"何かが起きる予感…"); }
-    if(A.f!==B.f)add("異系の活力",T.hetero,"違う科どうしは丈夫に育つ");
+    if(A.f!==B.f)add("異系の活力",T.hetero,"違う族どうしは丈夫に育つ");
     if(A.l===B.l)add("系統の固定",T.lineFix,"同じ系統=ばらつき小・得意が伸びる");
     /* インブリード: 3代以内に同じ祖先 */
     var sa=[A.i].concat(A.a), sb=[B.i].concat(B.a), common=[];
@@ -359,7 +374,7 @@
     for(var i=0;i<g.mb.length;i++)if(g.mb[i].i===id)return g.mb[i].n;
     for(var j=0;j<g.plots.length;j++)if(g.plots[j]&&g.plots[j].i===id)return g.plots[j].n;
     for(var k=0;k<g.hall.length;k++)if(g.hall[k].i===id)return g.hall[k].n;
-    return "名もなき花";
+    return "名もなきマチモン";
   }
   function childMean(A,B,k,th,line){
     var m=0.9*((A[k]+B[k])/2)+5+th.burst*0.6+(k===line.spec&&A.l===B.l?3:0);
@@ -369,8 +384,8 @@
   function breedCost(c,A,B){ var cost=300; if(A.fee)cost+=A.fee; if(B.fee)cost+=B.fee; return cost; }
   function preview(c,ra,rb){
     var g=W(c), A=ref(c,ra), B=ref(c,rb); if(!A||!B)return null;
-    if(ra.k==="m"&&rb.k==="m")return {err:"名木どうしは配合できない(どちらかは自分の庭の植物)"};
-    if(A===B)return {err:"同じ植物どうしは配合できない"};
+    if(ra.k==="m"&&rb.k==="m")return {err:"名マチモンどうしは配合できない(どちらかは自分の街のマチモン)"};
+    if(A===B)return {err:"同じマチモンどうしは配合できない"};
     var th=theory(c,A,B), line=lineById(g,A.l), st={};
     KEYS.forEach(function(k){ var m=childMean(A,B,k,th,line); st[k]={mean:clamp(Math.round(m),1,100),lo:clamp(Math.round(m-th.sigma*1.3),1,100),hi:clamp(Math.round(m+th.sigma*1.3),1,100)}; });
     /* モンテカルロ(固定シード=同じ組み合わせは同じ予想) */
@@ -384,8 +399,8 @@
   function hash(s){ var h=7; for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%2147483647; return h; }
   function breed(c,ra,rb){
     var g=W(c), pv=preview(c,ra,rb); if(!pv)return {err:"親を2つ選んでね"}; if(pv.err)return pv;
-    if(pv.used)return {err:"この植物は今週もう配合した。来週(正解あと"+(GD().WEEK_NEED-g.qc)+"問)まで待とう"};
-    if(g.seeds.length>=seedCap(g))return {err:"タネ倉庫がいっぱい"};
+    if(pv.used)return {err:"このマチモンは今週もう配合した。来週(正解あと"+(GD().WEEK_NEED-g.qc)+"問)まで待とう"};
+    if(g.seeds.length>=seedCap(g))return {err:"タマゴ倉庫がいっぱい"};
     if(!MM.economy.spend(c,"g",pv.cost))return {err:"コインが足りない(🪙"+pv.cost+")"};
     var A=pv.A,B=pv.B,th=pv.th,line=pv.line,r=c.rand, n=1+((r()<0.15+0.1*(g.fac.lab||0)+((has(A,"lucky")||has(B,"lucky"))?0.25:0))?1:0), out=[];
     var hk=pairKey(A.l,B.l), found=false;
@@ -403,12 +418,12 @@
       var s=normPlant(p); g.seeds.push(s); out.push(s); noteSeed(g,s);
     }
     if(ra.k==="p")A.bk=aw(g); if(rb.k==="p")B.bk=aw(g);
-    g.breeds++;
+    g.breeds++; dailyAdd(c,g,"b",1);
     titleCheck(c,g,{mut:out.some(function(x){ return x.mut; }),lg:out.some(function(x){ return rarity(x)>=5; })});
     return { seeds:out, found:found, cost:pv.cost, th:th };
   }
 
-  /* ---------- ライバルの庭 ---------- */
+  /* ---------- ライバルの街 ---------- */
   function rivalPlant(c,g,rv,bornOffset){
     var r=c.rand, lvl=rv.lv+4+Math.min(40,(g.y-1)*2.5);
     var fam=(r()<0.55)?rv.fam:Math.floor(r()*9);
@@ -425,7 +440,7 @@
     return s;
   }
 
-  /* ---------- 品評会 ---------- */
+  /* ---------- 大会 ---------- */
   function contestsOf(c,week){
     var g=W(c), w=week||g.w, out=[];
     GD().contests.forEach(function(x){ if(x.w===w)out.push(x); });
@@ -437,17 +452,17 @@
   function contestById(c,id){ var g=W(c); var d=GD().contestById[id]; if(d)return d; var cs=contestsOf(c,g.w); for(var i=0;i<cs.length;i++)if(cs[i].id===id)return cs[i]; return null; }
   function doneKey(g,id){ return g.y+":"+id; }
   function eligible(c,p,def){
-    var g=W(c); if(!p||p.dead||p.bw==null)return "まだ咲いていない";
-    if(g.used[p.i]===aw(g))return "今週は出品済み";
-    if((g.ent&&g.ent.w===aw(g)?g.ent.n:0)>=GD().ENTRY_MAX)return "今週の出品枠("+GD().ENTRY_MAX+")を使い切った";
-    if(def.world&&g.fame<GD().WORLD_FAME)return "名声"+GD().WORLD_FAME+"で出品できる";
+    var g=W(c); if(!p||p.dead||p.bw==null)return "まだおとなになっていない";
+    if(g.used[p.i]===aw(g))return "今週は出場済み";
+    if((g.ent&&g.ent.w===aw(g)?g.ent.n:0)>=GD().ENTRY_MAX)return "今週の出場枠("+GD().ENTRY_MAX+")を使い切った";
+    if(def.world&&g.fame<GD().WORLD_FAME)return "名声"+GD().WORLD_FAME+"で出場できる";
     if(def.g===5&&p.r.w>0)return "新人戦は未勝利のみ";
     if(def.g===2&&p.r.w<1)return "1勝以上が必要";
     if(def.g===1&&!(p.r.gr>=1||p.r.w>=3))return "重賞1勝か通算3勝が必要";
-    if(def.rookie&&p.bw<(g.y-1)*GD().YEAR_WEEKS)return "今年咲いた植物のみ";
+    if(def.rookie&&p.bw<(g.y-1)*GD().YEAR_WEEKS)return "今年おとなになったマチモンのみ";
     return "";
   }
-  /* 出品者(ライバル)を選ぶ: G1=上位、G2/G3=中位、OP=下位。同じ強豪が何度も現れる=因縁が生まれる */
+  /* 出場者(ライバル)を選ぶ: G1=上位、G2/G3=中位、OP=下位。同じ強豪が何度も現れる=因縁が生まれる */
   function field(c,def,excl){
     var g=W(c), alive=rivalAlive(g).filter(function(p){ return g.used[p.i]!==aw(g)&&p.i!==excl; });
     if(def.world)alive=alive.concat([]);
@@ -470,7 +485,8 @@
     if(!def||!p||isDone(c,cid))return null;
     if(eligible(c,p,def))return null;
     var subs=openSubs(c), fam=GD().families[p.f];
-    var qids=MM.learn.pick(GD().GRADE[def.g].n,c,subs.indexOf(fam.sub)>=0&&def.g>=3?{sub:fam.sub}:{subs:subs});
+    var nEx=def.g===1?2:(def.g===2?1:0), nAll=GD().GRADE[def.g].n;
+    var qids=MM.learn.pick(nAll-nEx,c,subs.indexOf(fam.sub)>=0&&def.g>=3?{sub:fam.sub}:{subs:subs}).concat(pickExam(c,nEx));
     if(!qids.length)return null;
     g.lock=1;
     return { cid:cid, def:def, pi:plotIdx, pid:p.i, qids:qids, n:qids.length, i:0, hits:0, ms:0, rivals:field(c,def,p.i).map(function(x){ return x.i; }) };
@@ -503,9 +519,9 @@
     var pos=0; for(var i=0;i<board.length;i++)if(board[i].me)pos=i+1;
     var res=settle(c,def,board);
     g.done[doneKey(g,def.id)]=1;
-    if(!g.ent||g.ent.w!==aw(g))g.ent={w:aw(g),n:0}; g.ent.n++;
+    if(!g.ent||g.ent.w!==aw(g))g.ent={w:aw(g),n:0}; g.ent.n++; dailyAdd(c,g,"c",1);
     var me=board[pos-1].p;
-    /* ライバル園芸家との勝敗 */
+    /* ライバルライバルとの勝敗 */
     var owners=[], seenO={};
     board.forEach(function(b,idx){ if(b.me||seenO[b.ow])return; seenO[b.ow]=1; var rv=GD().rivalById[b.ow]; if(!rv)return;
       var beat=pos<idx+1, x=g.rv[b.ow]||(g.rv[b.ow]={w:0,l:0}); if(beat)x.w++; else x.l++;
@@ -516,7 +532,7 @@
     rankCheck(c,g);
     return { pos:pos, board:board, prize:res.prize, fame:res.fame, tix:res.tix, def:def, plant:me, owners:owners, week:wk, pres:board[pos-1].pres };
   }
-  /* 着順を確定して賞金・名声・記録へ(自分の出品もライバルだけの大会も同じ関数) */
+  /* 着順を確定して賞金・名声・記録へ(自分の出場もライバルだけの大会も同じ関数) */
   function settle(c,def,board){
     var g=W(c), GR=GD().GRADE[def.g], out={prize:0,fame:0,tix:0};
     for(var i=0;i<board.length;i++){
@@ -558,21 +574,22 @@
     var g=W(c), out={bloom:[],dead:[],year:null,income:0};
     /* 今週まだ開かれていない大会をライバルだけで開催 */
     contestsOf(c,g.w).forEach(function(def){ if(!isDone(c,def.id))simRivalContest(c,def); });
-    /* 自分の植物の寿命 */
-    for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(p&&!p.dead&&p.bw!=null&&age(g,p)>=lifeOf(g,p)){ p.dead=1; out.dead.push(p); ev(g,"🥀",p.n+" が枯れた。名木にするか、堆肥にしよう"); } }
-    /* ライバルの世代交代: 寿命が来た株は引退(活躍した株は名木へ)→同じ園芸家が新しい株を植える */
+    g.plots.forEach(function(p){ if(p&&!p.dead)markDex(c,g,p); });
+    /* 自分のマチモンの寿命 */
+    for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(p&&!p.dead&&p.bw!=null&&age(g,p)>=lifeOf(g,p)){ p.dead=1; out.dead.push(p); ev(g,"🪦",p.n+" が寿命をむかえた。名マチモンにするか、見送りにしよう"); } }
+    /* ライバルの世代交代: 寿命が来た株は引退(活躍した株は名マチモンへ)→同じライバルが新しい株をかえす */
     var A=aw(g);
     for(var j=g.rp.length-1;j>=0;j--){ var q=g.rp[j]; if(A-q.bw>=(q.life||30)){
         if(q.r.g1>=1||q.r.gr>=3)addMeiboku(c,g,q,false);
         var rv=GD().rivalById[q.ow]; g.rp.splice(j,1); if(rv)g.rp.push(rivalPlant(c,g,rv,-Math.floor(c.rand()*3)-4)); } }
-    /* 自分の名木の花粉料収入(人気=質の順位) */
+    /* 自分の名マチモンの種付け料収入(人気=質の順位) */
     var mine=g.mb.filter(function(m){ return m.own; });
     if(mine.length){ var inc=0; mine.forEach(function(m){ inc+=Math.round((m.fee||0)*0.25*(1+rarity(m)*0.4)); }); inc=Math.min(inc,3000); if(inc>0){ c.mm.res.g+=inc; out.income=inc; } }
     if(GD().COUNCIL_WEEKS.indexOf(g.w)>=0)out.council=council(c);
     g.w++;
     if(g.w>GD().YEAR_WEEKS){ out.year=yearEnd(c); g.w=1; g.y++; }
     var cs=contestsOf(c,g.w).filter(function(x){ return x.g===1; });
-    ev(g,cal(c).sIcon,cal(c).label+(cs.length?" — 今週は "+cs[0].name+"(G1)":"")+(out.income?" / 花粉料 🪙"+out.income:""));
+    ev(g,cal(c).sIcon,cal(c).label+(cs.length?" — 今週は "+cs[0].name+"(G1)":"")+(out.income?" / 種付け料 🪙"+out.income:""));
     rankCheck(c,g);
     if(out.council)g.pend.push({t:"council",res:out.council});
     if(out.year)g.pend.push({t:"year",y:g.y-1,awards:out.year});
@@ -581,7 +598,7 @@
   }
 
   /* ---------- 街評議会(12週ごと) ----------
-     自分の街の評価 = 景観 + 咲いている科の多さ + 特性・色違い。24組の街と比べて順位→表彰。 */
+     自分の街の評価 = 活気 + おとなの族の多さ + 特性・色違い。24組の街と比べて順位→表彰。 */
   function townScore(c){
     var g=W(c), fams={}, tr=0, sh=0;
     g.plots.forEach(function(p){ if(p&&!p.dead&&p.bw!=null){ fams[p.f]=1; if(p.tr)tr++; if(p.sh)sh++; } });
@@ -622,7 +639,7 @@
   function shareText(c){
     var g=W(c), rk=rankOf(c), ts=townScore(c), best=null;
     g.plots.forEach(function(p){ if(p&&p.bw!=null&&!p.dead&&(!best||sum(p)>sum(best)))best=p; });
-    return "🌸 MACHIMON 社労士 — "+(c.mm.name||"わたしの街")+"\n植物街ランク: "+rk.cur.icon+rk.cur.name+" / 街の評価 "+ts.total+"点\n"
+    return "🏙 MACHIMON 社労士 — "+(c.mm.name||"わたしの街")+"\n街ランク: "+rk.cur.icon+rk.cur.name+" / 街の評価 "+ts.total+"点\n"
       +(best?"自慢の株: "+GD().families[best.f].icon+best.n+"("+rarInfo(best).name+(best.tr?"・"+GD().traitById[best.tr].name:"")+")\n":"")
       +"黄金像 "+g.statue+"体 / G1 "+g.total.g1+"勝 / 第"+g.y+"年\n社労士の問題を解くほど街が育つ #マチモン社労士";
   }
@@ -647,7 +664,7 @@
     /* 系統の勢い・系統確立 */
     g.lastYr={lp:yr.lp};
     lineCheck(c,g);
-    /* 名木の人気(花粉料)を実績で更新・古い名木の整理 */
+    /* 名マチモンの人気(種付け料)を実績で更新・古い名マチモンの整理 */
     g.mb.forEach(function(x){ x.fee=feeOf(x,yr.mbp[x.i]||0); });
     if(g.mb.length>160){ g.mb.sort(function(a,b){ return (b.own-a.own)||(mbScore(b)-mbScore(a)); }); g.mb=g.mb.slice(0,160); }
     g.yr={pl:{},own:{},mbp:{},lp:{}};
@@ -658,7 +675,7 @@
   function mbScore(m){ return sum(m)+(m.r.g1||0)*20+(m.r.gr||0)*6; }
   function feeOf(m,pz){ return Math.round(Math.max(100,(sum(m)-200)*8+(m.r.g1||0)*300+(pz||0)/40)/50)*50; }
 
-  /* ---------- 名木 ---------- */
+  /* ---------- 名マチモン ---------- */
   function canMeiboku(p){ return !!p&&p.bw!=null&&(p.r.g1>=1||p.r.gr>=2||rarity(p)>=3); }
   function mbFull(g){ return g.mb.filter(function(m){ return m.own; }).length>=GD().MB_MAX; }
   function addMeiboku(c,g,p,own){
@@ -674,7 +691,7 @@
     g.plots[plotIdx]=null;
     g.titles.meiboku=g.titles.meiboku||g.y; c.mm.tix=(c.mm.tix||0)+0;
     titleCheck(c,g); rankCheck(c,g);
-    ev(g,"🌳",m.n+" が名木になった！ ほかの庭からも花粉を求められる(毎週 花粉料)");
+    ev(g,"👑",m.n+" が名マチモンになった！ ほかの街からも種付けを求められる(毎週 種付け料)");
     return m;
   }
   function compost(c,plotIdx){
@@ -683,7 +700,7 @@
     if(p.r.w>0){ g.hall.push({i:p.i,n:p.n,f:p.f,l:p.l,r:p.r,y:g.y,rar:rarity(p)}); while(g.hall.length>100)g.hall.shift(); }
     g.plots[plotIdx]=null; c.mm.res.mat+=mat; return {mat:mat};
   }
-  /* 系統確立: 名木の「子(第1親がその名木)」の名木が3本以上 かつ 子孫の重賞勝ちが8以上 */
+  /* 系統確立: 名マチモンの「子(第1親がその名マチモン)」の名マチモンが3本以上 かつ 子孫の重賞勝ちが8以上 */
   function lineCheck(c,g){
     g.mb.forEach(function(m){
       if(allLines(g).some(function(l){ return l.from===m.i; }))return;
@@ -739,19 +756,98 @@
   function ev(g,icon,text){ g.ev.push({i:icon,t:text,y:g.y,w:g.w}); while(g.ev.length>30)g.ev.shift(); }
   function takePend(c){ var g=W(c); return g.pend.length?g.pend.shift():null; }
 
+  /* ---------- 本試験形式(五肢択一・個数・年度別・選択式) ---------- */
+  var EXAM=null;
+  function examIds(){
+    if(EXAM)return EXAM; EXAM=[];
+    try{ if(typeof QBY!=="undefined")QBY.forEach(function(q){ if(q&&(q.examFmt||q.nendo||q.sentaku)&&(q.choices||q.passage))EXAM.push(q.id); }); }catch(e){}
+    return EXAM;
+  }
+  function pickExam(c,n,sub){
+    var ids=examIds(), m=MM.learn.masteryBySub(c), cand=[];
+    for(var i=0;i<ids.length;i++){ var q=G.qById(ids[i]); if(!q)continue; if(typeof sub==="number"&&q.s!==sub)continue; cand.push({id:q.id,p:MM.learn.priority(q,c,{mastery:m})}); }
+    cand.sort(function(a,b){ return b.p-a.p; });
+    var top=cand.slice(0,Math.max(12,n*3)), out=[];
+    while(out.length<n&&top.length){ var k=Math.floor(c.rand()*Math.min(top.length,8)); out.push(top.splice(k,1)[0].id); }
+    return out;
+  }
+  function isExam(q){ return !!(q&&(q.examFmt||q.nendo||q.sentaku)); }
+  /* 合格力(目安): ○×の習熟度 と 本試験形式の正答率 を科目ごとに合成。70%を合格ラインの目安にする */
+  function passMeter(c){
+    var mast=MM.learn.masteryBySub(c), ex={}, ids=examIds();
+    for(var i=0;i<ids.length;i++){ var q=G.qById(ids[i]); if(!q)continue; var st=MM.learn.stat(c,q.id); var e=ex[q.s]||(ex[q.s]={c:0,n:0,tot:0}); e.tot++; if((st.c||0)+(st.w||0)>0){ e.n++; if(st.box>=2||(st.c||0)>(st.w||0))e.c++; } }
+    var subs=[], sum=0;
+    for(var s2=0;s2<9;s2++){ var mm2=mast[s2]||0, e2=ex[s2]||{c:0,n:0,tot:0}, ea=e2.tot?e2.c/e2.tot:0;
+      var v=Math.round((e2.tot?(0.6*mm2+0.4*ea):mm2)*100); subs.push({sub:s2,v:v,mast:Math.round(mm2*100),exam:e2.c+"/"+e2.tot}); sum+=v; }
+    var avg=Math.round(sum/9), low=subs.reduce(function(a,x){ return x.v<a.v?x:a; },subs[0]);
+    return { subs:subs, avg:avg, low:low, line:70 };
+  }
+
+  /* ---------- 毎日: デイリーミッション・連続ログイン ---------- */
+  function daily(c,g){
+    g=g||W(c); var d=c.dstr||"";
+    if(g.daily.d!==d){ g.daily={d:d,p:{},got:{},all:0}; }
+    return g.daily;
+  }
+  function dailyAdd(c,g,id,n){ var dl=daily(c,g); dl.p[id]=(dl.p[id]||0)+n; }
+  function dailyList(c){
+    var g=W(c), dl=daily(c,g);
+    return GD().DAILY.map(function(m){ var v=Math.min(m.need,dl.p[m.id]||0); return {id:m.id,name:m.name,icon:m.icon,need:m.need,now:v,done:v>=m.need,got:!!dl.got[m.id],reward:m.reward}; });
+  }
+  function giveReward(c,g,r){ var out=[]; if(r.g){ c.mm.res.g+=r.g; out.push("🪙"+r.g); } if(r.tix){ c.mm.tix=(c.mm.tix||0)+r.tix; out.push("🎫"+r.tix); } if(r.medal){ g.medal+=r.medal; out.push("🏅"+r.medal); }
+    if(r.egg!=null){ var sd=genSeed(c,g,{rar:r.egg,traitMul:r.egg>=3?3:1}); g.seeds.push(sd); noteSeed(g,sd); out.push("🥚"+rarInfo(sd).name); } return out.join(" "); }
+  function claimDaily(c,id){
+    var g=W(c), dl=daily(c,g), m=dailyList(c).filter(function(x){ return x.id===id; })[0];
+    if(!m||!m.done||m.got)return null;
+    dl.got[id]=1; var txt=giveReward(c,g,m.reward), all=null;
+    if(!dl.all&&dailyList(c).every(function(x){ return x.got; })){ dl.all=1; all=giveReward(c,g,{egg:GD().DAILY_ALL.rar+(c.rand()<0.2?1:0)}); }
+    return {text:txt,all:all};
+  }
+  function streakInfo(c){
+    var g=W(c), sk=g.streak, d=c.dstr||"", today=(sk.claimed===d);
+    var yd=""; try{ var dt=new Date(d+"T00:00:00"); dt.setDate(dt.getDate()-1); yd=dt.toISOString().slice(0,10); }catch(e){}
+    var cont=(sk.d===yd||sk.d===d);
+    var n=today?sk.n:(cont?sk.n+1:1);
+    return { n:n, day:((n-1)%7)+1, today:today, reward:GD().STREAK[(n-1)%7] };
+  }
+  function claimStreak(c){
+    var g=W(c), info=streakInfo(c); if(info.today)return null;
+    g.streak={d:c.dstr||"",n:info.n,claimed:c.dstr||""};
+    var r=info.reward.egg!=null?{egg:info.reward.egg}:info.reward;
+    return {day:info.day,n:info.n,text:giveReward(c,g,r)};
+  }
+  /* ---------- タマゴ(🥚)をかえす: 街の事件で手に入る旧タマゴも、ここで遺伝子つきマチモンになる ---------- */
+  function hatchTama(c){
+    var g=W(c); if((c.mm.res.tama||0)<1)return null;
+    if(g.seeds.length>=seedCap(g)+5)return {err:"タマゴ袋がいっぱい"};
+    c.mm.res.tama--;
+    var rar=rollRar(c,g); g.pity=(rar>=2)?0:g.pity+1;
+    var sd=genSeed(c,g,{rar:rar}); noteSeed(g,sd); g.seeds.push(sd);
+    var idx=-1; for(var i=0;i<g.plots.length;i++)if(!g.plots[i]){ idx=i; break; }
+    if(idx>=0)plant(c,g.seeds.length-1,idx);
+    titleCheck(c,g);
+    return {seed:sd,placed:idx};
+  }
+  /* 街の生産: おとなマチモンの「稼ぎ」が毎時の生産に乗る(=マチモンが育つほど街が発展) */
+  function prod(c){
+    var g; try{ g=W(c); }catch(e){ return 0; }
+    var s=0; for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(p&&!p.dead&&p.bw!=null)s+=cur(g,p,"m")/GD().PROD_DIV; }
+    return Math.round(s*10)/10;
+  }
+
   /* ---------- 秘書のひとこと ---------- */
   function advice(c){
     var g=W(c), plants=g.plots.filter(function(p){ return p&&!p.dead; }), bloom=plants.filter(function(p){ return p.bw!=null; });
     var empty=g.plots.filter(function(p){ return !p; }).length, dead=g.plots.filter(function(p){ return p&&p.dead; }).length;
-    if(!plants.length&&g.seeds.length)return "花壇が空いてるモン！ まずはタネを植えよう";
-    if(!plants.length&&!g.seeds.length)return (c.mm.res.g>=GD().GACHA.cost1)?"タネガチャを回そう！ 🪙"+GD().GACHA.cost1+"で1回だモン":"クイズに正解してコインを集めよう。🪙"+GD().GACHA.cost1+"でタネが1つ買えるモン";
-    if(dead)return "枯れた植物があるモン。名木にするか堆肥にして、花壇を空けよう";
-    if(empty&&g.seeds.length)return "空いてる花壇が"+empty+"つあるモン。タネを植えよう！";
+    if(!plants.length&&g.seeds.length)return "おうちが空いてるモン！ まずはタマゴをかえそう";
+    if(!plants.length&&!g.seeds.length)return (c.mm.res.g>=GD().GACHA.cost1)?"マチモンガチャを回そう！ 🪙"+GD().GACHA.cost1+"で1回だモン":"クイズに正解してコインを集めよう。🪙"+GD().GACHA.cost1+"でタマゴが1つ買えるモン";
+    if(dead)return "寿命をむかえたマチモンがあるモン。名マチモンにするか見送って、おうちを空けよう";
+    if(empty&&g.seeds.length)return "空いてるおうちが"+empty+"つあるモン。タマゴをかえそう！";
     var cs=contestsOf(c,g.w).filter(function(d){ return !isDone(c,d.id); });
-    if(bloom.length&&cs.length){ var gd=cs[0]; return "今週は「"+gd.name+"」("+GD().GRADE[gd.g].label+")があるモン！ 咲いた植物を出品しよう"; }
-    if(bloom.length>=2&&g.breeds<3)return "咲いた植物どうしで配合できるモン。🧬配合でもっと強いタネを作ろう！";
+    if(bloom.length&&cs.length){ var gd=cs[0]; return "今週は「"+gd.name+"」("+GD().GRADE[gd.g].label+")があるモン！ おとなになったマチモンを出場しよう"; }
+    if(bloom.length>=2&&g.breeds<3)return "おとなになったマチモンどうしで配合できるモン。🧬配合でもっと強いタマゴを作ろう！";
     var grow=plants.filter(function(p){ return p.bw==null; });
-    if(grow.length){ var p=grow[0]; return p.n+" はあと "+Math.max(1,Math.ceil((needOf(p)-(p.g||0))/(2+(g.fac.water||0))))+"問くらいで咲くモン。💧クイズで水やり！"; }
+    if(grow.length){ var p=grow[0]; return p.n+" はあと "+Math.max(1,Math.ceil((needOf(p)-(p.g||0))/(2+(g.fac.water||0))))+"問くらいでおとなになるモン。💧クイズで育てる！"; }
     return "正解あと"+(GD().WEEK_NEED-g.qc)+"問で次の週だモン";
   }
 
@@ -763,5 +859,7 @@
     scenery:scenery, rankOf:rankOf, theory:theory, preview:preview, breed:breed, ref:ref, lineById:lineById, allLines:allLines, nameOfId:nameOfId, famNick:famNick,
     contestsOf:contestsOf, contestById:contestById, eligible:eligible, isDone:isDone, start:start, step:step, finish:finish, rivalAlive:rivalAlive, catScore:catScore,
     tick:tick, yearEnd:yearEnd, canMeiboku:canMeiboku, mbFull:mbFull, gardenScore:gardenScore, toMeiboku:toMeiboku, compost:compost, facCost:facCost, upgrade:upgrade,
-    titleCheck:titleCheck, takePend:takePend, council:council, councilPreview:councilPreview, townScore:townScore, shareText:shareText, banner:banner, freeReady:freeReady, has:has, seasonTrait:seasonTrait, rollTrait:rollTrait, advice:advice, openSubs:openSubs, hotLines:hotLines, feeOf:feeOf, mbScore:mbScore };
+    titleCheck:titleCheck, takePend:takePend, examIds:examIds, pickExam:pickExam, isExam:isExam, passMeter:passMeter, dailyList:dailyList, claimDaily:claimDaily, streakInfo:streakInfo, claimStreak:claimStreak, hatchTama:hatchTama, prod:prod, markDex:markDex, council:council, councilPreview:councilPreview, townScore:townScore, shareText:shareText, banner:banner, freeReady:freeReady, has:has, seasonTrait:seasonTrait, rollTrait:rollTrait, advice:advice, openSubs:openSubs, hotLines:hotLines, feeOf:feeOf, mbScore:mbScore };
+  /* 旧タマゴの孵化(オンボーディング・事件報酬)を遺伝子つきマチモンへ差し替える */
+  if(MM.hatch){ MM.hatch.hatch=function(c){ var r=hatchTama(c); return (r&&r.seed)?{garden:1,name:r.seed.n,rar:rarity(r.seed),rare:rarity(r.seed)>=3}:null; }; }
 })();

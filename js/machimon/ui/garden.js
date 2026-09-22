@@ -1,8 +1,8 @@
 "use strict";
 /* ============================================================
-   machimon/ui/garden.js — ガーデン(タネ配合 × 植物街 × 品評会 × 街評議会)の画面
-   ★おじいちゃんでも迷わない: ハブの主ボタンは常に「💧 クイズで水やり」1つ。
-     ほかは全部おまけ(ガチャ・配合・品評会・評議会)。
+   machimon/ui/garden.js — マチモン(タマゴ配合 × マチモン街 × 大会 × 街評議会)の画面
+   ★おじいちゃんでも迷わない: ハブの主ボタンは常に「📚 クイズで育てる」1つ。
+     ほかは全部おまけ(ガチャ・配合・大会・評議会)。
    ★UIは判断を持たない。すべて core/garden.js に委譲する。
    ============================================================ */
 (function(){
@@ -16,13 +16,24 @@
   UI.gd={ sel:{a:null,b:null}, quiz:null, contest:null, last:null, tab:"all" };
 
   /* ---------- 見た目の部品 ---------- */
-  function icon(p,size){
-    var gd=GA().W(UI.ctx()), st=GA().stage(p), fam=GD().families[p.f];
-    var e=["🌰","🌱","🌿",fam.icon,fam.icon,fam.icon,"🥀"][st];
-    var cls="mm-gi"+(st===3?" mm-gi-bud":"")+(p.sh?" mm-gi-shiny":"")+(st>=4&&st<6?" mm-gi-bloom":"");
-    var sz=size||34; if(st>=4&&st<6){ var o=GA().cur(gd,p,"o"); sz=Math.round(sz*(0.9+Math.min(0.5,o/200))); }
-    return '<span class="'+cls+'" style="font-size:'+sz+'px">'+e+'</span>';
+  /* マチモンの見た目: 族のスプライトが成長で進化する(タマゴ→こども→おとな→全盛期の最終形)。色違いは色相が変わる */
+  function spOf(p){
+    var fam=GD().families[p.f], st=GA().stage(p), r=GA().rarity(p);
+    if(st<=0)return null; if(st<4)return fam.sp[0];
+    if(st===5&&(r>=3||p.mut)&&GA().statusText(GA().W(UI.ctx()),p)==="全盛期")return fam.sp[2];
+    return r>=5?fam.sp[2]:fam.sp[1];
   }
+  function icon(p,size){
+    var st=GA().stage(p), sz=size||34;
+    if(st===6)return '<span class="mm-gi" style="font-size:'+Math.round(sz*0.8)+'px">🪦</span>';
+    if(st<=0)return '<span class="mm-gi mm-gi-egg'+(p.sh?' mm-gi-shiny':'')+'" style="font-size:'+Math.round(sz*0.8)+'px">🥚</span>';
+    var cls="mm-gi"+(p.sh?" mm-gi-shiny":"")+(st>=4?" mm-gi-bloom":"");
+    return '<span class="'+cls+'">'+MM.px(spOf(p),sz)+'</span>';
+  }
+  /* 族のアイコン(おとなの姿) */
+  function famPx(f,size,sh){ return '<span class="mm-gi'+(sh?' mm-gi-shiny':'')+'">'+MM.px(GD().families[f].sp[1],size||24)+'</span>'; }
+  function eggPx(s,size){ var r=GA().rarInfo(s); return '<span class="mm-gegg'+(s.sh?' mm-gi-shiny':'')+'" style="font-size:'+Math.round((size||30)*0.9)+'px;--rc:'+r.color+'">🥚<i>'+MM.px(GD().families[s.f].sp[0],Math.round((size||30)*0.5))+'</i></span>'; }
+  UI.gdIcon=icon; UI.gdFamPx=famPx;
   function rarBadge(p){ var r=GA().rarInfo(p); return '<span class="mm-grar" style="background:'+r.color+'">'+r.name+'</span>'; }
   function traitBadge(p){ if(!p.tr)return ""; var t=GD().traitById[p.tr]; return '<span class="mm-gtr" title="'+esc(t.desc)+'">'+t.icon+esc(t.name)+'</span>'; }
   function shinyBadge(p){ return p.sh?'<span class="mm-gtr mm-gtr-sh">✨色違い</span>':''; }
@@ -38,9 +49,25 @@
     var cal=GA().cal(c), gd=GA().W(c), rk=GA().rankOf(c);
     return '<div class="mm-ghead"><div class="mm-ghead-top"><b>'+cal.sIcon+' '+esc(cal.label)+'</b><span class="mm-sub">名声 '+fmt(gd.fame)+' / 🏅'+gd.medal+(gd.statue?' / 🗿黄金像'+gd.statue:'')+'</span></div>'
       +'<div class="mm-gweek"><span>次の週まで 正解 <b>'+cal.qc+'</b>/'+cal.need+'</span>'+UI.bar(cal.qc,cal.need)+'</div>'
-      +'<button class="mm-grank" onclick="MM.ui.go(\'gCouncil\')"><span>'+rk.cur.icon+' 植物街ランク <b>'+esc(rk.cur.name)+'</b></span><span class="mm-sub">'+(rk.next?'次「'+esc(rk.next.name)+'」まで '+fmt(rk.next.need-rk.score):'最終段')+'</span>'+(rk.next?UI.bar(rk.score-rk.cur.need,rk.next.need-rk.cur.need):'')+'</button></div>';
+      +'<button class="mm-grank" onclick="MM.ui.go(\'gCouncil\')"><span>'+rk.cur.icon+' 街ランク <b>'+esc(rk.cur.name)+'</b></span><span class="mm-sub">'+(rk.next?'次「'+esc(rk.next.name)+'」まで '+fmt(rk.next.need-rk.score):'最終段')+'</span>'+(rk.next?UI.bar(rk.score-rk.cur.need,rk.next.need-rk.cur.need):'')+'</button></div>';
   }
   function back(to,label){ return '<button class="small-btn mm-gback" onclick="MM.ui.go(\''+(to||"garden")+'\')">'+(label||"もどる")+'</button>'; }
+
+  /* ---------- 旧画面の一本化: ガチャ=マチモンガチャ / マチモン=育成 / タマゴ=遺伝子つきで孵化 ---------- */
+  UI.screens.gacha=function(){ return UI.screens.gGacha(); };
+  UI.screens.mons=function(){ return UI.screens.garden(); };
+  UI.screens.hatch=function(){
+    var c=UI.ctx(), n=c.mm.res.tama||0;
+    if(n<1)return UI.screens.garden();
+    return '<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🥚 タマゴ '+n+'個</div>'
+      +'<div class="mm-egg" onclick="MM.ui.gHatch()">🥚</div><div style="text-align:center" class="mm-sub">タップして割る(空いているおうちに入るモン)</div>'
+      +'<button class="small-btn mm-gback" onclick="MM.ui.go(\'town\')">もどる</button></div>';
+  };
+  UI.gHatch=function(){
+    var c=UI.ctx(), r=MM.garden.hatchTama(c); save();
+    if(!r||r.err){ UI.toast(r?r.err:"タマゴがないモン"); UI.go("garden"); return; }
+    UI.gd.last={seeds:[r.seed],from:"hatch",placed:r.placed}; sfx("roll",4); UI.go("gReveal");
+  };
 
   /* ---------- ハブ ---------- */
   UI.screens.garden=function(){
@@ -48,51 +75,72 @@
     var pend=GA().takePend(c); if(pend){ save(); return pend.t==="year"?yearView(c,pend):councilView(c,pend.res); }
     var h='<div class="mm-wrap">'+UI.resBar(c)+head(c);
     h+='<div class="mm-coach">'+MM.px("m01",44,"mm-hop")+'<div class="mm-coach-text">'+esc(GA().advice(c))+'</div></div>';
-    h+='<button class="mm-cta mm-gwater" onclick="MM.ui.gQuizStart()">💧 クイズで水やり ▶<span class="mm-sub">正解で 植物が育つ・コイン・10問で1週すすむ</span></button>';
+    h+='<button class="mm-cta mm-gwater" onclick="MM.ui.gQuizStart()">📚 クイズで育てる ▶<span class="mm-sub">正解で マチモンが育つ・コイン・10問で1週すすむ</span></button>';
     var cs=GA().contestsOf(c,gd.w).filter(function(d){ return !GA().isDone(c,d.id); });
     var g1=cs.filter(function(d){ return d.g===1; })[0];
     h+='<div class="mm-gmenu">'
-      +'<button onclick="MM.ui.go(\'gGacha\')"><span>🌰</span>タネガチャ'+(GA().freeReady(c)?'<i class="mm-gdot">無料</i>':'')+'</button>'
+      +'<button onclick="MM.ui.go(\'gGacha\')"><span>🥚</span>マチモンガチャ'+(GA().freeReady(c)?'<i class="mm-gdot">無料</i>':'')+'</button>'
       +'<button onclick="MM.ui.go(\'gBreed\')"><span>🧬</span>配合</button>'
-      +'<button onclick="MM.ui.go(\'gContest\')"><span>🏆</span>品評会'+(g1?'<i class="mm-gdot">G1</i>':'')+'</button>'
+      +'<button onclick="MM.ui.go(\'gContest\')"><span>🏆</span>大会'+(g1?'<i class="mm-gdot">G1</i>':'')+'</button>'
       +'<button onclick="MM.ui.go(\'gCouncil\')"><span>🏛</span>街評議会</button></div>';
-    /* 花壇 */
-    h+='<div class="mm-h">🪴 花壇 <span class="mm-sub">'+gd.plots.filter(Boolean).length+'/'+gd.plots.length+' ・ タネ '+gd.seeds.length+'/'+GA().seedCap(gd)+'</span></div><div class="mm-gplots">';
+    h+=dailyCard(c);
+    h+=passCard(c);
+    /* おうち */
+    h+='<div class="mm-h">🏠 おうち <span class="mm-sub">'+gd.plots.filter(Boolean).length+'/'+gd.plots.length+' ・ タマゴ '+gd.seeds.length+'/'+GA().seedCap(gd)+'</span></div><div class="mm-gplots">';
     for(var i=0;i<gd.plots.length;i++){ var p=gd.plots[i];
-      if(!p){ h+='<button class="mm-gplot mm-gplot-empty" onclick="MM.ui.go(\'gSeeds\',{plot:'+i+'})"><span class="mm-gi" style="font-size:26px;opacity:.5">🟫</span><span class="mm-sub">＋ 植える</span></button>'; continue; }
+      if(!p){ h+='<button class="mm-gplot mm-gplot-empty" onclick="MM.ui.go(\'gSeeds\',{plot:'+i+'})"><span class="mm-gi" style="font-size:26px;opacity:.5">🏠</span><span class="mm-sub">＋ かえす</span></button>'; continue; }
       var st=GA().stage(p), r=GA().rarInfo(p);
       h+='<button class="mm-gplot'+(st===6?' mm-gplot-dead':'')+'" style="border-color:'+r.color+'" onclick="MM.ui.go(\'gPlant\',{plot:'+i+'})">'
         +icon(p,30)+'<span class="mm-gplot-name">'+esc(p.n)+'</span><span class="mm-gplot-st">'+esc(GA().statusText(gd,p))+'</span>'
         +(st<4?'<span class="mm-bar mm-bar-thin"><i style="width:'+Math.min(100,Math.round((p.g||0)/GA().needOf(p)*100))+'%"></i></span>':'')
         +'<span class="mm-gplot-tags">'+rarBadge(p)+(p.tr?GD().traitById[p.tr].icon:'')+(p.sh?'✨':'')+(p.mon?MM.px(c.mm.mons[p.mon]?c.mm.mons[p.mon].sp:"m01",14):'')+'</span></button>'; }
     h+='</div>';
-    var yb=GA().yieldBonus(gd); if(yb>0||gd.statue)h+='<div class="mm-sub" style="text-align:center">🍎 実りボーナス: 正解コイン +'+Math.round(yb*100)+'%'+(gd.statue?' / 🗿黄金像 +'+gd.statue*10+'%':'')+'</div>';
+    var yb=GA().yieldBonus(gd); if(yb>0||gd.statue)h+='<div class="mm-sub" style="text-align:center">🪙 稼ぎボーナス: 正解コイン +'+Math.round(yb*100)+'%'+(gd.statue?' / 🗿黄金像 +'+gd.statue*10+'%':'')+'</div>';
     /* お知らせ */
     if(gd.ev.length){ h+='<div class="mm-h">📣 お知らせ</div><div class="mm-q mm-gev">'; for(var k=gd.ev.length-1;k>=0&&k>=gd.ev.length-4;k--){ var e=gd.ev[k]; h+='<div>'+e.i+' '+esc(e.t)+'</div>'; } h+='</div>'; }
-    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'gSeeds\',{})">🌰 タネ袋</button><button onclick="MM.ui.go(\'gMb\')">🌳 名木</button><button onclick="MM.ui.go(\'gFac\')">🔨 施設</button><button onclick="MM.ui.go(\'gRec\')">🎖 記録</button></div>';
+    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'gSeeds\',{})">🥚 タマゴ袋</button><button onclick="MM.ui.go(\'gMb\')">👑 名マチモン</button><button onclick="MM.ui.go(\'gFac\')">🔨 施設</button><button onclick="MM.ui.go(\'gRec\')">🎖 記録</button></div>';
     return h+'</div>'+UI.tabs("garden");
   };
 
-  /* ---------- タネ袋(植える) ---------- */
+  function passCard(c){
+    var pm=GA().passMeter(c), n=G.SUBJECTS||[];
+    var h='<button class="mm-gpassm" onclick="MM.ui.gd.pmOpen=!MM.ui.gd.pmOpen;MM.ui.render()"><span>📈 合格力(目安) <b>'+pm.avg+'%</b> <span class="mm-sub">目標 '+pm.line+'% ・ いちばん弱い: '+esc(n[pm.low.sub]||"")+' '+pm.low.v+'%</span></span>'
+      +'<span class="mm-gpbar"><i style="width:'+pm.avg+'%"></i><b style="left:'+pm.line+'%"></b></span>';
+    if(UI.gd.pmOpen){ pm.subs.forEach(function(x){ h+='<span class="mm-gpsub"><span>'+esc(n[x.sub]||"")+'</span><span class="mm-gpbar"><i style="width:'+x.v+'%;background:'+(x.v>=pm.line?'#3E9B4F':(x.v>=40?'#F2B31B':'#D8534F'))+'"></i><b style="left:'+pm.line+'%"></b></span><i>'+x.v+'%</i></span>'; });
+      h+='<span class="mm-sub">○×の習熟度と本試験形式(択一・個数・選択式)の正答から出した目安。科目ごとの足切り(選択式3点)があるので、全科目を目標ラインへ。</span>'; }
+    return h+'</button>';
+  }
+  function dailyCard(c){
+    var sk=GA().streakInfo(c), dl=GA().dailyList(c), h='<div class="mm-gdaily">';
+    if(!sk.today)h+='<button class="mm-cta mm-gfree" onclick="MM.ui.gStreak()">📅 ログインボーナス '+sk.n+'日目 を受けとる ▶</button>';
+    else h+='<div class="mm-sub">📅 連続 <b>'+sk.n+'日</b> ・ 7日目はSSR以上確定タマゴ('+(7-sk.day)+'日後)</div>';
+    h+='<div class="mm-gdl">';
+    dl.forEach(function(m){ h+='<button class="mm-gdm'+(m.got?' mm-gdm-got':(m.done?' mm-gdm-ok':''))+'" '+(m.done&&!m.got?'onclick="MM.ui.gDaily(\''+m.id+'\')"':'')+'><span>'+m.icon+'</span><b>'+esc(m.name)+'</b><i>'+(m.got?'✔':(m.done?'受けとる':m.now+'/'+m.need))+'</i></button>'; });
+    return h+'</div><div class="mm-sub" style="text-align:center">4つ全部で 🎁 SR以上確定タマゴ</div></div>';
+  }
+  UI.gStreak=function(){ var c=UI.ctx(), r=MM.garden.claimStreak(c); save(); if(r){ sfx("levelup"); if(UI.celebrate)UI.celebrate({icon:"📅",title:"ログイン "+r.n+"日目！",sub:r.text,sfx:r.day===7?"fanfare":"levelup"}); } UI.go("garden"); };
+  UI.gDaily=function(id){ var c=UI.ctx(), r=MM.garden.claimDaily(c,id); save(); if(r){ sfx("levelup"); UI.toast("🎁 "+r.text); if(r.all&&UI.celebrate)UI.celebrate({icon:"🎁",title:"デイリーコンプ！",sub:r.all,sfx:"fanfare"}); } UI.go("garden"); };
+
+  /* ---------- タマゴ袋(かえす) ---------- */
   UI.screens.gSeeds=function(p){
     var c=UI.ctx(), gd=GA().W(c), plot=(p&&typeof p.plot==="number")?p.plot:-1;
-    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🌰 タネ袋 <span class="mm-sub">'+gd.seeds.length+'/'+GA().seedCap(gd)+(plot>=0?' ・ 花壇'+(plot+1)+'に植える':'')+'</span></div>';
-    if(!gd.seeds.length)h+='<div class="mm-q" style="font-size:13px">タネがありません。🌰タネガチャで手に入れるか、咲いた植物どうしを🧬配合しよう。</div><button class="mm-cta" onclick="MM.ui.go(\'gGacha\')">🌰 タネガチャへ ▶</button>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🥚 タマゴ袋 <span class="mm-sub">'+gd.seeds.length+'/'+GA().seedCap(gd)+(plot>=0?' ・ おうち'+(plot+1)+'にかえす':'')+'</span></div>';
+    if(!gd.seeds.length)h+='<div class="mm-q" style="font-size:13px">タマゴがありません。🥚マチモンガチャで手に入れるか、おとなになったマチモンどうしを🧬配合しよう。</div><button class="mm-cta" onclick="MM.ui.go(\'gGacha\')">🥚 マチモンガチャへ ▶</button>';
     var order=gd.seeds.map(function(s,i){ return i; }).sort(function(a,b){ return GA().sum(gd.seeds[b])-GA().sum(gd.seeds[a]); });
     order.forEach(function(i){ var s=gd.seeds[i];
-      h+='<div class="mm-gcard" style="border-color:'+GA().rarInfo(s).color+'"><div class="mm-gcard-top">'+icon({f:s.f,g:999,bw:0,sh:s.sh,o:s.o,t:s.t,j:s.j,s:s.s},30)
+      h+='<div class="mm-gcard" style="border-color:'+GA().rarInfo(s).color+'"><div class="mm-gcard-top">'+eggPx(s,30)
         +'<div><b>'+esc(s.n)+'</b> '+rarBadge(s)+traitBadge(s)+shinyBadge(s)+'<br><span class="mm-sub">'+esc(famName(s))+'・'+esc(lineName(s))+'・'+GD().TYPES[s.t].name+'・'+GD().SEASONS[s.se]+' / 素質 '+GA().sum(s)+'</span></div></div>'
         +'<div class="mm-gmini">'+GD().STATS.map(function(st){ return st.icon+GA().grade(s[st.k]); }).join(' ')+'</div>'
-        +'<div class="mm-gbtns">'+(plot>=0?'<button class="mm-cta-s" onclick="MM.ui.gPlantSeed('+i+','+plot+')">ここに植える ▶</button>':'<button class="mm-cta-s" onclick="MM.ui.gPlantSeed('+i+',-1)">植える ▶</button>')
+        +'<div class="mm-gbtns">'+(plot>=0?'<button class="mm-cta-s" onclick="MM.ui.gPlantSeed('+i+','+plot+')">ここにかえす ▶</button>':'<button class="mm-cta-s" onclick="MM.ui.gPlantSeed('+i+',-1)">かえす ▶</button>')
         +'<button class="small-btn" onclick="MM.ui.gDrop('+i+')">手放す(🧩)</button></div></div>'; });
     return h+back("garden")+'</div>';
   };
   UI.gPlantSeed=function(i,plot){
     var c=UI.ctx(), gd=GA().W(c);
     if(plot<0){ for(var k=0;k<gd.plots.length;k++)if(!gd.plots[k]){ plot=k; break; } }
-    if(plot<0){ UI.toast("空いている花壇がないモン。🔨施設で花壇を増やすか、枯れた植物を片付けよう"); return; }
+    if(plot<0){ UI.toast("空いているおうちがないモン。🔨施設でおうちを増やすか、寿命をむかえたマチモンを片付けよう"); return; }
     var s=GA().plant(c,i,plot); save(); sfx("tap");
-    if(s)UI.toast("🌱 "+s.n+" を植えた！ クイズに正解すると育つモン");
+    if(s)UI.toast("🐣 "+s.n+" がうまれた！ クイズに正解すると育つモン");
     UI.go("garden");
   };
   UI.gDrop=function(i){ var c=UI.ctx(), r=GA().dropSeed(c,i); save(); if(r)UI.toast("🧩 +"+r.mat); UI.go("gSeeds",{}); };
@@ -100,7 +148,7 @@
     try{ var d=G.document.createElement("div"); d.className="mm-gtoast"; d.textContent=t; G.document.body.appendChild(d); setTimeout(function(){ try{ d.remove(); }catch(e){} },2600); }catch(e){}
   };
 
-  /* ---------- 植物の詳細 ---------- */
+  /* ---------- マチモンの詳細 ---------- */
   UI.screens.gPlant=function(p){
     var c=UI.ctx(), gd=GA().W(c), i=p.plot, pl=gd.plots[i]; if(!pl)return UI.screens.garden();
     var st=GA().stage(pl), tt=GD().TYPES[pl.t];
@@ -108,25 +156,25 @@
       +'<div class="mm-gdetail" style="border-color:'+GA().rarInfo(pl).color+'">'+icon(pl,72)+'<div class="mm-h" style="justify-content:center">'+esc(pl.n)+'</div>'
       +'<div>'+rarBadge(pl)+traitBadge(pl)+shinyBadge(pl)+'</div><div class="mm-sub">'+esc(famName(pl))+'・'+esc(lineName(pl))+' / '+tt.name+'('+esc(tt.desc)+') / '+GD().SEASONS[pl.se]+'が得意</div>'
       +'<div class="mm-sub"><b>'+esc(GA().statusText(gd,pl))+'</b>'+(st>=4&&st<6?' ・ 寿命あと'+Math.max(0,GA().lifeOf(gd,pl)-GA().age(gd,pl))+'週':'')+'</div></div>';
-    h+='<div class="mm-q" style="font-size:13px">'+statRows(pl,true)+'<div class="mm-sub" style="margin-top:4px">うすい棒=素質 / 濃い棒=いまの力(咲き具合で変わる)</div></div>';
+    h+='<div class="mm-q" style="font-size:13px">'+statRows(pl,true)+'<div class="mm-sub" style="margin-top:4px">うすい棒=素質 / 濃い棒=いまの力(成長ぐあいで変わる)</div></div>';
     if(pl.tr)h+='<div class="mm-q" style="font-size:12px;padding:8px">'+GD().traitById[pl.tr].icon+' <b>'+esc(GD().traitById[pl.tr].name)+'</b>: '+esc(GD().traitById[pl.tr].desc)+'</div>';
     h+='<div class="mm-q" style="font-size:12px;padding:8px"><b>🧬 血統</b><br>'+pedigree(gd,pl)+'</div>';
-    h+='<div class="mm-q" style="font-size:12px;padding:8px">🏆 '+pl.r.run+'回出品 '+pl.r.w+'勝(重賞'+pl.r.gr+' G1 '+pl.r.g1+') / 賞金 🪙'+fmt(pl.r.pz)+'</div>';
-    /* 庭師マチモン */
+    h+='<div class="mm-q" style="font-size:12px;padding:8px">🏆 '+pl.r.run+'回出場 '+pl.r.w+'勝(重賞'+pl.r.gr+' G1 '+pl.r.g1+') / 賞金 🪙'+fmt(pl.r.pz)+'</div>';
+    /* お世話マチモン */
     var mons=Object.keys(c.mm.mons);
     if(mons.length&&st<6){
-      h+='<div class="mm-q" style="font-size:12px;padding:8px"><b>👾 庭師マチモン</b> <span class="mm-sub">(成長が速くなる。同じ科目のマチモンなら特に)</span><div class="mm-gmons">';
+      h+='<div class="mm-q" style="font-size:12px;padding:8px"><b>👾 お世話マチモン</b> <span class="mm-sub">(成長が速くなる。同じ科目のマチモンなら特に)</span><div class="mm-gmons">';
       mons.slice(0,24).forEach(function(u){ var m=c.mm.mons[u], sp=MM.DATA.speciesById[m.sp]||{}; h+='<button class="'+(pl.mon===u?'mm-act':'')+'" onclick="MM.ui.gMon('+i+',\''+u+'\')">'+MM.px(m.sp,26)+'<span>'+esc(sp.name||"")+'</span></button>'; });
       h+='</div></div>';
     }
     h+='<div class="mm-gbtns mm-gbtns-col">';
     if(st>=4&&st<6){
-      h+='<button class="mm-cta-s" onclick="MM.ui.gd.sel.a={k:\'p\',i:'+i+'};MM.ui.go(\'gBreed\')">🧬 この植物で配合する</button>';
-      h+='<button class="mm-cta-s" onclick="MM.ui.go(\'gContest\',{plot:'+i+'})">🏆 品評会に出す</button>';
+      h+='<button class="mm-cta-s" onclick="MM.ui.gd.sel.a={k:\'p\',i:'+i+'};MM.ui.go(\'gBreed\')">🧬 このマチモンで配合する</button>';
+      h+='<button class="mm-cta-s" onclick="MM.ui.go(\'gContest\',{plot:'+i+'})">🏆 大会に出す</button>';
     }
-    if(GA().canMeiboku(pl))h+='<button class="small-btn" onclick="MM.ui.gToMb('+i+')">🌳 名木にする(花壇を空けて、毎週 花粉料が入る)</button>';
-    else if(st>=4)h+='<div class="mm-sub" style="text-align:center">名木になれるのは 重賞2勝・G1勝ち・SSR以上 のどれか</div>';
-    h+='<button class="small-btn" onclick="MM.ui.gCompost('+i+')">'+(st===6?'🥀 堆肥にする(🧩)':'引き抜く(🧩)')+'</button>';
+    if(GA().canMeiboku(pl))h+='<button class="small-btn" onclick="MM.ui.gToMb('+i+')">👑 名マチモンにする(おうちを空けて、毎週 種付け料が入る)</button>';
+    else if(st>=4)h+='<div class="mm-sub" style="text-align:center">名マチモンになれるのは 重賞2勝・G1勝ち・SSR以上 のどれか</div>';
+    h+='<button class="small-btn" onclick="MM.ui.gCompost('+i+')">'+(st===6?'🪦 見送る(🧩)':'手放す(🧩)')+'</button>';
     h+='</div>'+back("garden")+'</div>';
     return h;
   };
@@ -136,29 +184,59 @@
       +'<div>母 <b>'+n(p.a[1])+'</b></div><div class="mm-sub">　母父 '+n(p.a[4])+' / 母母 '+n(p.a[5])+'</div></div>';
   }
   UI.gMon=function(i,u){ var c=UI.ctx(), gd=GA().W(c); GA().setMon(c,i,gd.plots[i]&&gd.plots[i].mon===u?"":u); save(); UI.go("gPlant",{plot:i}); };
-  UI.gToMb=function(i){ var c=UI.ctx(), m=GA().toMeiboku(c,i); save(); if(m&&UI.celebrate)UI.celebrate({icon:"🌳",title:m.n+" が名木に！",sub:"ほかの庭から花粉を求められ、毎週 花粉料が入る",sfx:"big"}); UI.go("gMb"); };
+  UI.gToMb=function(i){ var c=UI.ctx(), m=GA().toMeiboku(c,i); save(); if(m&&UI.celebrate)UI.celebrate({icon:"👑",title:m.n+" が名マチモンに！",sub:"ほかの街から種付けを求められ、毎週 種付け料が入る",sfx:"big"}); UI.go("gMb"); };
   UI.gCompost=function(i){ var c=UI.ctx(), r=GA().compost(c,i); save(); if(r)UI.toast("🧩 +"+r.mat); UI.go("garden"); };
 
-  /* ---------- 💧 水やりクイズ(無限) ---------- */
+  /* ---------- 📚 クイズクイズ(無限) ---------- */
   UI.gQuizStart=function(){ UI.gd.quiz={n:0,hits:0,grow:0,coin:0,qid:null}; nextQ(); UI.go("gQuiz"); };
-  function nextQ(){ var c=UI.ctx(), subs=GA().openSubs(c), ids=MM.learn.pick(1,c,{subs:subs}); UI.gd.quiz.qid=ids[0]; UI.gd.quiz.t0=Date.now(); UI.gd.quiz.fb=null; }
+  function nextQ(){ var c=UI.ctx(), s=UI.gd.quiz, ids=null; if(s.n%4===3)ids=GA().pickExam(c,1); if(!ids||!ids.length)ids=MM.learn.pick(1,c,{subs:[0,1,2,3,4,5,6,7,8]}); s.qid=ids[0]; s.t0=Date.now(); s.fb=null; s.sen={picks:[]}; }
   function qText(q){ return q.q||q.question||""; }
-  function choicesHtml(q,fn){
-    var h="";
-    if(q.choices&&q.choices.length&&q.format!=="true_false"){
-      h+='<div style="display:grid;gap:8px">';
-      for(var i=0;i<q.choices.length;i++)h+='<button class="mm-slot" style="min-height:52px;text-align:left" onclick="'+fn+'('+i+')">'+(i+1)+'. '+esc(typeof q.choices[i]==="string"?q.choices[i]:(q.choices[i].text||""))+'</button>';
+  var KANA=["ア","イ","ウ","エ","オ"];
+  /* 問題の表示(○×/五肢択一/個数/選択式を1つで扱う)。st=選択式の途中状態 */
+  function qHtml(q,fn,st){
+    var h="", tag=q.sentaku?"選択式":(q.kosuu?"個数問題":(q.nendo?"年度別過去問形式":(q.examFmt?"五肢択一":"")));
+    if(tag)h+='<div class="mm-gexam">📝 本試験形式: '+tag+'</div>';
+    if(q.sentaku){
+      var picks=(st&&st.picks)||[], k=picks.length, keys=q.blanks.map(function(b){ return b.key; });
+      var body=esc(q.passage).replace(/\[\[([A-E])\]\]/g,function(m0,key){ var i=keys.indexOf(key); return i<k?'<b class="mm-gblank mm-gblank-on">'+key+':'+esc(q.options[picks[i]])+'</b>':'<b class="mm-gblank'+(i===k?' mm-gblank-now':'')+'">'+key+'</b>'; });
+      h+='<div class="mm-q" style="font-size:14px">'+esc(qText(q))+'<div class="mm-gpass">'+body+'</div></div>';
+      h+='<div class="mm-sub" style="text-align:center">空欄 <b>'+keys[k]+'</b> に入る語句を選ぶ('+(k+1)+'/'+keys.length+')</div><div class="mm-gopts">';
+      q.options.forEach(function(o,i){ h+='<button onclick="'+fn+'('+i+')">'+esc(o)+'</button>'; });
       return h+'</div>';
     }
-    return '<div class="mm-ans"><button onclick="'+fn+'(true)" aria-label="まる">◯</button><button onclick="'+fn+'(false)" aria-label="ばつ">✕</button></div>';
+    h+='<div class="mm-q">'+esc(qText(q))+'</div>';
+    if(q.statements){ h+='<div class="mm-q mm-gstmts">'; q.statements.forEach(function(x,i){ h+='<div><b>'+KANA[i]+'</b> '+esc(x.t)+'</div>'; }); h+='</div>'; }
+    if(q.choices&&q.choices.length&&q.format!=="true_false"){
+      h+='<div style="display:grid;gap:8px">';
+      for(var i=0;i<q.choices.length;i++){ var ch=q.choices[i]; h+='<button class="mm-slot" style="min-height:52px;text-align:left" onclick="'+fn+'('+i+')">'+(i+1)+'. '+esc(typeof ch==="string"?ch:(ch.t||ch.text||""))+'</button>'; }
+      return h+'</div>';
+    }
+    return h+'<div class="mm-ans"><button onclick="'+fn+'(true)" aria-label="まる">◯</button><button onclick="'+fn+'(false)" aria-label="ばつ">✕</button></div>';
   }
   function judgeQ(q,v){
     if(q.choices&&q.choices.length&&q.format!=="true_false"){
+      var ch=q.choices[v]; if(ch&&typeof ch==="object"&&"ok" in ch)return !!ch.ok;
       var ci=(typeof q.answerIndex==="number")?q.answerIndex:(typeof q.correctIndex==="number"?q.correctIndex:-1);
       if(ci<0&&q.choices[0]&&typeof q.choices[0]==="object"){ for(var i=0;i<q.choices.length;i++)if(q.choices[i].correct)ci=i; }
       return v===ci;
     }
     var ans=(typeof q.a==="boolean")?q.a:!!q.answer; return v===ans;
+  }
+  /* 選択式: 1つ選ぶたびに呼ぶ。5つ埋まったら {done,ok,hits} */
+  function senPick(q,st,i){ st.picks=st.picks||[]; st.picks.push(i); if(st.picks.length<q.blanks.length)return {done:false};
+    var hits=0; q.blanks.forEach(function(b,k){ if(st.picks[k]===b.ok)hits++; }); return {done:true,hits:hits,ok:hits>=3}; }
+  /* 解説(形式ごと) */
+  function explainHtml(q,v,st){
+    var h='<div class="mm-q" style="font-size:13px;padding:10px">';
+    if(q.sentaku){ q.blanks.forEach(function(b,k){ var ok=st&&st.picks&&st.picks[k]===b.ok; h+='<div>'+(ok?'⭕':'❌')+' <b>'+b.key+'：'+esc(q.options[b.ok])+'</b> <span class="mm-sub">'+esc(b.law||"")+'</span><br><span class="mm-sub">'+esc(b.why||"")+'</span></div>'; }); }
+    else if(q.choices&&q.choices.length&&q.format!=="true_false"){
+      if(q.statements)q.statements.forEach(function(x,i){ h+='<div>'+(x.ok?'⭕':'❌')+' <b>'+KANA[i]+'</b> <span class="mm-sub">'+esc(x.why||"")+'</span></div>'; });
+      q.choices.forEach(function(ch,i){ if(typeof ch!=="object"||!ch.why)return; h+='<div>'+(ch.ok?'⭕ 正解 ':'')+(i===v?'👉 ':'')+'<b>'+(i+1)+'.</b> <span class="mm-sub">'+esc(ch.why)+'</span></div>'; });
+      if(!q.statements&&!q.choices.some(function(ch){ return ch&&ch.why; })){ var ci=-1; q.choices.forEach(function(ch,i){ if(ch&&ch.ok)ci=i; }); if(ci>=0)h+='<div>⭕ 正解は '+(ci+1)+'</div>'; }
+    } else h+='💡 '+esc(q.e||q.explanation||"");
+    if(q.memoryPoint)h+='<div class="mm-gmemo">🧠 覚えどころ: '+esc(q.memoryPoint)+'</div>';
+    if(q.trap)h+='<div class="mm-sub">⚠ ひっかけ: '+esc(q.trap)+'</div>';
+    return h+'</div>';
   }
   UI.screens.gQuiz=function(){
     var c=UI.ctx(), s=UI.gd.quiz; if(!s)return UI.screens.garden();
@@ -166,16 +244,17 @@
     if(!q){ UI.gd.quiz=null; return UI.screens.garden(); }
     var gd=GA().W(c), cal=GA().cal(c);
     var h='<div class="mm-wrap">'+UI.resBar(c)
-      +'<div class="mm-gqhead"><span>💧 水やり '+s.n+'問 / 正解 '+s.hits+'</span><span>'+cal.sIcon+' 次の週まで '+cal.qc+'/'+cal.need+'</span></div>'+UI.bar(cal.qc,cal.need)
-      +'<div class="mm-gstrip">'+gd.plots.map(function(p){ return p?icon(p,22):'<span class="mm-gi" style="font-size:18px;opacity:.3">🟫</span>'; }).join("")+'</div>';
+      +'<div class="mm-gqhead"><span>📚 クイズ '+s.n+'問 / 正解 '+s.hits+'</span><span>'+cal.sIcon+' 次の週まで '+cal.qc+'/'+cal.need+'</span></div>'+UI.bar(cal.qc,cal.need)
+      +'<div class="mm-gstrip">'+gd.plots.map(function(p){ return p?icon(p,22):'<span class="mm-gi" style="font-size:18px;opacity:.3">🏠</span>'; }).join("")+'</div>';
     if(s.fb)h+=s.fb;
-    else h+='<div class="mm-q">'+esc(qText(q))+'</div>'+choicesHtml(q,"MM.ui.gQuizAns");
-    h+='<button class="small-btn mm-gback" onclick="MM.ui.gQuizEnd()">ガーデンにもどる</button>';
+    else h+=qHtml(q,"MM.ui.gQuizAns",s.sen);
+    h+='<button class="small-btn mm-gback" onclick="MM.ui.gQuizEnd()">マチモンにもどる</button>';
     return h+'</div>';
   };
   UI.gQuizAns=function(v){
     var c=UI.ctx(), s=UI.gd.quiz; if(!s||s.fb)return;
-    var q=G.qById(s.qid), ok=judgeQ(q,v), ms=Date.now()-(s.t0||Date.now());
+    var q=G.qById(s.qid), ms=Date.now()-(s.t0||Date.now()), ok;
+    if(q.sentaku){ var sp=senPick(q,s.sen,v); if(!sp.done){ UI.render(); return; } ok=sp.ok; } else ok=judgeQ(q,v);
     var rw=MM.learn.commit(s.qid,ok,ms,c), gain=MM.economy.grant(rw,c);
     try{ MM.evolve.gainXp(c,q.s||0,ok); }catch(e){}
     save();
@@ -183,26 +262,26 @@
     var gdn=gain.garden||{};
     sfx(ok?"correct":"wrong",c.mm.combo); UI.play({haptic:ok?"light":"medium"});
     var pops=(ok?'<span class="mm-pop">🪙 +'+gain.g+'</span>':'')+(gdn.grow?'<span class="mm-pop" style="animation-delay:.1s">💧 成長 +'+Math.round(gdn.grow)+'</span>':'')
-      +(gain.ke?'<span class="mm-pop mm-pop-ke" style="animation-delay:.2s">✨ 知識 +'+gain.ke+'</span>':'')+(gdn.yield?'<span class="mm-pop" style="animation-delay:.3s">🍎 実り +'+gdn.yield+'</span>':'');
+      +(gain.ke?'<span class="mm-pop mm-pop-ke" style="animation-delay:.2s">✨ 知識 +'+gain.ke+'</span>':'')+(gdn.yield?'<span class="mm-pop" style="animation-delay:.3s">🪙 稼ぎ +'+gdn.yield+'</span>':'');
     var extra="";
-    (gdn.bloom||[]).forEach(function(p){ extra+='<div class="mm-gbloom">'+icon(p,40)+' <b>'+esc(p.n)+'</b> が咲いた！ '+rarBadge(p)+'</div>'; });
-    if(gdn.drop)extra+='<div class="mm-gbloom mm-gdrop">🎁 落としダネ！ <b>'+esc(gdn.drop.n)+'</b> '+rarBadge(gdn.drop)+traitBadge(gdn.drop)+shinyBadge(gdn.drop)+'</div>';
+    (gdn.bloom||[]).forEach(function(p){ extra+='<div class="mm-gbloom">'+icon(p,40)+' <b>'+esc(p.n)+'</b> がおとなになった！ '+rarBadge(p)+'</div>'; });
+    if(gdn.drop)extra+='<div class="mm-gbloom mm-gdrop">🎁 落としタマゴ！ <b>'+esc(gdn.drop.n)+'</b> '+rarBadge(gdn.drop)+traitBadge(gdn.drop)+shinyBadge(gdn.drop)+'</div>';
     if(gdn.week)extra+='<div class="mm-gbloom">📅 1週すすんだ！ '+esc(GA().cal(c).label)+(gdn.week.council?' ・ 🏛街評議会の結果が出た！':'')+(gdn.week.year?' ・ 🎊年度表彰！':'')+'</div>';
     s.fb='<div class="mm-stamp '+(ok?'mm-stamp-ok':'')+'">'+(ok?'⭕ 正解！':'❌ ざんねん')+'</div><div class="mm-reward">'+pops+'</div>'+extra
-      +'<div class="mm-q" style="font-size:13px;padding:10px">💡 '+esc(q.e||q.explanation||"")+'</div>'
+      +explainHtml(q,v,s.sen)
       +'<button class="mm-cta" onclick="MM.ui.gQuizNext()">'+(gdn.week&&(gdn.week.council||gdn.week.year)?'結果を見る ▶':'つぎの問題 ▶')+'</button>';
     if(gdn.bloom&&gdn.bloom.length){ sfx("big"); }
-    if(gdn.drop&&GA().rarity(gdn.drop)>=3&&UI.celebrate)UI.celebrate({icon:"🎁",title:"落としダネ "+GA().rarInfo(gdn.drop).name+"！",sub:gdn.drop.n,sfx:"fanfare"});
+    if(gdn.drop&&GA().rarity(gdn.drop)>=3&&UI.celebrate)UI.celebrate({icon:"🎁",title:"落としタマゴ "+GA().rarInfo(gdn.drop).name+"！",sub:gdn.drop.n,sfx:"fanfare"});
     UI.render();
-    if(ok&&!extra){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.gd.quiz&&UI.gd.quiz.fb&&UI.route.screen==="gQuiz")UI.gQuizNext(); },1300); }
+    if(ok&&!extra&&!GA().isExam(q)){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.gd.quiz&&UI.gd.quiz.fb&&UI.route.screen==="gQuiz")UI.gQuizNext(); },1300); }
   };
   UI.gQuizNext=function(){ clearTimeout(UI._gt); var c=UI.ctx(), gd=GA().W(c); if(gd.pend.length){ UI.gd.quiz=null; UI.go("garden"); return; } nextQ(); UI.render(); };
   UI.gQuizEnd=function(){ clearTimeout(UI._gt); UI.gd.quiz=null; UI.go("garden"); };
 
-  /* ---------- 🌰 タネガチャ ---------- */
+  /* ---------- 🥚 マチモンガチャ ---------- */
   UI.screens.gGacha=function(){
     var c=UI.ctx(), gd=GA().W(c), pf=GD().families[GA().pickupFam(gd)], stt=GD().traitById[GA().seasonTrait(gd)];
-    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🌰 タネガチャ <span class="mm-sub">タネ '+gd.seeds.length+'/'+GA().seedCap(gd)+' ・ 天井まで '+Math.max(0,GD().GACHA.pity-gd.pity)+'回 ・ 🏅'+gd.medal+'</span></div>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🥚 マチモンガチャ <span class="mm-sub">タマゴ '+gd.seeds.length+'/'+GA().seedCap(gd)+' ・ 天井まで '+Math.max(0,GD().GACHA.pity-gd.pity)+'回 ・ 🏅'+gd.medal+'</span></div>';
     if(GA().freeReady(c))h+='<button class="mm-cta mm-gfree" onclick="MM.ui.gPull(\'normal\',1,1)">🎁 きょうの無料ガチャ ▶</button>';
     GD().BANNERS.forEach(function(b){
       var cur=b.currency==="medal"?"🏅":"🪙";
@@ -212,7 +291,7 @@
         +'<button class="mm-cta-s" '+(GA().canPull(c,10,b.id)?'':'disabled')+' onclick="MM.ui.gPull(\''+b.id+'\',10)">'+(b.id==="council"?'UR確定 ':'10連 ')+cur+fmt(b.cost10)+'</button></div></div>';
     });
     h+='<div class="mm-q" style="font-size:11px;padding:8px">排出率: N55% / R28% / SR13% / SSR3.5% / UR0.5%。天井'+GD().GACHA.pity+'回でSR以上。特性つき・✨色違い(1/64)はどのガチャでも出る。伝説(LG)は配合でしか生まれない。コインはクイズの正解で貯まる。</div>';
-    return h+back("garden")+'</div>';
+    return h+back("garden")+'</div>'+UI.tabs("gGacha");
   };
   UI.gPull=function(bid,n,free){
     var c=UI.ctx(), r=GA().pull(c,n,bid,!!free); save();
@@ -224,15 +303,16 @@
     var c=UI.ctx(), L=UI.gd.last; if(!L)return UI.screens.garden();
     var best=0; L.seeds.forEach(function(s){ best=Math.max(best,GA().rarity(s)+(s.tr?0.5:0)+(s.sh?1:0)); });
     var cls=best>=3?"mm-gcap-rainbow":best>=2?"mm-gcap-gold":"";
-    var h='<div class="mm-wrap"><div class="mm-h" style="justify-content:center">'+(L.from==="breed"?'🧬 配合の結果':'🌰 ガチャの結果')+'</div>'
+    var h='<div class="mm-wrap"><div class="mm-h" style="justify-content:center">'+(L.from==="breed"?'🧬 配合の結果':(L.from==="hatch"?'🐣 タマゴが割れた！':'🥚 ガチャの結果'))+'</div>'
       +'<div class="mm-gcapwrap '+cls+'"><div class="mm-gcap">'+(best>=3?'🌈':best>=2?'✨':'🥚')+'</div><div class="mm-sub">'+(best>=3?'確定演出！！':best>=2?'キラッ…！':'')+'</div></div><div class="mm-greveal">';
     L.seeds.forEach(function(s,i){ var ri=GA().rarInfo(s);
-      h+='<div class="mm-gres" style="animation-delay:'+(0.9+i*0.18)+'s;border-color:'+ri.color+'">'+icon({f:s.f,g:999,bw:0,sh:s.sh,o:s.o,t:s.t,j:s.j,s:s.s},28)
+      h+='<div class="mm-gres" style="animation-delay:'+(0.9+i*0.18)+'s;border-color:'+ri.color+'">'+eggPx(s,28)
         +'<span class="mm-grar" style="background:'+ri.color+'">'+ri.name+'</span><span class="mm-gres-n">'+esc(s.n)+'</span>'+(s.tr?'<span class="mm-gres-t">'+GD().traitById[s.tr].icon+esc(GD().traitById[s.tr].name)+'</span>':'')+(s.sh?'<span class="mm-gres-t">✨色違い</span>':'')+(s.mut?'<span class="mm-gres-t">🧬突然変異</span>':'')+'</div>'; });
     h+='</div>';
+    if(L.from==="hatch")h+='<div class="mm-gbloom">'+(L.placed>=0?'🏠 おうちに入ったモン！ クイズに正解すると育つモン':'🥚 おうちが満員なのでタマゴ袋に入れたモン')+'</div>';
     if(L.found)h+='<div class="mm-gbloom">💡 隠しニックス発見！ この組み合わせはこれから「黄金配合」として表示されるモン</div>';
-    h+='<div class="mm-gbtns"><button class="mm-cta-s" onclick="MM.ui.go(\'gSeeds\',{})">🌰 タネ袋へ(植える)</button>'
-      +(L.from==="breed"?'<button class="mm-cta-s" onclick="MM.ui.go(\'gBreed\')">🧬 もう一度配合</button>':'<button class="mm-cta-s" onclick="MM.ui.go(\'gGacha\')">🌰 もう一度</button>')+'</div>'+back("garden")+'</div>';
+    h+='<div class="mm-gbtns"><button class="mm-cta-s" onclick="MM.ui.go(\'gSeeds\',{})">🥚 タマゴ袋へ(かえす)</button>'
+      +(L.from==="hatch"?((UI.ctx().mm.res.tama||0)>0?'<button class="mm-cta-s" onclick="MM.ui.gHatch()">🥚 もう1つ割る</button>':'<button class="mm-cta-s" onclick="MM.ui.go(\'garden\')">🐣 育てにいく</button>'):(L.from==="breed"?'<button class="mm-cta-s" onclick="MM.ui.go(\'gBreed\')">🧬 もう一度配合</button>':'<button class="mm-cta-s" onclick="MM.ui.go(\'gGacha\')">🥚 もう一度</button>'))+'</div>'+back("garden")+'</div>';
     if(best>=3)setTimeout(function(){ sfx("fanfare"); },900); else if(best>=2)setTimeout(function(){ sfx("levelup"); },900);
     return h;
   };
@@ -241,7 +321,7 @@
   UI.screens.gBreed=function(){
     var c=UI.ctx(), gd=GA().W(c), S=UI.gd.sel, A=GA().ref(c,S.a), B=GA().ref(c,S.b);
     if(!A)S.a=null; if(!B)S.b=null;
-    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🧬 配合シミュレーション <span class="mm-sub">何回でも試せる・決定でタネができる</span></div>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🧬 配合シミュレーション <span class="mm-sub">何回でも試せる・決定でタマゴができる</span></div>';
     h+='<div class="mm-gpair">'+slot("a","父(系統を継ぐ)",A)+'<span class="mm-gx">×</span>'+slot("b","母",B)+'</div>';
     if(A&&B){
       var pv=GA().preview(c,S.a,S.b);
@@ -261,14 +341,14 @@
           +(th.inbreed?'<div class="mm-sub" style="text-align:center;color:#D8534F">⚠ インブリード: 丈夫さが下がりやすい・まれに虚弱</div>':'')+'</div>';
         h+='<button class="mm-cta" '+(pv.used?'disabled':'')+' onclick="MM.ui.gBreedGo()">'+(pv.used?'今週はもう配合した(来週またできる)':'🧬 配合する(🪙'+fmt(pv.cost)+')')+'</button>';
       }
-    }else h+='<div class="mm-q" style="font-size:13px">下のリストから<b>父</b>と<b>母</b>を選ぶモン。咲いている自分の植物か、🌳名木(花粉を借りる)が選べる。</div>';
+    }else h+='<div class="mm-q" style="font-size:13px">下のリストから<b>父</b>と<b>母</b>を選ぶモン。おとなの自分のマチモンか、🌳名マチモン(血統を借りる)が選べる。</div>';
     /* 候補 */
     var mine=[]; gd.plots.forEach(function(p,i){ if(p&&p.bw!=null&&!p.dead)mine.push({ref:{k:"p",i:i},p:p}); });
-    h+='<div class="mm-h" style="font-size:14px">🪴 自分の植物(咲いているもの)</div>';
-    if(!mine.length)h+='<div class="mm-sub">まだ咲いている植物がないモン。💧水やりで咲かせよう</div>';
+    h+='<div class="mm-h" style="font-size:14px">🏠 自分のマチモン(おとなのもの)</div>';
+    if(!mine.length)h+='<div class="mm-sub">まだおとなのマチモンがないモン。📚クイズでおとなにしよう</div>';
     mine.forEach(function(x){ h+=cand(x.ref,x.p,S); });
     var tab=UI.gd.tab||"all";
-    h+='<div class="mm-h" style="font-size:14px">🌳 名木(花粉を借りる)</div><div class="mm-gtabs">'+['all'].concat(GD().families.map(function(f){ return String(f.id); })).map(function(t){
+    h+='<div class="mm-h" style="font-size:14px">👑 名マチモン(血統を借りる)</div><div class="mm-gtabs">'+['all'].concat(GD().families.map(function(f){ return String(f.id); })).map(function(t){
       return '<button class="'+(t===tab?'mm-act':'')+'" onclick="MM.ui.gd.tab=\''+t+'\';MM.ui.render()">'+(t==="all"?"すべて":GD().families[+t].icon)+'</button>'; }).join("")+'</div>';
     var mbs=gd.mb.slice().filter(function(m){ return tab==="all"||String(m.f)===tab; }).sort(function(a,b){ return GA().mbScore(b)-GA().mbScore(a); });
     var lim=UI.gd.mbMore?120:20; mbs.slice(0,lim).forEach(function(m){ h+=cand({k:"m",i:m.i},m,S); });
@@ -277,14 +357,14 @@
   };
   function slot(which,label,p){
     if(!p)return '<div class="mm-gslot mm-gslot-empty"><span class="mm-sub">'+label+'</span><span style="font-size:30px;opacity:.4">❔</span></div>';
-    return '<button class="mm-gslot" style="border-color:'+GA().rarInfo(p).color+'" onclick="MM.ui.gd.sel.'+which+'=null;MM.ui.render()"><span class="mm-sub">'+label+'</span><span style="font-size:30px">'+GD().families[p.f].icon+'</span><b>'+esc(p.n)+'</b><span class="mm-sub">'+esc(lineName(p))+'</span>'+rarBadge(p)+(p.tr?GD().traitById[p.tr].icon:'')+'</button>';
+    return '<button class="mm-gslot" style="border-color:'+GA().rarInfo(p).color+'" onclick="MM.ui.gd.sel.'+which+'=null;MM.ui.render()"><span class="mm-sub">'+label+'</span><span style="font-size:30px">'+famPx(p.f,22,p.sh)+'</span><b>'+esc(p.n)+'</b><span class="mm-sub">'+esc(lineName(p))+'</span>'+rarBadge(p)+(p.tr?GD().traitById[p.tr].icon:'')+'</button>';
   }
   function cand(ref,p,S){
     var on=(S.a&&S.a.k===ref.k&&S.a.i===ref.i)?"父":(S.b&&S.b.k===ref.k&&S.b.i===ref.i)?"母":"";
     var r=JSON.stringify(ref).replace(/"/g,"'");
     return '<button class="mm-gcand'+(on?' mm-gcand-on':'')+'" style="border-left-color:'+GA().rarInfo(p).color+'" onclick="MM.ui.gPick('+r+')">'
-      +'<span style="font-size:24px">'+GD().families[p.f].icon+'</span><span class="mm-gcand-b"><b>'+esc(p.n)+'</b> '+rarBadge(p)+(p.tr?GD().traitById[p.tr].icon:'')+(p.sh?'✨':'')+(p.own?' <span class="mm-gtr">自家</span>':'')
-      +'<span class="mm-sub">'+esc(lineName(p))+' / '+GD().STATS.map(function(s){ return s.icon+GA().grade(p[s.k]); }).join(' ')+(p.fee?' / 花粉料🪙'+fmt(p.fee):'')+(p.r&&p.r.g1?' / G1 '+p.r.g1+'勝':'')+'</span></span>'
+      +'<span style="font-size:24px">'+famPx(p.f,22,p.sh)+'</span><span class="mm-gcand-b"><b>'+esc(p.n)+'</b> '+rarBadge(p)+(p.tr?GD().traitById[p.tr].icon:'')+(p.sh?'✨':'')+(p.own?' <span class="mm-gtr">自家</span>':'')
+      +'<span class="mm-sub">'+esc(lineName(p))+' / '+GD().STATS.map(function(s){ return s.icon+GA().grade(p[s.k]); }).join(' ')+(p.fee?' / 種付け料🪙'+fmt(p.fee):'')+(p.r&&p.r.g1?' / G1 '+p.r.g1+'勝':'')+'</span></span>'
       +(on?'<i class="mm-gdot">'+on+'</i>':'')+'</button>';
   }
   UI.gPick=function(ref){
@@ -300,26 +380,26 @@
     UI.gd.last={seeds:r.seeds,from:"breed",found:r.found}; sfx("roll",6); UI.go("gReveal");
   };
 
-  /* ---------- 🌳 名木 ---------- */
+  /* ---------- 👑 名マチモン ---------- */
   UI.screens.gMb=function(){
     var c=UI.ctx(), gd=GA().W(c);
-    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🌳 名木 <span class="mm-sub">'+gd.mb.length+'本 ・ 配合の父/母として花粉を借りられる</span></div>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">👑 名マチモン <span class="mm-sub">'+gd.mb.length+'本 ・ 配合の父/母として血統を借りられる</span></div>';
     var mine=gd.mb.filter(function(m){ return m.own; });
-    if(mine.length){ h+='<div class="mm-h" style="font-size:14px">自家の名木(毎週 花粉料が入る)</div>'; mine.forEach(function(m){ h+=mbRow(gd,m); }); }
+    if(mine.length){ h+='<div class="mm-h" style="font-size:14px">自家の名マチモン(毎週 種付け料が入る)</div>'; mine.forEach(function(m){ h+=mbRow(gd,m); }); }
     var hot=GA().hotLines(gd); if(hot.length)h+='<div class="mm-q" style="font-size:12px;padding:8px">🔥 勢いのある系統(昨年のリーディング): '+hot.map(function(id){ return esc(GA().lineById(gd,id).name); }).join(" / ")+'</div>';
     gd.mb.filter(function(m){ return !m.own; }).sort(function(a,b){ return GA().mbScore(b)-GA().mbScore(a); }).slice(0,60).forEach(function(m){ h+=mbRow(gd,m); });
     return h+back("garden")+'</div>';
   };
   function mbRow(gd,m){
     var r=JSON.stringify({k:"m",i:m.i}).replace(/"/g,"'");
-    return '<button class="mm-gcand" style="border-left-color:'+GA().rarInfo(m).color+'" onclick="MM.ui.gd.sel.b='+r+';MM.ui.go(\'gBreed\')"><span style="font-size:24px">'+GD().families[m.f].icon+'</span><span class="mm-gcand-b"><b>'+esc(m.n)+'</b> '+rarBadge(m)+(m.tr?GD().traitById[m.tr].icon:'')+(m.own?' <span class="mm-gtr">自家</span>':'')
-      +'<span class="mm-sub">'+esc(GA().lineById(gd,m.l).name)+' / '+GD().STATS.map(function(s){ return s.icon+GA().grade(m[s.k]); }).join(' ')+' / 花粉料🪙'+fmt(m.fee)+' / 重賞'+m.r.gr+' G1 '+m.r.g1+'</span></span></button>';
+    return '<button class="mm-gcand" style="border-left-color:'+GA().rarInfo(m).color+'" onclick="MM.ui.gd.sel.b='+r+';MM.ui.go(\'gBreed\')"><span style="font-size:24px">'+famPx(m.f,22,m.sh)+'</span><span class="mm-gcand-b"><b>'+esc(m.n)+'</b> '+rarBadge(m)+(m.tr?GD().traitById[m.tr].icon:'')+(m.own?' <span class="mm-gtr">自家</span>':'')
+      +'<span class="mm-sub">'+esc(GA().lineById(gd,m.l).name)+' / '+GD().STATS.map(function(s){ return s.icon+GA().grade(m[s.k]); }).join(' ')+' / 種付け料🪙'+fmt(m.fee)+' / 重賞'+m.r.gr+' G1 '+m.r.g1+'</span></span></button>';
   }
 
   /* ---------- 🔨 施設 ---------- */
   UI.screens.gFac=function(){
     var c=UI.ctx(), gd=GA().W(c), F=GD().FACILITY;
-    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🔨 ガーデン施設</div>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🔨 マチモン施設</div>';
     Object.keys(F).forEach(function(k){ var f=F[k], lv=gd.fac[k]||0, cost=GA().facCost(gd,k);
       h+='<div class="mm-gcard"><div class="mm-gcard-top"><span style="font-size:30px">'+f.icon+'</span><div><b>'+esc(f.name)+' Lv'+lv+'</b> <span class="mm-sub">/ 最大'+f.max+'</span><br><span class="mm-sub">'+esc(f.desc)+'</span></div></div>'
         +'<div class="mm-gbtns">'+(cost==null?'<span class="mm-sub">最大レベル</span>':'<button class="mm-cta-s" '+(c.mm.res.g>=cost?'':'disabled')+' onclick="MM.ui.gUp(\''+k+'\')">強化 🪙'+fmt(cost)+'</button>')+'</div></div>'; });
@@ -327,29 +407,29 @@
   };
   UI.gUp=function(k){ var c=UI.ctx(), r=GA().upgrade(c,k); save(); if(r.err)UI.toast(r.err); else { sfx("levelup"); UI.toast(GD().FACILITY[k].name+" Lv"+r.lv+"！"); } UI.go("gFac"); };
 
-  /* ---------- 🏆 品評会 ---------- */
+  /* ---------- 🏆 大会 ---------- */
   UI.screens.gContest=function(p){
     var c=UI.ctx(), gd=GA().W(c); if(UI.gd.contest)return contestQ(c);
     var cs=GA().contestsOf(c,gd.w), bloom=[]; gd.plots.forEach(function(x,i){ if(x&&x.bw!=null&&!x.dead)bloom.push(i); });
-    var h='<div class="mm-wrap">'+UI.resBar(c)+head(c)+'<div class="mm-h">🏆 今週の品評会</div>';
-    if(!bloom.length)h+='<div class="mm-q" style="font-size:13px">咲いている植物がいないと出品できないモン。💧水やりで咲かせよう</div>';
+    var h='<div class="mm-wrap">'+UI.resBar(c)+head(c)+'<div class="mm-h">🏆 今週の大会</div>';
+    if(!bloom.length)h+='<div class="mm-q" style="font-size:13px">おとなのマチモンがいないと出場できないモン。📚クイズでおとなにしよう</div>';
     cs.forEach(function(d){
       var GR=GD().GRADE[d.g], done=GA().isDone(c,d.id);
       h+='<div class="mm-gcont'+(d.g===1?' mm-gcont-g1':'')+(done?' mm-gcont-done':'')+'"><div><span class="mm-grade" style="background:'+GR.color+'">'+GR.label+'</span> <b>'+esc(d.name)+'</b>'+(d.world?' <span class="mm-gtr">🌏'+esc(d.world)+'</span>':'')+'</div>'
         +'<div class="mm-sub">'+GD().CAT_NAME[d.cat]+' / 1着 🪙'+fmt(GR.prize[0])+(d.g===1?' 🎫':'')+' / 条件: '+esc(d.g===5?"未勝利":GR.req)+' / プレゼン'+GR.n+'問</div>';
       if(done)h+='<div class="mm-sub">✔ 終了</div>';
       else bloom.forEach(function(i){ var pl=gd.plots[i], el=GA().eligible(c,pl,d), sc=Math.round(GA().catScore(gd,pl,d.cat,d.w));
-        h+='<button class="mm-gentry" '+(el?'disabled':'')+' onclick="MM.ui.gEnter(\''+d.id+'\','+i+')">'+icon(pl,20)+' '+esc(pl.n)+' <span class="mm-sub">'+(el?esc(el):'部門点 '+sc+' ▶ 出品')+'</span></button>'; });
+        h+='<button class="mm-gentry" '+(el?'disabled':'')+' onclick="MM.ui.gEnter(\''+d.id+'\','+i+')">'+icon(pl,20)+' '+esc(pl.n)+' <span class="mm-sub">'+(el?esc(el):'部門点 '+sc+' ▶ 出場')+'</span></button>'; });
       h+='</div>';
     });
     /* ライバルの有力株 */
     var top=GA().rivalAlive(gd).filter(function(x){ return x.r.g1>0||x.r.gr>1; }).sort(function(a,b){ return b.r.pz-a.r.pz; }).slice(0,5);
     if(top.length){ h+='<div class="mm-h" style="font-size:14px">👀 ライバルの有力株</div><div class="mm-q" style="font-size:12px;padding:8px">';
-      top.forEach(function(x){ var rv=GD().rivalById[x.ow]||{}; h+='<div class="mm-row"><span>'+GD().families[x.f].icon+' '+esc(x.n)+' <span class="mm-sub">('+esc(rv.name||"")+')</span></span><span>重賞'+x.r.gr+' G1 '+x.r.g1+'</span></div>'; }); h+='</div>'; }
+      top.forEach(function(x){ var rv=GD().rivalById[x.ow]||{}; h+='<div class="mm-row"><span>'+famPx(x.f,22,x.sh)+' '+esc(x.n)+' <span class="mm-sub">('+esc(rv.name||"")+')</span></span><span>重賞'+x.r.gr+' G1 '+x.r.g1+'</span></div>'; }); h+='</div>'; }
     return h+back("garden")+'</div>';
   };
   UI.gEnter=function(cid,i){
-    var c=UI.ctx(), s=GA().start(c,cid,i); if(!s){ UI.toast("出品できないモン"); return; }
+    var c=UI.ctx(), s=GA().start(c,cid,i); if(!s){ UI.toast("出場できないモン"); return; }
     var gd=GA().W(c), r0=null; for(var k=0;k<gd.rp.length;k++)if(gd.rp[k].i===s.rivals[0])r0=gd.rp[k];
     var rv=r0?GD().rivalById[r0.ow]:null; s.taunt=rv?{boss:rv.boss,name:rv.name,text:rv.taunt}:null;
     UI.gd.contest=s; s.t0=Date.now(); save(); sfx("roll",4); UI.go("gContest");
@@ -359,21 +439,23 @@
     if(!q||s.i>=s.n)return contestResult(c);
     var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h"><span class="mm-grade" style="background:'+GR.color+'">'+GR.label+'</span> '+esc(s.def.name)+' <span class="mm-sub">プレゼン '+(s.i+1)+'/'+s.n+' ・ 正解 '+s.hits+'</span></div>';
     if(s.i===0&&s.taunt)h+='<div class="mm-live mm-live-taunt">🗣 '+esc(s.taunt.boss)+'('+esc(s.taunt.name)+')「'+esc(s.taunt.text)+'」</div>';
-    h+='<div class="mm-sub" style="text-align:center">審査員に植物の良さを説明しよう！ 正解が多いほど高得点</div>';
-    if(s.fb)h+=s.fb; else h+='<div class="mm-q">'+esc(qText(q))+'</div>'+choicesHtml(q,"MM.ui.gConAns");
+    h+='<div class="mm-sub" style="text-align:center">審査員にマチモンの良さを説明しよう！ 正解が多いほど高得点</div>';
+    if(s.fb)h+=s.fb; else h+=qHtml(q,"MM.ui.gConAns",s.sen||(s.sen={picks:[]}));
     return h+'</div>';
   }
   UI.gConAns=function(v){
     var c=UI.ctx(), s=UI.gd.contest; if(!s||s.fb)return;
-    var q=G.qById(s.qids[s.i]), ok=judgeQ(q,v), ms=Date.now()-(s.t0||Date.now());
+    var q=G.qById(s.qids[s.i]), ms=Date.now()-(s.t0||Date.now()), ok;
+    s.sen=s.sen||{picks:[]};
+    if(q.sentaku){ var sp=senPick(q,s.sen,v); if(!sp.done){ UI.render(); return; } ok=sp.ok; } else ok=judgeQ(q,v);
     var r=GA().step(c,s,ok,ms); save();
     sfx(ok?"correct":"wrong",c.mm.combo); UI.play({haptic:ok?"light":"medium"});
     s.fb='<div class="mm-stamp '+(ok?'mm-stamp-ok':'')+'">'+(ok?'⭕ 審査員がうなずいた！':'❌ 審査員が首をかしげた…')+'</div>'
-      +'<div class="mm-q" style="font-size:13px;padding:10px">💡 '+esc(q.e||q.explanation||"")+'</div><button class="mm-cta" onclick="MM.ui.gConNext()">'+(r.over?'審査結果へ ▶':'つぎ ▶')+'</button>';
+      +explainHtml(q,v,s.sen)+'<button class="mm-cta" onclick="MM.ui.gConNext()">'+(r.over?'審査結果へ ▶':'つぎ ▶')+'</button>';
     UI.render();
-    if(ok&&!r.over){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.gd.contest&&UI.gd.contest.fb)UI.gConNext(); },1200); }
+    if(ok&&!r.over&&!GA().isExam(q)){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.gd.contest&&UI.gd.contest.fb)UI.gConNext(); },1200); }
   };
-  UI.gConNext=function(){ clearTimeout(UI._gt); var s=UI.gd.contest; if(!s)return UI.go("garden"); s.fb=null; s.t0=Date.now(); UI.render(); };
+  UI.gConNext=function(){ clearTimeout(UI._gt); var s=UI.gd.contest; if(!s)return UI.go("garden"); s.fb=null; s.sen={picks:[]}; s.t0=Date.now(); UI.render(); };
   function contestResult(c){
     var s=UI.gd.contest; UI.gd.contest=null;
     var r=GA().finish(c,s); save();
@@ -383,12 +465,12 @@
       +'<div class="mm-stamp '+(won?'mm-stamp-ok':'')+'" style="font-size:22px">'+(won?'🏆 優勝！ '+esc(r.def.name):(r.pos<=3?'🎖 '+r.pos+'位 入賞！':r.pos+'位…'))+'</div>'
       +'<div class="mm-sub" style="text-align:center">プレゼン '+(r.pres>=0?'+':'')+(Math.round(r.pres*10)/10)+'点(正解 '+s.hits+'/'+s.n+')</div><div class="mm-q" style="padding:8px">';
     r.board.forEach(function(b,i){ var rv=GD().rivalById[b.ow]||{};
-      h+='<div class="mm-board-row'+(b.me?' mm-board-me':'')+'"><b>'+(i+1)+'位</b><span>'+GD().families[b.p.f].icon+' '+esc(b.name)+' <span class="mm-sub">'+(b.me?'あなた':esc(rv.name||""))+'</span></span><span class="mm-sub">'+b.score+'</span></div>'; });
+      h+='<div class="mm-board-row'+(b.me?' mm-board-me':'')+'"><b>'+(i+1)+'位</b><span>'+famPx(b.p.f,22,b.p.sh)+' '+esc(b.name)+' <span class="mm-sub">'+(b.me?'あなた':esc(rv.name||""))+'</span></span><span class="mm-sub">'+b.score+'</span></div>'; });
     h+='</div><div class="mm-reward">'+(r.prize?'<span class="mm-pop">🪙 賞金 +'+fmt(r.prize)+'</span>':'')+(r.fame?'<span class="mm-pop" style="animation-delay:.2s">名声 +'+r.fame+'</span>':'')+(r.tix?'<span class="mm-pop mm-pop-ke" style="animation-delay:.3s">🎫 +'+r.tix+'</span>':'')+'</div>';
     if(r.owners.length){ h+='<div class="mm-q" style="font-size:12px;padding:8px">'; r.owners.slice(0,4).forEach(function(o){ h+='<div>'+(o.beat?'✅':'❌')+' <b>'+esc(o.name)+'</b> 通算'+o.w+'勝'+o.l+'敗 <span class="mm-sub">'+esc(o.boss)+'「'+esc(o.text)+'」</span></div>'; }); h+='</div>'; }
-    if(!won)h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>'+(s.hits<s.n?'プレゼンの正解が増えれば順位が上がるモン。':'植物の素質で負けたモン。配合でもっと強いタネを作ろう！')+'</span></div>';
-    h+='<button class="mm-cta" onclick="MM.ui.go(\'garden\')">ガーデンへもどる ▶</button></div>';
-    if(won)setTimeout(function(){ sfx("fanfare"); if(UI.celebrate)UI.celebrate({icon:GD().families[r.plant.f].icon,title:r.def.name+" 優勝！",sub:GR.label+(r.tix?" 🎫+"+r.tix:"")+" 🪙+"+fmt(r.prize),sfx:"fanfare"}); },300);
+    if(!won)h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>'+(s.hits<s.n?'プレゼンの正解が増えれば順位が上がるモン。':'マチモンの素質で負けたモン。配合でもっと強いタマゴを作ろう！')+'</span></div>';
+    h+='<button class="mm-cta" onclick="MM.ui.go(\'garden\')">マチモンへもどる ▶</button></div>';
+    if(won)setTimeout(function(){ sfx("fanfare"); if(UI.celebrate)UI.celebrate({icon:famPx(r.plant.f,22,r.plant.sh),title:r.def.name+" 優勝！",sub:GR.label+(r.tix?" 🎫+"+r.tix:"")+" 🪙+"+fmt(r.prize),sfx:"fanfare"}); },300);
     return h;
   }
 
@@ -397,10 +479,10 @@
     var c=UI.ctx(), gd=GA().W(c), pv=GA().councilPreview(c), me=pv.me;
     var h='<div class="mm-wrap">'+UI.resBar(c)+head(c)+'<div class="mm-h">🏛 街評議会 <span class="mm-sub">次の審査まで あと'+pv.weeksLeft+'週(正解 約'+(pv.weeksLeft*GD().WEEK_NEED+GD().WEEK_NEED-gd.qc)+'問)</span></div>';
     h+='<div class="mm-q" style="font-size:13px">季節の終わりごとに、全国25の街から審査員が見に来るモン。いまの予想は <b>'+pv.pos+'位</b> / '+pv.board.length+'</div>';
-    h+='<div class="mm-q" style="font-size:12px;padding:8px"><b>あなたの街 '+fmt(me.total)+'点</b><div class="mm-row"><span>🌸 景観(咲いた花・名声・名木・称号・黄金像)</span><span>'+fmt(me.scenery)+'</span></div><div class="mm-row"><span>🌈 咲いている科 '+me.fams+'/9 ×40</span><span>'+me.fams*40+'</span></div><div class="mm-row"><span>✨ 特性 '+me.traits+'株×30 / 色違い '+me.shiny+'株×50</span><span>'+(me.traits*30+me.shiny*50)+'</span></div></div>';
+    h+='<div class="mm-q" style="font-size:12px;padding:8px"><b>あなたの街 '+fmt(me.total)+'点</b><div class="mm-row"><span>🌸 活気(おとなのマチモン・名声・名マチモン・称号・黄金像)</span><span>'+fmt(me.scenery)+'</span></div><div class="mm-row"><span>🌈 おとなの族 '+me.fams+'/9 ×40</span><span>'+me.fams*40+'</span></div><div class="mm-row"><span>✨ 特性 '+me.traits+'株×30 / 色違い '+me.shiny+'株×50</span><span>'+(me.traits*30+me.shiny*50)+'</span></div></div>';
     h+='<div class="mm-h" style="font-size:14px">🎁 表彰の特典</div><div class="mm-q" style="font-size:12px;padding:8px">';
     GD().COUNCIL_PRIZE.forEach(function(p){ h+='<div class="mm-row"><span>'+p.icon+' <b>'+p.name+'</b>'+(p.upto<99?'('+p.upto+'位以内)':'')+'</span><span class="mm-sub">'+esc(p.desc)+(p.tix?' 🎫'+p.tix:'')+'</span></div>'; });
-    h+='<div class="mm-sub" style="margin-top:4px">🗿黄金像: 1体ごとに正解コイン+10%・景観+120(最大'+GD().STATUE_MAX+'体)。🏅メダルはガチャの「評議会メダル交換」で限定の確定タネに。</div></div>';
+    h+='<div class="mm-sub" style="margin-top:4px">🗿黄金像: 1体ごとに正解コイン+10%・活気+120(最大'+GD().STATUE_MAX+'体)。🏅メダルはガチャの「評議会メダル交換」で限定の確定タマゴに。</div></div>';
     h+='<div class="mm-h" style="font-size:14px">📊 いまの順位予想</div><div class="mm-q" style="font-size:12px;padding:8px">';
     pv.board.slice(0,12).forEach(function(x,i){ h+='<div class="mm-board-row'+(x.me?' mm-board-me':'')+'"><b>'+(i+1)+'位</b><span>'+esc(x.name)+'</span><span class="mm-sub">'+fmt(x.score)+'</span></div>'; });
     if(pv.pos>12)h+='<div class="mm-board-row mm-board-me"><b>'+pv.pos+'位</b><span>'+esc(c.mm.name||"あなたの街")+'</span><span class="mm-sub">'+fmt(me.total)+'</span></div>';
@@ -425,8 +507,8 @@
     if(g.medal||g.tix||g.seeds.length||g.statue){
       h+='<div class="mm-reward">'+(g.statue?'<span class="mm-pop mm-pop-ke">🗿 黄金像 +1(コイン永続+10%)</span>':'')+(g.medal?'<span class="mm-pop">🏅 +'+g.medal+'</span>':'')+(g.tix?'<span class="mm-pop">🎫 +'+g.tix+'</span>':'')+'</div>';
       if(g.hint)h+='<div class="mm-gbloom mm-gdrop">💡 審査員のヒント: <b>'+esc(g.hint)+'</b> は黄金配合らしい…(配合で爆発力+5)</div>';
-      g.seeds.forEach(function(s){ h+='<div class="mm-gbloom">🎁 '+GD().families[s.f].icon+' <b>'+esc(s.n)+'</b> '+rarBadge(s)+traitBadge(s)+shinyBadge(s)+'</div>'; });
-    }else h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>咲いている花を増やして、いろんな科をそろえると点が上がるモン！</span></div>';
+      g.seeds.forEach(function(s){ h+='<div class="mm-gbloom">🎁 '+famPx(s.f,22,s.sh)+' <b>'+esc(s.n)+'</b> '+rarBadge(s)+traitBadge(s)+shinyBadge(s)+'</div>'; });
+    }else h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>おとなのマチモンを増やして、いろんな族をそろえると点が上がるモン！</span></div>';
     h+='<button class="mm-cta" onclick="MM.ui.go(\'garden\')">つづける ▶</button></div>';
     if(won)setTimeout(function(){ sfx("fanfare"); if(UI.celebrate)UI.celebrate({icon:res.icon,title:"街評議会 "+res.prize+"！",sub:g.statue?"黄金像が建った！":"🏅+"+g.medal,sfx:"fanfare"}); },300);
     return h;
@@ -446,19 +528,19 @@
   UI.screens.gRec=function(){
     var c=UI.ctx(), gd=GA().W(c), T=GD().TITLES, got=T.filter(function(t){ return gd.titles[t.id]; }).length;
     var h='<div class="mm-wrap">'+UI.resBar(c)+'<div class="mm-h">🎖 記録</div>'
-      +'<div class="mm-q" style="font-size:12px;padding:8px"><div class="mm-row"><span>品評会</span><span>'+gd.total.run+'回 '+gd.total.win+'勝 / 重賞'+gd.total.gr+' / G1 '+gd.total.g1+'</span></div>'
+      +'<div class="mm-q" style="font-size:12px;padding:8px"><div class="mm-row"><span>大会</span><span>'+gd.total.run+'回 '+gd.total.win+'勝 / 重賞'+gd.total.gr+' / G1 '+gd.total.g1+'</span></div>'
       +'<div class="mm-row"><span>獲得賞金</span><span>🪙'+fmt(gd.total.pz)+'</span></div><div class="mm-row"><span>配合</span><span>'+gd.breeds+'回 / 隠しニックス '+Object.keys(gd.hnf).filter(function(k){ return gd.hnf[k]===1; }).length+'/'+gd.hn.length+'</span></div>'
-      +'<div class="mm-row"><span>ガチャ</span><span>'+gd.pulls+'回 / 落としダネ '+gd.drops+' / 色違い '+gd.shiny+'</span></div><div class="mm-row"><span>水やり</span><span>'+fmt(gd.water)+'問</span></div>'
+      +'<div class="mm-row"><span>ガチャ</span><span>'+gd.pulls+'回 / 落としタマゴ '+gd.drops+' / 色違い '+gd.shiny+'</span></div><div class="mm-row"><span>育成</span><span>'+fmt(gd.water)+'問</span></div>'
       +'<div class="mm-row"><span>特性図鑑</span><span>'+GD().TRAITS.map(function(t){ return gd.trSeen[t.id]?t.icon:'❔'; }).join("")+'</span></div></div>';
     h+='<div class="mm-h" style="font-size:14px">🏅 称号 '+got+'/'+T.length+'</div><div class="mm-gtitles">';
     T.forEach(function(t){ var on=gd.titles[t.id]; h+='<div class="'+(on?'mm-gt-on':'')+'"><b>'+(on?'🎖 ':'🔒 ')+esc(t.name)+'</b><span class="mm-sub">'+esc(t.desc)+' 🎫'+t.tix+'</span></div>'; });
     h+='</div>';
     var fam=Object.keys(gd.hnf); if(fam.length){ h+='<div class="mm-h" style="font-size:14px">💡 黄金配合(隠しニックス)</div><div class="mm-q" style="font-size:12px;padding:8px">'; fam.forEach(function(k){ var ab=k.split("|"); h+='<div>'+esc(GA().lineById(gd,ab[0]).name)+' × '+esc(GA().lineById(gd,ab[1]).name)+(gd.hnf[k]===2?' <span class="mm-sub">(ヒント・未配合)</span>':' ✅')+'</div>'; }); h+='</div>'; }
     var ids=Object.keys(gd.rec); if(ids.length){ h+='<div class="mm-h" style="font-size:14px">📜 G1年表(直近の勝者)</div><div class="mm-q" style="font-size:12px;padding:8px">';
-      ids.slice(0,40).forEach(function(id){ var d=GD().contestById[id], a=gd.rec[id], e=a[a.length-1]; if(!d||!e)return; h+='<div class="mm-row"><span>'+esc(d.name)+'</span><span>'+(e.ow==="me"?'<b>':'')+GD().families[e.f].icon+esc(e.n)+(e.ow==="me"?'</b>':'')+' <span class="mm-sub">第'+e.y+'年</span></span></div>'; }); h+='</div>'; }
+      ids.slice(0,40).forEach(function(id){ var d=GD().contestById[id], a=gd.rec[id], e=a[a.length-1]; if(!d||!e)return; h+='<div class="mm-row"><span>'+esc(d.name)+'</span><span>'+(e.ow==="me"?'<b>':'')+famPx(e.f,22,e.sh)+esc(e.n)+(e.ow==="me"?'</b>':'')+' <span class="mm-sub">第'+e.y+'年</span></span></div>'; }); h+='</div>'; }
     if(gd.awards.length){ h+='<div class="mm-h" style="font-size:14px">🎊 年度表彰</div><div class="mm-q" style="font-size:12px;padding:8px">'; gd.awards.slice(-16).reverse().forEach(function(a){ h+='<div class="mm-row"><span>第'+a.y+'年 '+esc(a.name)+'</span><span>'+(a.me?'<b>':'')+esc(a.who)+(a.me?'</b>':'')+'</span></div>'; }); h+='</div>'; }
-    var rv=Object.keys(gd.rv); if(rv.length){ h+='<div class="mm-h" style="font-size:14px">🗣 ライバル園芸家</div><div class="mm-q" style="font-size:12px;padding:8px">'; rv.forEach(function(id){ var d=GD().rivalById[id]; if(d)h+='<div class="mm-row"><span>'+esc(d.name)+'</span><span>'+gd.rv[id].w+'勝'+gd.rv[id].l+'敗</span></div>'; }); h+='</div>'; }
-    if(gd.hall.length){ h+='<div class="mm-h" style="font-size:14px">🏛 殿堂</div><div class="mm-q" style="font-size:12px;padding:8px">'; gd.hall.slice(-20).reverse().forEach(function(x){ h+='<div class="mm-row"><span>'+GD().families[x.f].icon+' '+esc(x.n)+(x.mb?' 🌳':'')+'</span><span>'+x.r.w+'勝 G1 '+x.r.g1+'</span></div>'; }); h+='</div>'; }
+    var rv=Object.keys(gd.rv); if(rv.length){ h+='<div class="mm-h" style="font-size:14px">🗣 ライバルライバル</div><div class="mm-q" style="font-size:12px;padding:8px">'; rv.forEach(function(id){ var d=GD().rivalById[id]; if(d)h+='<div class="mm-row"><span>'+esc(d.name)+'</span><span>'+gd.rv[id].w+'勝'+gd.rv[id].l+'敗</span></div>'; }); h+='</div>'; }
+    if(gd.hall.length){ h+='<div class="mm-h" style="font-size:14px">🏛 殿堂</div><div class="mm-q" style="font-size:12px;padding:8px">'; gd.hall.slice(-20).reverse().forEach(function(x){ h+='<div class="mm-row"><span>'+famPx(x.f,22,x.sh)+' '+esc(x.n)+(x.mb?' 🌳':'')+'</span><span>'+x.r.w+'勝 G1 '+x.r.g1+'</span></div>'; }); h+='</div>'; }
     return h+back("garden")+'</div>';
   };
 })();

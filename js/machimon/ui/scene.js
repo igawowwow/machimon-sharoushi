@@ -73,6 +73,9 @@
       }
       n++; delay++;
     }
+    /* 遺伝子つきマチモン(おとな)も街を歩く */
+    try{ if(MM.garden){ var gd=MM.garden.W(c); for(var gi=0;gi<gd.plots.length&&n<WALKERS_MAX+4;gi++){ var gp=gd.plots[gi]; if(!gp||gp.dead||gp.bw==null)continue;
+      h+='<span class="mm-walker" style="left:'+(10+(n*17)%70)+'%;--mm-dur:'+(8+n*2)+'s;animation-delay:-'+(n*2.7)+'s"><span class="mm-hop" style="animation-delay:-'+(n*0.31)+'s">'+(UI.gdIcon?UI.gdIcon(gp,28):'')+'</span></span>'; n++; } } }catch(e){}
     if(!uids.length){
       h+='<span class="mm-walker" style="left:42%"><i class="mm-bub" style="animation-delay:2s">だれか来ないかな…</i>🥚</span>';
     }

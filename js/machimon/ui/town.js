@@ -26,12 +26,12 @@
     /* 相棒のコーチ(いま何をすべきか1行)と、つぎの目標(進捗バー) */
     if(UI.coach)h+=UI.coach(c,st);
     if(UI.goal)h+=UI.goal(c);
-    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'garden\')" style="background:linear-gradient(135deg,#E3F9D8,#FFE1EB)">🌱 ガーデン</button><button onclick="MM.ui.go(\'boss\')">⚔️ ボス</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
+    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'garden\')" style="background:linear-gradient(135deg,#E3F9D8,#FFE1EB)">🐣 マチモン育成</button><button onclick="MM.ui.go(\'boss\')">⚔️ ボス</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
 
-    /* 植物街: 花壇の様子と街ランク(タップでガーデンへ) */
+    /* マチモン街: おうちの様子と街ランク(タップでマチモンへ) */
     try{ if(MM.garden){ var gdn=MM.garden.W(c), rk=MM.garden.rankOf(c), row="";
-      gdn.plots.forEach(function(p){ if(!p)return; var f=MM.DATA.garden.families[p.f], st=MM.garden.stage(p); row+=["🌰","🌱","🌿",f.icon,f.icon,f.icon,"🥀"][st]; });
-      h+='<button class="mm-grank" style="margin:6px 0" onclick="MM.ui.go(\'garden\')"><span>'+rk.cur.icon+' 植物街 <b>'+esc(rk.cur.name)+'</b>'+(gdn.statue?' 🗿×'+gdn.statue:'')+'</span><span style="font-size:20px;letter-spacing:2px">'+(row||'<span class="mm-sub">花壇はまだ空っぽ。タネを植えよう ▶</span>')+'</span></button>'; } }catch(e){}
+      gdn.plots.forEach(function(p){ if(!p)return; var f=MM.DATA.garden.families[p.f], st=MM.garden.stage(p); row+=(MM.ui.gdIcon?MM.ui.gdIcon(p,22):""); });
+      h+='<button class="mm-grank" style="margin:6px 0" onclick="MM.ui.go(\'garden\')"><span>'+rk.cur.icon+' マチモン街 <b>'+esc(rk.cur.name)+'</b>'+(gdn.statue?' 🗿×'+gdn.statue:'')+'</span><span style="font-size:20px;letter-spacing:2px">'+(row||'<span class="mm-sub">おうちはまだ空っぽ。タマゴをかえそう ▶</span>')+'</span></button>'; } }catch(e){}
     /* 放置収益の回収(街に戻った瞬間に自動。タップ不要) */
     var idle=UI.lastIdle; UI.lastIdle=null;
     if(idle&&(idle.g>0||idle.mat>0)){
@@ -121,7 +121,7 @@
     if(MM.town.openArea(c,id)){ MM.game.save(); UI.play({step:7,fx:"gold",haptic:"heavy"}); }
     UI.go("town");
   };
-  /* 事件が尽きたときの追加見回り(そのエリアの科目から出題する) */
+  /* 事件が尽きたときの追加見回り(そのエリアの族目から出題する) */
   UI.more=function(area){
     var c=UI.ctx();
     MM.incident.more(c,area,3);

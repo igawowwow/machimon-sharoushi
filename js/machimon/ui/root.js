@@ -59,7 +59,7 @@
       +'</div>';
   };
   UI.tabs=function(active){
-    var T=[["town","🏠","街"],["garden","🌱","ガーデン"],["mons","👾","マチモン"],["gacha","🔮","ガチャ"],["zukan","📖","図鑑"],["build","🔨","建設"]];
+    var T=[["town","🏠","街"],["garden","🐣","マチモン"],["gGacha","🔮","ガチャ"],["zukan","📖","図鑑"],["build","🔨","建設"]];
     var h='<nav class="mm-tabs" aria-label="MACHIMONナビ">';
     for(var i=0;i<T.length;i++){
       h+='<button type="button" class="'+(T[i][0]===active?"mm-act":"")+'" onclick="MM.ui.go(\''+T[i][0]+'\')">'
