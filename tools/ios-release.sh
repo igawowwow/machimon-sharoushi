@@ -54,7 +54,8 @@ xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$KEY_ID" --apiIssuer "$ASC_
 
 if [ "$SUBMIT" = "1" ]; then
   step "6/6 審査提出(処理完了を待つ)"
-  node tools/asc-release.mjs submit --build "$BUILD" --version "$VER" --version-id "$VID" --notes docs/whatsnew.txt
+  NOTES=""; [ "$VER" != "1.0" ] && NOTES="--notes docs/whatsnew.txt"   # 初回版はリリースノートを設定できない
+  node tools/asc-release.mjs submit --build "$BUILD" --version "$VER" --version-id "$VID" $NOTES
 else
   echo "SUBMIT=0 のため審査提出は省略。状況: npm run ios:status"
 fi
