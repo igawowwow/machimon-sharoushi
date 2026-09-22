@@ -59,7 +59,7 @@ const ASSETS = [
   "./js/data/explain/e0.js", "./js/data/explain/e1.js", "./js/data/explain/e2.js", "./js/data/explain/e3.js", "./js/data/explain/e4.js", "./js/data/explain/e5.js", "./js/data/explain/e6.js", "./js/data/explain/e7.js", "./js/data/explain/e8.js",
   "./js/questions/s0.js", "./js/questions/s1.js", "./js/questions/s2.js",
   "./js/questions/s3.js", "./js/questions/s4.js", "./js/questions/s5.js",
-  "./js/questions/s6.js", "./js/questions/s7.js", "./js/questions/s8.js",
+  "./js/questions/s6.js", "./js/questions/s7.js", "./js/questions/s8.js", "./js/questions/x0.js", "./js/questions/x1.js", "./js/questions/x2.js", "./js/questions/x3.js", "./js/questions/x4.js", "./js/questions/x5.js", "./js/questions/x6.js", "./js/questions/x7.js", "./js/questions/x8.js",
   "./js/questions/takuitsu.js", "./js/questions/takuitsu2.js", "./js/questions/takuitsu3.js",
   "./js/questions/kosuu.js", "./js/questions/kosuu2.js",
   "./js/questions/nendo.js", "./js/questions/nendo2.js", "./js/questions/nendo3.js",
