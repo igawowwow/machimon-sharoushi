@@ -165,6 +165,7 @@
 
   /* 回答の確定: SRS前進 + 当日カウンタ + コンボ。報酬内訳を返す(付与は economy が行う) */
   function commit(id,ok,ms,c){
+    c.lastQid=id;
     var st=stat(c,id);
     var rw=reward(id,ok,ms,c);
     var S=sched();

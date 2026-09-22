@@ -26,8 +26,12 @@
     /* 相棒のコーチ(いま何をすべきか1行)と、つぎの目標(進捗バー) */
     if(UI.coach)h+=UI.coach(c,st);
     if(UI.goal)h+=UI.goal(c);
-    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'derby\')" style="background:linear-gradient(135deg,#FFF3C4,#FFE1EB)">🏇 ダービー</button><button onclick="MM.ui.go(\'boss\')">⚔️ ボス</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
+    h+='<div class="mm-quick"><button onclick="MM.ui.go(\'garden\')" style="background:linear-gradient(135deg,#E3F9D8,#FFE1EB)">🌱 ガーデン</button><button onclick="MM.ui.go(\'boss\')">⚔️ ボス</button><button onclick="MM.ui.go(\'record\')">📊 記録</button><button onclick="MM.ui.go(\'hatch\',{})">🥚 タマゴ '+(c.mm.res.tama||0)+'</button></div>';
 
+    /* 植物街: 花壇の様子と街ランク(タップでガーデンへ) */
+    try{ if(MM.garden){ var gdn=MM.garden.W(c), rk=MM.garden.rankOf(c), row="";
+      gdn.plots.forEach(function(p){ if(!p)return; var f=MM.DATA.garden.families[p.f], st=MM.garden.stage(p); row+=["🌰","🌱","🌿",f.icon,f.icon,f.icon,"🥀"][st]; });
+      h+='<button class="mm-grank" style="margin:6px 0" onclick="MM.ui.go(\'garden\')"><span>'+rk.cur.icon+' 植物街 <b>'+esc(rk.cur.name)+'</b>'+(gdn.statue?' 🗿×'+gdn.statue:'')+'</span><span style="font-size:20px;letter-spacing:2px">'+(row||'<span class="mm-sub">花壇はまだ空っぽ。タネを植えよう ▶</span>')+'</span></button>'; } }catch(e){}
     /* 放置収益の回収(街に戻った瞬間に自動。タップ不要) */
     var idle=UI.lastIdle; UI.lastIdle=null;
     if(idle&&(idle.g>0||idle.mat>0)){

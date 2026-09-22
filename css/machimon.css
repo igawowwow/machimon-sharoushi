@@ -365,3 +365,100 @@
 .mm-owner{ display:flex; flex-direction:column; gap:2px; border:2px solid #8A8494; border-radius:12px; background:#F3F0E8; padding:6px 10px; margin:4px 0; font-size:13px; }
 .mm-owner-beat{ border-color:#3E9B4F; background:linear-gradient(135deg,#DFF5EC,#fff); }
 .mm-sire{ margin-top:6px; font-size:13px; font-weight:900; color:#8A6FD1; }
+
+/* ================= ガーデン(タネ配合 × 植物街 × 品評会 × 街評議会) ================= */
+.mm-ghead{ border:2px solid var(--ink,#33303E); border-radius:16px; background:linear-gradient(135deg,#EFFBE6,#FFF6E5); padding:10px; margin:8px 0; }
+.mm-ghead-top{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; flex-wrap:wrap; font-size:14px; }
+.mm-gweek{ font-size:12px; margin:6px 0; }
+.mm-grank{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; padding:6px 8px; font-size:13px; font-family:inherit; color:inherit; }
+.mm-grank span{ display:block; }
+.mm-gwater{ background:linear-gradient(135deg,#8FE3FF,#6FD6A8); margin-inline:auto; }
+.mm-gwater .mm-sub{ display:block; font-size:11px; font-weight:700; }
+.mm-gfree{ background:linear-gradient(135deg,#FFE27A,#FF9EC0); margin:6px auto; }
+.mm-gmenu{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0; }
+.mm-gmenu button{ position:relative; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px 2px; font-size:12px; font-weight:900; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; min-height:64px; }
+.mm-gmenu button span{ display:block; font-size:24px; }
+.mm-gdot{ position:absolute; top:-6px; right:-4px; background:#FF5A5A; color:#fff; font-style:normal; font-size:10px; border-radius:10px; padding:1px 6px; font-weight:900; }
+.mm-gplots{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.mm-gplot{ position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; border:3px solid #8A8494; border-radius:14px; background:linear-gradient(#fff 55%,#EAD9B8); padding:6px 2px; font-family:inherit; color:inherit; min-height:104px; }
+.mm-gplot-empty{ border-style:dashed; background:#FBF8F1; justify-content:center; }
+.mm-gplot-dead{ filter:grayscale(.7); }
+.mm-gplot-name{ font-size:11px; font-weight:900; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-gplot-st{ font-size:10px; color:#6B6578; }
+.mm-gplot-tags{ display:flex; gap:2px; align-items:center; font-size:11px; }
+.mm-bar-thin{ height:5px; width:80%; }
+.mm-gi{ display:inline-block; line-height:1.1; }
+.mm-gi-bud{ filter:saturate(.3) brightness(1.1); transform:scale(.8); }
+.mm-gi-bloom{ animation:mm-gsway 3s ease-in-out infinite; transform-origin:50% 100%; }
+.mm-gi-shiny{ filter:drop-shadow(0 0 4px #FFD84D) drop-shadow(0 0 8px #FF9EC0); }
+@keyframes mm-gsway{ 0%,100%{ transform:rotate(-3deg) } 50%{ transform:rotate(3deg) } }
+.mm-grar{ display:inline-block; font-size:10px; font-weight:900; color:#fff; border-radius:6px; padding:0 5px; vertical-align:middle; }
+.mm-gtr{ display:inline-block; font-size:10px; font-weight:900; background:#FFF3C4; border:1px solid #E0B94A; border-radius:6px; padding:0 4px; margin-left:3px; vertical-align:middle; }
+.mm-gtr-sh{ background:linear-gradient(90deg,#FFE1EB,#E3F0FF,#FFF3C4); }
+.mm-gev{ font-size:12px; padding:8px; display:grid; gap:3px; }
+.mm-gcard{ border:3px solid #8A8494; border-radius:14px; background:#fff; padding:8px; margin:6px 0; }
+.mm-gcard-top{ display:flex; gap:8px; align-items:center; font-size:13px; }
+.mm-gmini{ font-size:12px; margin:4px 0; letter-spacing:.5px; }
+.mm-gbtns{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.mm-gbtns-col{ flex-direction:column; }
+.mm-cta-s{ flex:1; min-height:44px; border:2px solid var(--ink,#33303E); border-radius:12px; background:var(--yellow,#FFC53C); font-weight:900; font-size:14px; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; }
+.mm-cta-s:disabled,.mm-cta:disabled{ opacity:.45; box-shadow:none; animation:none; }
+.mm-gback{ width:100%; min-height:48px; margin-top:10px; }
+.mm-gdetail{ text-align:center; border:3px solid #8A8494; border-radius:18px; background:linear-gradient(#fff 60%,#EAD9B8); padding:10px; margin:8px 0; }
+.mm-gstat{ display:grid; grid-template-columns:78px 1fr 28px; gap:6px; align-items:center; font-size:12px; margin:3px 0; }
+.mm-gstat-bar{ position:relative; height:10px; border-radius:6px; background:#EDE9DF; overflow:hidden; }
+.mm-gstat-bar i{ position:absolute; left:0; top:0; bottom:0; background:#3ED6C0; border-radius:6px; }
+.mm-gstat-range i{ background:#9FD8FF; }
+.mm-gstat-range b{ position:absolute; top:-1px; width:3px; height:12px; background:#2F6BFF; }
+.mm-gped{ display:grid; gap:1px; margin-top:4px; }
+.mm-gmons{ display:flex; gap:4px; overflow-x:auto; padding:4px 0; }
+.mm-gmons button{ flex:0 0 auto; border:2px solid #D8D2C4; border-radius:10px; background:#fff; padding:2px 4px; font-size:9px; font-family:inherit; display:flex; flex-direction:column; align-items:center; }
+.mm-gmons .mm-act{ border-color:#3E9B4F; background:#E3F9D8; }
+.mm-gqhead{ display:flex; justify-content:space-between; font-size:12px; font-weight:900; margin-top:6px; }
+.mm-gstrip{ display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin:6px 0; }
+.mm-gbloom{ border:2px solid #3E9B4F; border-radius:12px; background:#EFFBE6; padding:8px; margin:6px 0; font-size:13px; animation:mm-stamp .45s cubic-bezier(.2,1.6,.4,1); }
+.mm-gdrop{ border-color:#E0B94A; background:#FFF9E0; }
+.mm-gbanner{ border:3px solid var(--ink,#33303E); border-radius:16px; padding:10px; margin:8px 0; background:#fff; }
+.mm-gbanner-pickup{ background:linear-gradient(135deg,#E3F0FF,#fff); }
+.mm-gbanner-season{ background:linear-gradient(135deg,#FFE1EB,#FFF3C4,#E3F9D8); }
+.mm-gbanner-council{ background:linear-gradient(135deg,#FFF3C4,#FFE7A0); }
+.mm-gbanner-t{ display:flex; align-items:center; gap:6px; font-size:15px; }
+.mm-gbanner-t span{ font-size:26px; }
+.mm-gcapwrap{ text-align:center; margin:10px 0; animation:mm-gcapout .3s ease-in .75s forwards; }
+.mm-gcap{ font-size:64px; display:inline-block; animation:mm-gshake .7s ease-in-out; }
+.mm-gcap-gold .mm-gcap{ filter:drop-shadow(0 0 10px #FFD84D); }
+.mm-gcap-rainbow .mm-gcap{ filter:drop-shadow(0 0 14px #FF6B9D) drop-shadow(0 0 20px #5B8DFF); }
+.mm-gcap-rainbow{ background:linear-gradient(90deg,#FFE1EB,#E3F0FF,#E3F9D8,#FFF3C4); border-radius:16px; }
+@keyframes mm-gshake{ 0%,100%{ transform:rotate(0) } 20%{ transform:rotate(-14deg) } 40%{ transform:rotate(14deg) } 60%{ transform:rotate(-10deg) } 80%{ transform:rotate(8deg) } }
+@keyframes mm-gcapout{ to{ opacity:.35; transform:scale(.8) } }
+.mm-greveal{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; }
+.mm-gres{ display:flex; flex-direction:column; align-items:center; gap:2px; border:3px solid #8A8494; border-radius:12px; background:#fff; padding:6px 2px; font-size:11px; opacity:0; animation:mm-gpop .35s cubic-bezier(.2,1.6,.4,1) forwards; }
+.mm-gres-n{ font-weight:900; text-align:center; }
+.mm-gres-t{ font-size:10px; font-weight:900; color:#B35CFF; }
+@keyframes mm-gpop{ from{ opacity:0; transform:scale(.4) } to{ opacity:1; transform:scale(1) } }
+.mm-gpair{ display:flex; align-items:stretch; gap:6px; margin:8px 0; }
+.mm-gx{ align-self:center; font-size:22px; font-weight:900; }
+.mm-gslot{ flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; border:3px solid #8A8494; border-radius:14px; background:#fff; padding:6px; font-size:12px; font-family:inherit; color:inherit; min-height:110px; }
+.mm-gslot-empty{ border-style:dashed; justify-content:center; background:#FBF8F1; }
+.mm-gpv{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:10px; margin:8px 0; }
+.mm-gpv-grade{ color:#fff; font-weight:900; font-size:20px; border-radius:12px; text-align:center; padding:6px; margin-bottom:6px; }
+.mm-gpv-grade small{ display:block; font-size:11px; }
+.mm-gth{ display:flex; flex-direction:column; border-bottom:1px dashed #EDE9DF; padding:3px 0; font-size:13px; }
+.mm-gprob{ display:flex; justify-content:space-around; gap:4px; font-size:12px; margin-top:6px; flex-wrap:wrap; }
+.mm-gtabs{ display:flex; gap:3px; overflow-x:auto; margin:4px 0; }
+.mm-gtabs button{ flex:0 0 auto; border:2px solid #D8D2C4; border-radius:10px; background:#fff; padding:4px 8px; font-size:14px; font-family:inherit; }
+.mm-gtabs .mm-act{ border-color:var(--ink,#33303E); background:#FFF3C4; }
+.mm-gcand{ position:relative; display:flex; gap:8px; align-items:center; width:100%; text-align:left; border:2px solid #D8D2C4; border-left:6px solid #8A8494; border-radius:12px; background:#fff; padding:6px 8px; margin:4px 0; font-family:inherit; color:inherit; font-size:13px; }
+.mm-gcand-on{ background:#FFF3C4; border-color:var(--ink,#33303E); }
+.mm-gcand-b{ display:flex; flex-direction:column; min-width:0; }
+.mm-gcont{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px; margin:6px 0; font-size:13px; }
+.mm-gcont-g1{ background:linear-gradient(135deg,#E3F0FF,#fff); border-width:3px; }
+.mm-gcont-done{ opacity:.55; }
+.mm-gentry{ display:block; width:100%; text-align:left; border:2px solid #D8D2C4; border-radius:10px; background:#FBF8F1; padding:6px 8px; margin-top:4px; font-family:inherit; color:inherit; font-size:13px; min-height:44px; }
+.mm-gentry:disabled{ opacity:.5; }
+.mm-award-me{ border-color:#D8534F; background:linear-gradient(135deg,#FFE1EB,#fff); }
+.mm-gtitles{ display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.mm-gtitles div{ border:2px solid #EDE9DF; border-radius:10px; padding:5px; font-size:11px; display:flex; flex-direction:column; opacity:.6; background:#fff; }
+.mm-gtitles .mm-gt-on{ opacity:1; border-color:#E0B94A; background:#FFF9E0; }
+.mm-gtoast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:#33303E; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; font-weight:900; z-index:9999; max-width:88vw; text-align:center; animation:mm-gpop .25s ease-out; }
+@media (prefers-reduced-motion: reduce){ .mm-gi-bloom,.mm-gcap,.mm-gres,.mm-gcapwrap{ animation:none !important; opacity:1; } }

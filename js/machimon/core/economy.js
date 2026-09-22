@@ -39,6 +39,8 @@
       c.mm.gauge+=mult;
       while(c.mm.gauge>=GAUGE_NEED){ c.mm.gauge-=GAUGE_NEED; gain.tama++; }
     }
+    /* ガーデン: 水やり(成長)・実りのコイン増加・週送り・落としダネ。すべての回答がここを通る */
+    try{ if(MM.garden&&MM.garden.onAnswer)MM.garden.onAnswer(rw,gain,c); }catch(e){ if(G.console)console.warn(e); }
     apply(gain,c);
     return gain;
   }
