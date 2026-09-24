@@ -904,46 +904,37 @@ body.sr-newui #app{padding-bottom:64px}
 <div id="fxlayer"></div>
 <script>
 /* 起動ウォッチドッグ(インライン=外部JSが1本でも壊れた「無音の真っ白」に効く最後の砦)。
-   外部JSがHTMLとして配信される/読み込み失敗するケースでは main.js の bootFail 自体が
-   存在しないため、ここで検知して自己修復する。main.js が起動に成功したら __srqBoot を立てる */
-window.__srqBoot=false;
-/* PWAインストール: beforeinstallprompt は外部JSより先に発火し得るのでここで早期捕捉。
-   保存後 srq:pwa を投げ、pwa-install.js が読み込み済みならボタンを即時表示する */
+   boot.js が起動に成功したら __mmBoot を立てる。立たなければキャッシュを捨てて1回だけ自動リロード。 */
+window.__mmBoot=false;
 window.__pwaPrompt=null;
-window.addEventListener("beforeinstallprompt",function(e){
-  e.preventDefault();window.__pwaPrompt=e;
-  try{window.dispatchEvent(new CustomEvent("srq:pwa"));}catch(_){}
-});
-window.addEventListener("appinstalled",function(){
-  window.__pwaPrompt=null;
-  try{window.dispatchEvent(new CustomEvent("srq:pwa",{detail:"installed"}));}catch(_){}
-});
+window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); window.__pwaPrompt=e; });
+window.addEventListener("appinstalled",function(){ window.__pwaPrompt=null; });
 (function(){
   var checked=false;
   function heal(){
-    if(checked||window.__srqBoot)return;
+    if(checked||window.__mmBoot)return;
     checked=true;
-    var k="srq-heal-wd";
-    if(!sessionStorage.getItem(k)){
+    var k="mm-heal-wd";
+    try{
+      if(sessionStorage.getItem(k)){ show(); return; }
       sessionStorage.setItem(k,"1");
-      var jobs=[];
-      try{if(window.caches)jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(x){return caches.delete(x);}));}));}catch(e){}
-      try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(e){}
-      Promise.all(jobs).catch(function(){}).then(function(){location.reload();});
-    }else{
-      var el=document.getElementById("app");
-      if(el)el.innerHTML='<div style="text-align:center;padding:60px 20px"><div style="font-size:40px">😵</div><div style="font-weight:900;margin:10px 0">読み込みに失敗しました</div><div style="font-size:12px;color:#8A8494;margin-bottom:16px">通信環境を確認して、もう一度お試しください(セーブデータは無事です)</div><button style="font-size:14px;padding:10px 22px;border-radius:12px;border:2px solid #5B4B8A;background:#fff;font-weight:900" onclick="location.reload()">🔄 再読み込み</button></div>';
-    }
+    }catch(e){ show(); return; }
+    var jobs=[];
+    try{ if(window.caches)jobs.push(caches.keys().then(function(ks){ return Promise.all(ks.map(function(x){ return caches.delete(x); })); })); }catch(e){}
+    try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){ return Promise.all(Array.prototype.map.call(rs,function(r){ return r.unregister(); })); })); }catch(e){}
+    Promise.all(jobs).catch(function(){}).then(function(){ location.reload(); });
   }
-  /* 全リソース確定(load)から3秒待って未起動なら修復。load が来ない異常系は30秒で強制チェック */
-  addEventListener("load",function(){setTimeout(heal,3000);});
-  setTimeout(heal,30000);
+  function show(){
+    var a=document.getElementById("app"); if(!a)return;
+    a.innerHTML='<div style="margin:auto;text-align:center;padding:24px"><div style="font-size:44px">😵</div>'
+      +'<div style="font-weight:900;margin:8px 0">読み込みに失敗しました</div>'
+      +'<div style="font-size:13px;color:#6B6578">もう一度お試しください(セーブデータは無事です)</div>'
+      +'<button style="margin-top:14px;min-height:48px;padding:0 18px;border:2px solid #33303E;border-radius:12px;background:#FFC53C;font-weight:900" onclick="location.reload()">🔄 再読み込み</button></div>';
+  }
+  window.addEventListener("load",function(){ setTimeout(heal,2500); });
+  setTimeout(function(){ if(!window.__mmBoot)heal(); },6000);
 })();
 </script>
-<script src="js/native-bridge.js"></script>
-<script src="js/native-features.js"></script>
-<script src="js/native-live-update.js"></script>
-<script src="js/data-sprites.js"></script>
 <script src="js/core/normalize.js"></script>
 <script src="js/questions/s0.js"></script>
 <script src="js/questions/s1.js"></script>
@@ -973,169 +964,13 @@ window.addEventListener("appinstalled",function(){
 <script src="js/questions/nendo3.js"></script>
 <script src="js/questions/sentaku.js"></script>
 <script src="js/questions/sentaku2.js"></script>
-<script src="js/data/case-rouki.js"></script>
-<script src="js/data/case-anei.js"></script>
-<script src="js/data/case-rousai.js"></script>
-<script src="js/data/case-kokunen.js"></script>
-<script src="js/data/case-kenpo.js"></script>
-<script src="js/data/case-kounen.js"></script>
-<script src="js/data/case-koyo.js"></script>
-<script src="js/data/case-choshu.js"></script>
-<script src="js/data/case-ippan.js"></script>
-<script src="js/data/explain/e0.js"></script>
-<script src="js/data/explain/e1.js"></script>
-<script src="js/data/explain/e2.js"></script>
-<script src="js/data/explain/e3.js"></script>
-<script src="js/data/explain/e4.js"></script>
-<script src="js/data/explain/e5.js"></script>
-<script src="js/data/explain/e6.js"></script>
-<script src="js/data/explain/e7.js"></script>
-<script src="js/data/explain/e8.js"></script>
 <script src="js/data-questions.js"></script>
-<script src="js/data/glossary-ext.js"></script>
-<script src="js/data/glossary-ext2.js"></script>
-<script src="js/data-learn.js"></script>
-<script src="js/data-learn2.js"></script>
-<script src="js/game-data.js"></script>
-<script src="js/data/enemies.js"></script>
-<script src="js/data/villains.js"></script>
-<script src="js/data-companions.js"></script>
-<script src="js/data-beats.js"></script>
-<script src="js/ui-office.js"></script>
-<script src="js/data-achievements.js"></script>
-<script src="js/core/weekly.js"></script>
-<script src="js/core/recommend.js"></script>
-<script src="js/audio/audio-manager.js"></script>
-<script src="js/audio/sfx.js"></script>
-<script src="js/audio/bgm.js"></script>
-<script src="js/audio/bgm-files.js"></script>
-<script src="js/fx.js"></script>
-<!-- Phase3 リニューアル基盤: 状態層(唯一の真実源)+ 互換シム。engine.js より前にロード。
-     engine.js は後から window.gameState/saveST を自身の定義で上書き = 旧UIの挙動は不変。 -->
-<script src="js/state/store.js"></script>
-<script src="js/state/slices/player.js"></script>
-<script src="js/state/slices/learning.js"></script>
-<script src="js/state/slices/adventure.js"></script>
-<script src="js/state/slices/collection.js"></script>
-<script src="js/state/slices/office.js"></script>
-<script src="js/state/slices/settings.js"></script>
-<script src="js/state/legacy-map.js"></script>
-<script src="js/state/legacy-shim.js"></script>
-<!-- Phase4a リニューアル: 学習の芯(純ロジック層・DOM/Store非依存)。名前空間 window.SRLearning に集約。
-     旧グローバル(srsOnCorrect/dueIds/recommend20/attackKind 等)は engine/ui-quiz 側のまま=旧UI無傷。
-     依存順: schema→scheduler→mastery→scoring→pools→exam→recommendation。 -->
 <script src="js/learning/schema.js"></script>
 <script src="js/learning/scheduler.js"></script>
-<script src="js/learning/mastery.js"></script>
-<script src="js/learning/scoring.js"></script>
-<script src="js/learning/pools.js"></script>
-<script src="js/learning/exam.js"></script>
-<script src="js/learning/recommendation.js"></script>
-<script src="js/learning/selection.js"></script>
-<script src="js/learning/strategy.js"></script>
-<!-- Phase4b: game/ 純ロジック層(DOM/Store非依存)。旧グローバル(startBoss/resolve/journeyPillars 等)は
-     ui-battle/ui-journey 側のまま=旧UI無傷。フラグ(settings.dev.newUI)背後の新screensが参照する。 -->
-<script src="js/game/battle-engine.js"></script>
-<script src="js/game/rewards.js"></script>
-<script src="js/game/journey.js"></script>
-<script src="js/engine.js"></script>
-<!-- 物語エンジン(js/story/*): engine.js 以降(ST 定義後)・ui-quest.js 以前に読む。データ駆動・eval禁止 -->
-<script src="js/story/story-schema.js"></script>
-<script src="js/story/story-state.js"></script>
-<script src="js/story/story-conditions.js"></script>
-<script src="js/story/story-effects.js"></script>
-<script src="js/story/story-quest-engine.js"></script>
-<script src="js/story/story-evidence-engine.js"></script>
-<script src="js/story/story-choice-engine.js"></script>
-<script src="js/story/story-engine.js"></script>
-<script src="js/story/story-visuals.js"></script>
-<script src="js/story/story-dialogue-renderer.js"></script>
-<script src="js/story/story-defeat.js"></script>
-<script src="js/story/story-cast.js"></script>
-<script src="js/story/story-interlude.js"></script>
-<script src="js/story/story-realcases.js"></script>
-<script src="js/story/story-anim.js"></script>
-<script src="js/story/chapters/opening.js"></script>
-<script src="js/story/chapters/prologue.js"></script>
-<script src="js/story/chapters/chapter-01.js"></script>
-<script src="js/story/story-battle-bridge.js"></script>
-<script src="js/story/story-encounter.js"></script>
-<script src="js/story/story-battle-beats.js"></script>
-<script src="js/story/story-home.js"></script>
-<script src="js/story/chapters/chapter-01b.js"></script>
-<script src="js/story/chapters/chapter-01c.js"></script>
-<script src="js/story/chapters/chapter-02.js"></script>
-<script src="js/story/chapters/chapter-02b.js"></script>
-<script src="js/story/chapters/chapter-03.js"></script>
-<script src="js/story/chapters/chapter-03b.js"></script>
-<script src="js/story/chapters/chapter-04.js"></script>
-<script src="js/story/chapters/chapter-04b.js"></script>
-<script src="js/story/chapters/chapter-05.js"></script>
-<script src="js/story/chapters/chapter-05b.js"></script>
-<script src="js/story/chapters/chapter-06.js"></script>
-<script src="js/story/chapters/chapter-06b.js"></script>
-<script src="js/story/chapters/chapter-07.js"></script>
-<script src="js/story/chapters/chapter-07b.js"></script>
-<script src="js/story/chapters/chapter-08.js"></script>
-<script src="js/story/chapters/chapter-08b.js"></script>
-<script src="js/story/story-gates.js"></script>
-<script src="js/story/story-charcreate.js"></script>
-<script src="js/story/story-title.js"></script>
-<script src="js/gear-power.js"></script>
-<script src="js/data-gear.js"></script>
-<script src="js/ui-gold.js"></script>
-<script src="js/core/course.js"></script>
-<script src="js/game/battle-select.js"></script>
-<script src="js/core/addiction.js"></script>
-<script src="js/ui-quiz.js"></script>
-<script src="js/ui-explain.js"></script>
-<script src="js/ui-battle.js"></script>
-<script src="js/gear-fx.js"></script>
-<script src="js/ui-intro.js"></script>
-<script src="js/ui-quickstart.js"></script>
-<script src="js/ui-ladder.js"></script>
-<script src="js/ui-mock.js"></script>
-<script src="js/ui-nendo.js"></script>
-<script src="js/ui-sentaku.js"></script>
-<script src="js/ui-stats.js"></script>
-<script src="js/ui-quest.js"></script>
-<script src="js/region.js"></script>
-<script src="js/ui-map.js"></script>
-<script src="js/ui-overlays.js"></script>
-<script src="js/ui-home.js"></script>
-<script src="js/ui-home-menus.js"></script>
-<script src="js/ui-journey.js"></script>
-<script src="js/ui-collection.js"></script>
-<script src="js/ui-soundtest.js"></script>
-<script src="js/gacha-suspense.js"></script>
-<script src="js/gacha-fx.js"></script>
-<script src="js/gacha-history.js"></script>
-<script src="js/ui-bestiary.js"></script>
-<script src="js/ui-case.js"></script>
-<script src="js/ui-notebook.js"></script>
-<script src="js/pwa-install.js"></script>
-<script src="js/app/lifecycle.js"></script>
-<script src="js/components/tabbar.js"></script>
-<script src="js/components/button.js"></script>
-<script src="js/components/card.js"></script>
-<script src="js/components/chip.js"></script>
-<script src="js/components/progressbar.js"></script>
-<script src="js/components/topbar.js"></script>
-<script src="js/components/overlay.js"></script>
-<script src="js/components/zukai-flash.js"></script>
-<script src="js/app/events.js"></script>
-<script src="js/app/router.js"></script>
-<script src="js/app/boot.js"></script>
-<!-- Phase4c: 新ホーム(単一CTA)/リザルト。フラグ(settings.dev.newUI or ?newui=home,result)背後。 -->
-<script src="js/app/actions/startToday.js"></script>
-<script src="js/screens/home.js"></script>
-<script src="js/screens/result.js"></script>
-<!-- Phase4d: 新バトル/解説(自己評価)/科目マップ。フラグ(newUI.battle/explain/adventure or ?newui=)背後。
-     explain は battle が render 時に参照するため battle より前に読み込む。 -->
-<script src="js/screens/explain.js"></script>
-<script src="js/screens/battle.js"></script>
-<script src="js/screens/adventure.js"></script>
-<!-- MACHIMON(街づくり×マチモン育成モード)。既存モードとは独立し、window.MM に閉じる -->
+<script src="js/audio/audio-manager.js"></script>
+<script src="js/audio/sfx.js"></script>
+<script src="js/audio/bgm-files.js"></script>
+<script src="js/audio/bgm.js"></script>
 <script src="js/machimon/data/species.js"></script>
 <script src="js/machimon/data/areas.js"></script>
 <script src="js/machimon/data/buildings.js"></script>
@@ -1176,6 +1011,6 @@ window.addEventListener("appinstalled",function(){
 <script src="js/machimon/ui/boss.js"></script>
 <script src="js/machimon/ui/record.js"></script>
 <script src="js/machimon/ui/garden.js"></script>
-<script src="js/main.js"></script>
+<script src="js/machimon/boot.js"></script>
 </body>
 </html>

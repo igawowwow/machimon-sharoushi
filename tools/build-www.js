@@ -31,11 +31,11 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 for (const d of DIRS) copyDir(path.join(ROOT, d), path.join(OUT, d));
 for (const f of FILES) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
-fs.rmSync(path.join(OUT, "js/native-live-update.js"), { force: true });
 
-const mainSrc = fs.readFileSync(path.join(OUT, "js/main.js"), "utf8");
-if (!/__srqNative\s*&&\s*"serviceWorker"\s*in\s*navigator/.test(mainSrc)) {
-  throw new Error("js/main.js に SW 登録のネイティブ除外(!__srqNative)が無い。");
+
+const bootSrc = fs.readFileSync(path.join(OUT, "js/machimon/boot.js"), "utf8");
+if (!/httpish\s*&&\s*!G\.Capacitor/.test(bootSrc)) {
+  throw new Error("js/machimon/boot.js に SW 登録のネイティブ除外が無い。");
 }
 
 const NA = path.join(ROOT, "native-assets");
