@@ -57,7 +57,7 @@
     for(var d in h)days++;
     return {
       answers:ans, correct:cor, pct:ans?Math.round(cor/ans*100):0,
-      mastered:mastered, questions:ids,
+      mastered:mastered, questions:((G.Q&&G.Q.length)||ids),   /* 分母は問題の総数(解いた数ではない) */
       weakest:subs.slice(0,3), strongest:subs.slice(-3).reverse(),
       mons:mons, buildings:blds, days:days,
       best:c.mm.best, tier:(MM.town?MM.town.tier(c).name:""),
