@@ -115,8 +115,8 @@
       if(r.reward.fluke)note.push("早すぎる解答。読んでから答えると身につく");
       if(note.length)h+='<div class="mm-sub" style="text-align:center">'+esc(note.join(" / "))+'</div>';
       /* 正解でも解説(短い版)を自動で出す。くわしい3層解説は「解説」ボタン */
-      var e1=String(q.e||q.explanation||"");
-      if(e1)h+='<div class="mm-q" style="font-size:13px;padding:10px">💡 '+esc(e1)+'</div>';
+      var e1=String(q.easyExplanation||q.e||q.explanation||"");
+      if(e1)h+='<div class="mm-q" style="font-size:14px;line-height:1.75;padding:12px">💡 '+esc(e1)+'</div>';
     }else{
       h+='<div class="mm-say-card">'+cheer(r.c)+'<span>だいじょうぶ、まちがえた問題ほど覚えるモン！</span></div>'
         +'<div class="mm-q">'+explain(q,false)+'</div>';
@@ -165,7 +165,16 @@
   function explain(q,ok){
     try{ expQ=q; fbQid=q.id; fbGood=!!ok; }catch(e){}
     try{ if(typeof G.explainHtml==="function")return G.explainHtml(q,!!ok); }catch(e){}
-    return UI.esc(q.e||q.explanation||"");
+    return easyFirst(q);
+  }
+  /* やさしい解説(あれば)を先に、元の解説は「ルール」として下に小さく出す */
+  function easyFirst(q){
+    var rule=String(q.e||q.explanation||""), easy=String(q.easyExplanation||""), tf=(typeof q.a==="boolean");
+    /* まちがえた直後でも「何を聞かれて、正解はどちらか」が分かるように、問題文と正解を先に出す */
+    var h=(tf&&q.q)?'<div class="mm-sub" style="line-height:1.6;margin-bottom:10px">📝 '+UI.esc(q.q)+'</div>':'';
+    if(!easy)return h+(tf?'<div style="font-size:15px;font-weight:800;margin-bottom:6px">正解は '+(q.a?"◯":"✕")+'</div>':'')+'<div style="line-height:1.7">'+UI.esc(rule)+'</div>';
+    return h+'<div style="font-size:15px;line-height:1.8">'+UI.esc(easy)+'</div>'
+      +(rule?'<div class="mm-sub" style="margin-top:10px;line-height:1.6">📐 ルール: '+UI.esc(rule)+'</div>':'');
   }
   UI.detail=function(qid){
     clearTimeout(UI._t);
