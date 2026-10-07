@@ -233,7 +233,10 @@
       if(q.statements)q.statements.forEach(function(x,i){ h+='<div>'+(x.ok?'⭕':'❌')+' <b>'+KANA[i]+'</b> <span class="mm-sub">'+esc(x.why||"")+'</span></div>'; });
       q.choices.forEach(function(ch,i){ if(typeof ch!=="object"||!ch.why)return; h+='<div>'+(ch.ok?'⭕ 正解 ':'')+(i===v?'👉 ':'')+'<b>'+(i+1)+'.</b> <span class="mm-sub">'+esc(ch.why)+'</span></div>'; });
       if(!q.statements&&!q.choices.some(function(ch){ return ch&&ch.why; })){ var ci=-1; q.choices.forEach(function(ch,i){ if(ch&&ch.ok)ci=i; }); if(ci>=0)h+='<div>⭕ 正解は '+(ci+1)+'</div>'; }
-    } else h+='💡 '+esc(q.e||q.explanation||"");
+    } else {
+      var ez=String(q.easyExplanation||""), rl=String(q.e||q.explanation||"");
+      h+=ez?('<div style="font-size:14px;line-height:1.75">💡 '+esc(ez)+'</div>'+(rl?'<div class="mm-sub" style="margin-top:8px">📐 ルール: '+esc(rl)+'</div>':'')):('💡 '+esc(rl));
+    }
     if(q.memoryPoint)h+='<div class="mm-gmemo">🧠 覚えどころ: '+esc(q.memoryPoint)+'</div>';
     if(q.trap)h+='<div class="mm-sub">⚠ ひっかけ: '+esc(q.trap)+'</div>';
     return h+'</div>';
