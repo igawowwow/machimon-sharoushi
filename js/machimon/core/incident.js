@@ -92,7 +92,16 @@
     var q=(typeof G.qById==="function"&&qid!=null)?G.qById(qid):null;
     var text=q?String(q.q||q.question||""):"";
     var T=D().incTopics||[];
-    for(var t=0;t<T.length;t++){ if(T[t][0].test(text))return T[t][1]; }
+    var qs=q?q.s:sub;
+    for(var t=0;t<T.length;t++){
+      if(T[t][2]&&T[t][2].indexOf(qs)<0)continue;   /* 科目で絞る(別の科目の語に当てない) */
+      if(T[t][0].test(text))return T[t][1];
+    }
+    /* 対応表に無い問題で論点名が付いているもの: 論点名で相談にする=食い違わない */
+    if(q&&q.topic){
+      var tp=String(q.topic).replace(/\(.*?\)/g,"");
+      if(tp&&tp.length<=16)return "「"+tp+"」のことで相談があるモン！";
+    }
     /* 対応表に無い問題: 問題文の先頭の語(助詞の手前)を使って「〇〇のことで相談」にする=絶対に食い違わない */
     if(text){
       text=text.replace(/^(使用者|労働者|事業主|事業者|会社|被保険者|受給資格者|国|政府|都道府県労働局長|厚生労働大臣)(は|が|の|に|を)/,"");
