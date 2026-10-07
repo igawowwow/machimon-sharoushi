@@ -1,4 +1,4 @@
-const C = "machimon-v11";
+const C = "machimon-v12";
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,6 +28,15 @@ const ASSETS = [
   "./js/questions/x6.js",
   "./js/questions/x7.js",
   "./js/questions/x8.js",
+  "./js/questions/z0.js",
+  "./js/questions/z1.js",
+  "./js/questions/z2.js",
+  "./js/questions/z3.js",
+  "./js/questions/z4.js",
+  "./js/questions/z5.js",
+  "./js/questions/z6.js",
+  "./js/questions/z7.js",
+  "./js/questions/z8.js",
   "./js/questions/takuitsu.js",
   "./js/questions/takuitsu2.js",
   "./js/questions/takuitsu3.js",
