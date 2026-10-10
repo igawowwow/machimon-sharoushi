@@ -34,7 +34,7 @@
     start:61                           /* はじめは番付の外(60枚目の下) */
   };
   /* 段ごとの相手のつよさ [いちばん下, いちばん上] */
-  var ANCHOR=[[120,170],[200,300],[340,500],[540,890],[920,1050],[1080,1260],[1300,1400],[1470,1470]];
+  var ANCHOR=[[120,170],[200,300],[340,500],[540,880],[890,980],[1010,1250],[1300,1420],[1500,1500]];
   /* 段ごとの相手のレア度(種類を選ぶときの目安) */
   var DAN_RAR=[[0],[0,1],[1],[1,2],[2],[2,3],[3,4],[4]];
   /* 関門(段の入口)を守る親方。横綱は特別な相手 */
@@ -51,10 +51,12 @@
     var pool=D.kinds.filter(function(k){ return !k.only&&k.f===fam&&k.rar===rar; });
     return pool[pos%pool.length];
   }
+  /* 相手の能力は、種類の配分を7割がた ならして使う(つよさ の数字どおりに勝ち負けが付きやすいように) */
+  var FLAT=0.7;
   function statsOf(kd,power){
     var K=["h","m","o","j","s"], tot=0, o={}, sum=0, top=K[0];
     K.forEach(function(k){ tot+=kd.base[k]; if(kd.base[k]>kd.base[top])top=k; });
-    K.forEach(function(k){ o[k]=Math.floor(power*kd.base[k]/tot); sum+=o[k]; });
+    K.forEach(function(k){ o[k]=Math.floor(power*(FLAT*0.2+(1-FLAT)*kd.base[k]/tot)); sum+=o[k]; });
     o[top]+=power-sum; return o;
   }
   /* 関門でない枠を、ライバルを腕前(lv)の低い順に 先鋒→大将→切り札 でうめる */

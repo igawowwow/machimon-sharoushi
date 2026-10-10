@@ -22,7 +22,7 @@
   function L(){ return MM.learn; }
   function bank(){ return G.Q||[]; }
   function r2(v){ return Math.round(v*100)/100; }
-  function isExam(q){ return MM.garden.isExam(q); }
+  function isExam(q){ return MM.exam.isExam(q); }
   function doneToday(c,id){ var x=c.mm.qx[id]; return !!(x&&x.d===c.dstr&&x.n>0); }
 
   /* 問題の状態(答える前)。new=まだ / nig=前にまちがえた / rev=期限の来た復習 / other=期限前 */
@@ -46,7 +46,7 @@
       if(cl==="rev"){ p.rev++; tot.rev++; } else if(cl==="nig"){ p.nig++; tot.nig++; }
     }
     /* 本試験形式の問題は別の表にある。のこりの復習・苦手の数には入れる */
-    var ex=MM.garden.examIds();
+    var ex=MM.exam.ids();
     for(i=0;i<ex.length;i++){ if(doneToday(c,ex[i]))continue; var c2=classOf(st[ex[i]],c.today); if(c2==="rev")tot.rev++; else if(c2==="nig")tot.nig++; }
     return { per:per, tot:tot };
   }
@@ -103,7 +103,7 @@
   }
   /* 本試験形式(択一・個数・選択式)は ふだんの問題の表(Q)とは別にある。その けいこ の条件に合うものを1問 */
   function pickEx(c,s){
-    var ids=MM.garden.examIds(), m=L().masteryBySub(c), cand=[];
+    var ids=MM.exam.ids(), m=L().masteryBySub(c), cand=[];
     for(var i=0;i<ids.length;i++){ var q=G.qById(ids[i]); if(!q)continue; if(s.kind==="new"&&q.s!==s.sub)continue;
       if(classOf(c.ST.q&&c.ST.q[q.id],c.today)!==s.kind||doneToday(c,q.id))continue; cand.push({id:q.id,p:L().priority(q,c,{mastery:m})}); }
     if(!cand.length)return null;

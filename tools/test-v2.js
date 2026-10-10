@@ -1,13 +1,14 @@
-/* 新しい遊び(GD.V2)のテスト: 種類105と絵 / つよさの式 / 個体差 / タマゴの確率 / 旧セーブの引っ越し / 画面
+/* テスト: 種類105と絵 / つよさの式 / 個体差 / タマゴの確率 / 1.x のセーブからの引っ越し / 番付と五番勝負 / 配合 / けいこ /
+   特性36・物語・図鑑・かけら交換 / 画面 / 自動プレイ(つり合わせの目安) / 決まり(禁止の言葉・使っていないファイルが無い)
    使い方: node tools/test-v2.js   (npm test から呼ばれる) */
 const fs=require("fs"),path=require("path");
 const {win,MM,store}=require("./lib-load.js")();
 const ok=(c,m)=>{ if(!c){ console.log("✗",m); process.exitCode=1; } else console.log("✓",m); };
-const D=MM.DATA, GD=D.garden, GA=MM.garden, M=MM.mon, UI=MM.ui;
+const D=MM.DATA, GD=D.garden, M=MM.mon, UI=MM.ui;
 const mkRand=(seed)=>()=>{ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; };
 const mkCtx=(ST,rand,day)=>MM.state.ctx({ST,today:20000+(day||0),now:1.7e12,rand,dstr:"2026-10-"+String(1+(day||0)).padStart(2,"0")});
 const RAR=["N","R","SR","SSR","UR","LG"];
-ok(GD.V2===false,"スイッチ GD.V2 は false で出荷状態(今の遊びのまま)");
+ok(win.Q&&win.Q.length>=3000&&MM.exam.ids().length>=300,"問題 "+win.Q.length+"問 ＋ 本試験形式 "+MM.exam.ids().length+"問");
 
 /* ---------- 種類105と絵 ---------- */
 {
@@ -27,7 +28,7 @@ ok(GD.V2===false,"スイッチ GD.V2 は false で出荷状態(今の遊びの�
   let dup=""; for(let f=0;f<9;f++){ const seen={}; K.filter(k=>k.f===f).forEach(k=>{ const g=MM.pxGrid(k.id); if(seen[g])dup=k.id+"="+seen[g]; seen[g]=k.id; }); }
   ok(!dup,"同じ族のなかで、ドットの形が重ならない "+dup);
   ok(K.every(k=>MM.pxData(k.id+"c")!==MM.pxData(k.id)&&MM.pxData(k.id+"c")!==MM.pxData("m01")),"こどもの姿(小物なし)も作れる");
-  ok(MM.pxData("m05").length>100&&D.looks.m30,"旧30体の絵は残っている");
+  ok(MM.pxData("m01").length>100&&D.looks.m30,"相棒マチノコ(m01)ほか 1.x の絵は残っている");
   ok(D.natures.length===10&&D.natures.filter(n=>!n.up).length===2&&D.natures.every(n=>(!n.up&&!n.dn)||(n.up&&n.dn&&n.up!==n.dn)),"性格10(うち増減なし2)");
 }
 
@@ -63,67 +64,76 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const c=mkCtx({q:{},mm:null},mkRand(99)); const cnt=[0,0,0,0,0], N=100000; for(let i=0;i<N;i++)cnt[M.rollRar(c)]++;
   const R=D.RATE2.rate; ok(cnt.every((x,i)=>Math.abs(x/N-R[i])<=0.003),"10万回: "+cnt.map((x,i)=>RAR[i]+(x/N*100).toFixed(2)+"%").join(" ")+" (表±0.3pt)");
   ok(Math.abs(R.reduce((a,b)=>a+b,0)-1)<1e-9,"確率の合計は100%");
-  const ST={q:{},mm:null}; GD.V2=true; const c2=mkCtx(ST,()=>0.1); const g=M.W(c2); c2.mm.res.g=1e6; D.RATE2.cap=999;
+  const ST={q:{},mm:null}; const c2=mkCtx(ST,()=>0.1); const g=M.W(c2); c2.mm.res.g=1e6; D.RATE2.cap=999;
   const rs=[]; for(let i=0;i<80;i++){ const r=M.pull(c2,false); rs.push(r.mon?M.rarOf(r.mon):-1); }
   ok(rs.slice(0,79).every(x=>x===0)&&rs[79]>=3&&g.pity===0,"80回目でかならずSSR以上(79回目までN → 80回目 "+RAR[rs[79]]+")");
   ok(c2.mm.res.g===1e6-80*D.RATE2.cost,"タマゴ1回 = コイン"+D.RATE2.cost);
   const f1=M.pull(c2,true), f2=M.pull(c2,true); ok(f1.mon&&f2.err,"無料は1日1回");
-  D.RATE2.cap=60; GD.V2=false;
+  D.RATE2.cap=60;
 }
 
 /* ---------- 旧セーブからの引っ越し ---------- */
 {
-  /* 旧い遊びでしばらく遊ぶ(ガチャ・育成・週送り) */
-  const ST={q:{},rq:[],mm:null}; const rand=mkRand(42); const c=mkCtx(ST,rand); MM.tutorial.finishIntro(c,"テスト街"); win.gameState=ST;
-  const g1=GA.W(c); c.mm.res.g+=40000;
-  for(let i=0;i<1500;i++){ const id=MM.learn.pick(1,c,{subs:GA.openSubs(c)})[0]; const rw=MM.learn.commit(id,rand()<0.8,4000,c); MM.economy.grant(rw,c);
-    if(i%20===0){ for(let k=0;k<g1.plots.length;k++)if(!g1.plots[k]&&g1.seeds.length)GA.plant(c,0,k); if(GA.canPull(c,10,"normal"))GA.pull(c,10,"normal"); }
-    g1.plots.forEach((p,k)=>{ if(p&&p.dead)GA.compost(c,k); }); let pd; while((pd=GA.takePend(c))){} }
-  c.mm.tix=7; g1.medal=4; c.mm.res.g=12345;
-  const alive=g1.plots.filter(p=>p&&!p.dead).length+g1.seeds.length, adults=g1.plots.filter(p=>p&&!p.dead&&p.bw!=null).length, lg=g1.plots.concat(g1.seeds).filter(p=>p&&!p.dead&&GA.sum(p)>=440).length;
-  const raw=JSON.stringify(ST); store["machimon-v1"]=raw; delete store[M.BACKUP_KEY];
-  ok(raw.length>30000&&alive>=10,"旧セーブを用意("+raw.length+"バイト・個体"+alive+"・おとな"+adults+")");
+  /* 1.x の遊びで作ったセーブ(tools/fixtures/save-v1.json。1.x のコードで遊ばせて書き出したもの)を読みこむ */
+  const FX=JSON.parse(fs.readFileSync(path.join(__dirname,"fixtures","save-v1.json"),"utf8")), meta=FX.meta, raw=JSON.stringify(FX.save), rand=mkRand(42);
+  const loadV1=()=>{ const ST=JSON.parse(raw); ST.mm=MM.state.normalize(ST.mm); return ST; };
+  const ST=loadV1(), c=mkCtx(ST,rand); store["machimon-v1"]=raw; delete store[M.BACKUP_KEY];
+  const alive=meta.alive, adults=meta.adults, lg=meta.lg;
+  ok(raw.length>30000&&alive>=10&&lg>=1&&ST.mm.gd&&ST.mm.gd.on===1&&ST.mm.tix===meta.tix&&ST.mm.res.g===meta.coin,"1.x のセーブを用意("+raw.length+"バイト・個体"+alive+"・おとな"+adults+"・LG"+lg+")");
   const qBefore=JSON.stringify(ST.q), rqBefore=JSON.stringify(ST.rq), oldGd=JSON.stringify(c.mm.gd);
+  ok(qBefore===JSON.stringify(FX.save.q)&&Object.keys(ST.q).length===meta.answered,"読みこんだだけでは 学習の記録は変わらない("+meta.answered+"問ぶん)");
   const m1=JSON.stringify(M.migrateV1toV2(c.mm.gd,c.mm)), m2=JSON.stringify(M.migrateV1toV2(c.mm.gd,c.mm));
   ok(m1===m2&&JSON.stringify(c.mm.gd)===oldGd,"引っ越しを2回かけても同じ結果・元のデータを書きかえない");
-  GD.V2=true;
   const c2=mkCtx(ST,rand); let g2=null, err=""; try{ g2=M.W(c2); }catch(e){ err=e.message; }
   ok(g2&&!err,"引っ越しで落ちない "+err);
   ok(JSON.stringify(ST.q)===qBefore&&JSON.stringify(ST.rq)===rqBefore,"学習の記録(ST.q / ST.rq)が1バイトも変わらない ("+qBefore.length+"バイト)");
   ok(g2.mons.length===alive&&g2.mig===1,"個体の数が保たれる("+g2.mons.length+")");
   ok(g2.mons.filter(p=>p.lv===10).length===adults&&g2.mons.every(p=>p.lv===1||p.lv===10),"おとなはLv10・それ以外はLv1");
+  ok(g2.mons.filter(p=>p.lv===10).every(p=>(g2.dex[p.k]&2)===2)&&Object.keys(g2.dex).filter(k=>g2.dex[k]&2).length<=adults,"1.x で おとな まで育てた種類には「おとなにした」のはんこ");
   ok(g2.mons.filter(p=>p.first).length===lg&&g2.mons.every(p=>M.rarOf(p)<=4),"LGは同じ族のURへ移し「初代」の印");
   ok(g2.mons.every(p=>GD.families[M.kindOf(p).f]&&p.tl.every(t=>t>=0&&t<=10)),"才能は0〜10");
+  ok(g2.mons.filter(p=>p.tr.length).length===meta.traits&&g2.mons.filter(p=>p.sh).length===meta.shiny&&Object.keys(g2.sdex).length===meta.shiny&&g2.hall.length===meta.ownMb,"特性・色ちがい・名マチモンの名前を引きつぐ");
   ok(c2.mm.res.g===5000&&g2.shard===7+3*(7+4),"コインは5,000まで・超えたぶんと券はかけらへ(かけら "+g2.shard+")");
-  ok(store[M.BACKUP_KEY]===raw,"旧セーブを別のキーへ写してある(戻せる)");
-  ok(c2.mm.gd===null,"写しが取れたので旧データは手放す");
-  const js=JSON.stringify(ST); ok(js.indexOf("NaN")<0&&js.indexOf("undefined")<0,"NaN が無い");
+  ok(store[M.BACKUP_KEY]===raw,"1.x のセーブを別のキーへ写してある(戻せる)");
+  ok(c2.mm.gd===null&&c2.mm.tix===0,"写しが取れたので 1.x のデータは手放す");
+  const js=JSON.stringify(ST); ok(js.indexOf("NaN")<0&&js.indexOf("undefined")<0&&js.length<raw.length,"NaN が無い・セーブは小さくなる("+raw.length+" → "+js.length+"バイト)");
   ok(M.kanban(g2)&&M.power(M.kanban(g2))===Math.max(...g2.mons.map(p=>M.power(p))),"いちばん強い子が看板に立つ");
   const g2b=M.W(mkCtx(ST,rand)); ok(g2b===g2,"引っ越しは1回きり(2回目の起動では走らない)");
   const rt=M.normalize(JSON.parse(JSON.stringify(g2))); ok(JSON.stringify(rt.mons)===JSON.stringify(g2.mons)&&rt.kan===g2.kan&&rt.shard===g2.shard,"保存して読み直しても同じ");
+  /* 引っ越し直後に起動できる: オープニングを出さずにホームへ。全部の画面が描ける */
+  { const STu=loadV1(); win.gameState=STu; const b0=UI.ctx; UI.ctx=()=>mkCtx(STu,rand); let e9=""; try{ UI.open(); }catch(e){ e9=e.message; }
+    { const hm=UI.screens.h2(); ok(hm.indexOf("あたらしい遊びに なりました")>0&&hm.indexOf(meta.alive+"体")>0,"引っ越し直後のホームに、1回だけ お知らせが出る"); UI.h2MigOk(); ok(UI.screens.h2().indexOf("あたらしい遊びに なりました")<0&&M.normalize(JSON.parse(JSON.stringify(STu.mm.g2))).mn===1,"「わかった」で消え、もう出ない"); }
+    const h=UI.screens.h2(); ok(!e9&&UI.route.screen==="h2"&&h.indexOf("つよさ")>0&&h.indexOf("undefined")<0&&h.indexOf("NaN")<0&&STu.mm.g2.mig===1,"1.x のセーブで起動 → オープニングなしでホーム "+e9);
+    let bad=""; ["n2","z2","r2","t2","k2m","bz","bzPre","b2"].forEach(sn=>{ let x=""; try{ if(sn==="b2")UI.b2Open(); UI.bzS.noScroll=1; x=UI.screens[sn]({})||""; }catch(e){ x="ERR"+e.message; } if(x.length<200||x.indexOf("undefined")>=0||x.indexOf("NaN")>=0||x.indexOf("ERR")===0)bad+=sn+" "; });
+    ok(!bad,"引っ越し直後に どの画面も描ける "+bad);
+    UI.k2Go("new"); const sq=UI.v2.quiz; ok(UI.route.screen==="k2"&&sq&&sq.qid!=null,"引っ越し直後に けいこ が始められる"); UI.v2.quiz=null;
+    const done=(q)=>JSON.stringify(Object.keys(q).filter(id=>(q[id].c||0)+(q[id].w||0)>0).sort().map(id=>[id,q[id]])); ok(done(STu.q)===done(JSON.parse(qBefore))&&JSON.stringify(STu.rq)===rqBefore,"起動して画面を回っても 解いた問題の記録は変わらない"); UI.ctx=b0; }
+  /* 起動のとき(boot.js): 1.x のセーブを読みこむ前に、まるごと写す */
+  { const src=fs.readFileSync(path.join(__dirname,"..","js/machimon/boot.js"),"utf8"); ok(/machimon-v1-backup/.test(src)&&/setItem\(BACKUP,raw\)/.test(src),"boot.js は 1.x のセーブを 形を変える前に写す"); }
   /* 途中で失敗したら: 元のセーブを残し、最初の1体から始める */
-  const ST3=JSON.parse(raw); ST3.mm=MM.state.normalize(ST3.mm); const keep=ST3.mm.gd; const real=GA.normalize; GA.normalize=()=>{ throw new Error("boom"); };
-  const wn=win.console.warn; win.console.warn=()=>{}; let g3=null; try{ g3=M.W(mkCtx(ST3,rand)); }catch(e){} GA.normalize=real; win.console.warn=wn;
+  const ST3=loadV1(), keep=ST3.mm.gd, real=MM.legacy.read; MM.legacy.read=()=>{ throw new Error("boom"); };
+  const wn=win.console.warn; win.console.warn=()=>{}; let g3=null; try{ g3=M.W(mkCtx(ST3,rand)); }catch(e){} MM.legacy.read=real; win.console.warn=wn;
   ok(g3&&g3.mf===1&&g3.mons.length===1&&ST3.mm.gd===keep&&ST3.mm.res.g===12345,"引っ越しに失敗したら元のセーブをそのまま残す");
-  /* 写しが取れない(保存先が使えない)ときも旧データを消さない */
-  const ST4=JSON.parse(raw); ST4.mm=MM.state.normalize(ST4.mm); delete store[M.BACKUP_KEY]; delete store["machimon-v1"];
-  const g4=M.W(mkCtx(ST4,rand)); ok(g4.mig===1&&ST4.mm.gd&&ST4.mm.gd.on===1,"写しが取れないときは旧データをセーブに残す");
+  /* 写しが取れない(保存先が使えない)ときも 1.x のデータを消さない */
+  const ST4=loadV1(); delete store[M.BACKUP_KEY]; delete store["machimon-v1"];
+  const g4=M.W(mkCtx(ST4,rand)); ok(g4.mig===1&&ST4.mm.gd&&ST4.mm.gd.on===1,"写しが取れないときは 1.x のデータをセーブに残す");
   /* 空・壊れたセーブ */
   const g5=M.W(mkCtx({q:{},mm:null},rand)); ok(g5.mons.length===1&&g5.kan===g5.mons[0].i,"空のセーブ: 最初の1体から始まる");
   const bad={q:{},mm:MM.state.normalize({res:{g:"abc"},gd:{on:1,seeds:"x",plots:[{f:"z",h:"NaN",i:5},null,7],mb:null,fac:"no",medal:"many"},g2:"oops"})};
-  let g6=null,e6=""; try{ g6=M.W(mkCtx(bad,rand)); }catch(e){ e6=e.message; } ok(g6&&g6.mons.length>=1&&JSON.stringify(bad).indexOf("NaN")<0,"壊れたセーブでも起動できる "+e6);
+  let g6=null,e6=""; try{ g6=M.W(mkCtx(bad,rand)); }catch(e){ e6=e.message; } ok(g6&&g6.mons.length>=1&&JSON.stringify(bad.mm.g2).indexOf("NaN")<0,"壊れたセーブでも起動できる "+e6);
   const g7=M.normalize({on:1,mons:[{i:"a1",k:"nope"},{i:"a2",k:"k003",lv:"x",tl:[99,-4,"a"],ef:[1e9],na:"zz",tr:["no","star","star"]},"str"],kan:"a9",sub:["a2","a2","q"],shard:-5});
   ok(g7.mons.length===1&&g7.mons[0].lv===1&&g7.mons[0].tl.join()==="10,0,0,0,0"&&g7.mons[0].ef[0]===100&&g7.mons[0].tr.join()==="star"&&g7.kan===""&&g7.shard===0,"壊れた値は安全な値へ丸める");
+  { const o=MM.state.normalize({on:1,name:"<b>x",res:{g:50,ke:9},mons:{u1:{sp:"m01"}},slots:{a:1},areas:{rouki:1},ms:{intro:1,tut:1},g2:null}); ok(o.res.g===50&&Object.keys(o.res).length===1&&!o.mons&&!o.slots&&!o.areas&&o.ms.intro===1&&!o.ms.tut&&o.name==="bx","1.x の使わなくなった項目(街・建物 など)は読みこむときに落とす"); }
 
   /* ---------- 育つ(けいこ) ---------- */
-  const STn={q:{},rq:[],mm:null}, cn=mkCtx(STn,mkRand(5)); MM.tutorial.finishIntro(cn,"あたらしい街"); win.gameState=STn; UI.ctx=()=>mkCtx(STn,cn.rand,cn._d||0);
+  const STn={q:{},rq:[],mm:null}, cn=mkCtx(STn,mkRand(5)); MM.game.finishIntro(cn,"あたらしい街"); win.gameState=STn; UI.ctx=()=>mkCtx(STn,cn.rand,cn._d||0);
   const gn=M.W(cn), k=M.kanban(gn), c0=cn.mm.res.g;
   let id=MM.learn.pick(1,cn,{subs:[0]})[0]; let gain=MM.economy.grant(MM.learn.commit(id,true,500,cn),cn);
   ok(gain.g===0&&k.xp===0&&cn.mm.res.g===c0,"2秒未満のまぐれ当たりは何も出ない");
   id=MM.learn.pick(1,cn,{subs:[0]})[0]; gain=MM.economy.grant(MM.learn.commit(id,false,4000,cn),cn); ok(gain.g===0&&k.xp===0,"まちがいは何も出ない");
   id=MM.learn.pick(1,cn,{subs:[0]})[0]; gain=MM.economy.grant(MM.learn.commit(id,true,4000,cn),cn);
-  ok(gain.g===10&&gain.mon.xp===10&&cn.mm.res.g===c0+10&&gain.ke===0&&gain.tama===0&&gain.mat===0,"あたらしい問題の正解 = コイン10・経験10(ほかのお金は出ない)");
-  MM.state.rollDay(cn); const w0=JSON.stringify(cn.mm.res); MM.economy.idle(cn); ok(JSON.stringify(cn.mm.g2.mons)===JSON.stringify(gn.mons),"放置では育たない");
+  ok(gain.g===10&&gain.mon.xp===10&&cn.mm.res.g===c0+10&&Object.keys(cn.mm.res).join()==="g","あたらしい問題の正解 = コイン10・経験10(お金はコインだけ)");
+  { const m0=JSON.stringify(gn.mons), c0b=cn.mm.res.g; MM.state.rollDay(cn); MM.game.enter({ST:STn,now:cn.now+86400000*3,rand:cn.rand}); ok(JSON.stringify(gn.mons)===m0&&cn.mm.res.g===c0b,"放置では何も増えない(コインも育ちも)"); }
   const pz=mon({i:"z",k:k.k}); M.addXp(pz,1e7,M.lvCap(cn,pz)); ok(pz.lv===D.LVCAP.base,"習熟が無いうちは Lv"+D.LVCAP.base+" が上限(それ以上にならない)");
   const pe=mon({i:"e"}); for(let i=0;i<5000;i++)M.addEf(pe,"hmojs"[i%5],0.9); ok(Math.abs(pe.ef.reduce((a,b)=>a+b,0)-300)<1e-6&&pe.ef.every(v=>v<=100),"けいこ値は合計300・1つ100まで");
   ok(M.release(cn,k.i).err&&gn.mons.length===1,"看板と最後の1体は手放せない");
@@ -136,8 +146,8 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   for(const [s,p] of scr){ let h=""; try{ h=UI.screens[s](p)||""; }catch(e){ h="ERR "+e.message; } const u=h.indexOf("undefined"), n=h.indexOf("NaN");
     ok(h.length>200&&u<0&&n<0&&h.indexOf("ERR")!==0,"render "+s+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(h.indexOf("ERR")===0?h:"")); }
   ok(UI.screens.h2().indexOf("つよさ")>0&&UI.screens.n2().split("つよさ").length>=1&&UI.screens.n2d({id:gn.mons[1].i}).indexOf("才能")>0,"ホーム・詳細に つよさ と 才能 が出る");
-  UI.go("garden"); const r1=UI.route.screen; UI.go("gContest"); const r2=UI.route.screen; UI.go("town"); ok(r1==="h2"&&r2==="h2"&&UI.route.screen==="h2","新しい遊びのあいだ、旧い画面(大会・街評議会・街)へは行けない");
-  ok(GA.tick(cn)===null&&!cn.mm.gd,"暦(週送り)は動かない・旧セーブは作られない");
+  UI.go("garden"); const r1=UI.route.screen; UI.go("gContest"); const r2=UI.route.screen; UI.go("town"); ok(r1==="h2"&&r2==="h2"&&UI.route.screen==="h2"&&!UI.screens.garden&&!UI.screens.town,"1.x の画面(大会・街評議会・街)は もう無い(名前を呼んでもホームへ)");
+  ok(!cn.mm.gd&&!MM.garden&&!MM.town&&!MM.incident&&!MM.boss,"1.x の遊びのコードは読みこまれない・1.x のセーブは作られない");
   module.exports={STn,cn,gn,mkCtx,mkRand,ok,win,MM,store,mon};
 }
 
@@ -156,7 +166,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const J1=JSON.stringify(B); const again=require("./lib-load.js")().MM.DATA.banzuke; ok(JSON.stringify(again)===J1,"相手は決め打ち(読み込み直しても同じ)");
 
   /* ---------- 五番勝負に運が無い ---------- */
-  const fresh=(seed)=>{ const ST={q:{},rq:[],mm:null}; const c=mkCtx(ST,mkRand(seed)); MM.tutorial.finishIntro(c,"番付の街"); M.W(c); return c; };
+  const fresh=(seed)=>{ const ST={q:{},rq:[],mm:null}; const c=mkCtx(ST,mkRand(seed)); MM.game.finishIntro(c,"番付の街"); M.W(c); return c; };
   const day=(c,n)=>{ c.dstr="2027-01-"+String(n).padStart(3,"0"); c.today=21000+n; MM.state.rollDay(c); };
   const run=(c,pat,ms,scale)=>{ const s=BZ.start(c); if(s.err)return s; if(scale!=null){ const foe=D.bzAt(s.foe); ["h","m","o","j","s"].forEach(k=>{ s.mine[k]=foe.stats[k]*scale; }); }
     let r,i=0; do{ r=BZ.round(c,s,!!pat[i],ms); i++; }while(r&&!r.over); return {s,res:BZ.finish(c,s)}; };
@@ -173,7 +183,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     s.fc.rows.forEach((row,i)=>{ const me=s.mine[row.k]; const fo=BZ.foeShow(foe,row.k);
       const w=(m)=>Math.round(me*m)>fo; const want=w(R.miss)?"◎":(w(R.hit)?"▲":(w(R.fast)?"△":"▼")); if(want!==row.mark)good=false; });
     ok(good&&s.fc.rows.length===5&&s.qids.length===5&&new Set(s.qids).size===5,"見込みの印(◎▲△▼)は、実際の勝ち負けの式と同じ・5問は重ならない");
-    const exN=s.qids.filter(id=>GA.isExam(win.qById(id))).length; ok(exN===R.exam,"5問のうち本試験形式が"+R.exam+"問 ("+exN+")");
+    const exN=s.qids.filter(id=>MM.exam.isExam(win.qById(id))).length; ok(exN===R.exam,"5問のうち本試験形式が"+R.exam+"問 ("+exN+")");
     const before=Object.keys(c.ST.q).filter(id=>(c.ST.q[id].c||0)+(c.ST.q[id].w||0)>0).length; let r,n=0; do{ r=BZ.round(c,s,true,5000); n++; }while(r&&!r.over); BZ.finish(c,s);
     const after=Object.keys(c.ST.q).filter(id=>(c.ST.q[id].c||0)+(c.ST.q[id].w||0)>0).length; ok(after-before===n,"取組で答えた問題も、学習の記録に入る("+n+"問)"); }
   { const c=fresh(6); const s=BZ.start(c); const q1=BZ.round(c,s,true,500), q2=BZ.round(c,s,true,4000), q3=BZ.round(c,s,true,9000);
@@ -221,7 +231,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
 /* ================= スライス4: 配合と育成どうぐ ================= */
 {
   const {mkCtx,mkRand,mon}=module.exports; const BR=MM.breed, KE=MM.keiko, BZ=MM.banzuke, B=D.BREED; const {banHit,rpgHit}=require("./lib-load.js");
-  const fresh=(seed)=>{ const ST={q:{},rq:[],mm:null}; const c=mkCtx(ST,mkRand(seed)); MM.tutorial.finishIntro(c,"配合の街"); win.gameState=ST; M.W(c); return c; };
+  const fresh=(seed)=>{ const ST={q:{},rq:[],mm:null}; const c=mkCtx(ST,mkRand(seed)); MM.game.finishIntro(c,"配合の街"); win.gameState=ST; M.W(c); return c; };
   const put=(c,o)=>{ const g=M.W(c); const p=M.normMon(Object.assign({i:"a"+(g.nid++),k:"k001",lv:1,xp:0,tl:[5,5,5,5,5],na:"n0",tr:[],ef:[0,0,0,0,0]},o)); g.mons.push(p); return p; };
   const c=fresh(11), g=M.W(c); g.hn=["0|1"]; g.hnf={};
   ok(D.ITEMS.length===12&&new Set(D.ITEMS.map(t=>t.id)).size===12&&D.ITEMS.every(t=>t.name&&t.desc&&"bmk".includes(t.use)),"育成どうぐは12種");
@@ -277,15 +287,16 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   k9.ef=[10,40,5,0,0]; BR.useItem(c,"wasure",k9.i); ok(k9.ef.join()==="10,0,5,0,0","わすれ草: いちばん多い けいこ値を0に");
   BR.useItem(c,"cho",""); BR.useItem(c,"mochi",""); ok(g.boost.ef===10&&g.boost.xp===10,"けいこ帳・ちから餅: つぎの10問が2倍");
   { const id=MM.learn.pick(1,c,{subs:[0],filter:(q,st)=>!MM.learn.seen(st)})[0], lv0=k9.lv; k9.lv=1; k9.tr=[]; k9.xp=0; k9.ef=[0,0,0,0,0]; const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); k9.lv=Math.max(lv0,k9.lv);
-    ok(gain.mon.xp===20&&gain.g===10&&Math.abs(gain.mon.ef.o-0.24)<1e-9&&g.boost.ef===9&&g.boost.xp===9,"2倍のあいだは 経験20・けいこ値0.24(コインは増えない)"); }
+    ok(gain.mon.xp===20&&gain.g===10&&Math.abs(gain.mon.ef.o-D.KEIKO.kinds[0].ef*2)<1e-9&&g.boost.ef===9&&g.boost.xp===9,"2倍のあいだは 経験20・けいこ値2倍(コインは増えない)"); }
   /* ごほうび: 順番で決まる・乱数なし */
   { const c2=fresh(12), g2=M.W(c2), out=[]; const cr=c2.rand; let used=0; c2.rand=()=>{ used++; return 0.5; }; BR.give(c2,{t0:6,t1:8,bt:1},out,"x"); c2.rand=cr;
     ok(used===0&&out.length===15&&g2.bt===1&&D.ITEMS.every(t=>g2.items[t.id]>=1),"ごほうびは順番で決まる(乱数なし)・12種すべてが順にもらえる");
     const z=BZ.Z(c2), it0=BR.itemCount(g2); const day=(n)=>{ c2.dstr="g"+n; c2.today=24000+n; MM.state.rollDay(c2); }; let d=1; day(d);
     const bout=(winIt)=>{ if(BZ.leftToday(c2)<=0){ d++; day(d); } const s=BZ.start(c2); const foe=D.bzAt(s.foe); ["h","m","o","j","s"].forEach(k=>{ s.mine[k]=foe.stats[k]*(winIt?3:0.1); }); let r; do{ r=BZ.round(c2,s,false,20000); }while(r&&!r.over); return BZ.finish(c2,s); };
     z.pos=40; let last; for(let i=0;i<7;i++)last=bout(i<3); ok(last.gifts.length===0&&BR.itemCount(g2)===it0,"負け越しの場所に ごほうびは無い");
-    for(let i=0;i<7;i++)last=bout(i<5); ok(last.gifts.length===2&&BR.itemCount(g2)===it0+2,"5勝の場所: 育成どうぐ2つ");
-    const bt0=g2.bt; for(let i=0;i<7;i++)last=bout(true); ok(last.gifts.some(x=>x.bt)&&g2.bt===bt0+1,"全勝の場所: とっておき2つ＋配合券");
+    for(let i=0;i<7;i++)last=bout(i<5); ok(last.gifts.length===1&&BR.itemCount(g2)===it0+1,"5勝の場所: 育成どうぐ1つ");
+    for(let i=0;i<7;i++)last=bout(i<6); ok(last.gifts.length===2&&D.itemById[last.gifts[1].item].tier===1,"6勝の場所: ふつう1つ＋とっておき1つ");
+    const bt0=g2.bt; for(let i=0;i<7;i++)last=bout(true); ok(last.gifts.length===2&&last.gifts.every(x=>x.item&&D.itemById[x.item].tier===1)&&g2.bt===bt0,"全勝の場所: とっておき2つ(配合券は出ない=配合券は復習と昇進だけ)");
     z.pos=45; z.n=0; z.w=0; z.l=0; const pr=bout(true); ok(pr.promo&&pr.promo.won&&pr.gifts.some(x=>x.bt)&&pr.gifts.some(x=>x.item),"昇進の一番に勝つ: とっておき＋配合券"); }
   /* 画面 */
   { win.gameState=c.ST; const base=UI.ctx; UI.ctx=()=>c; g.bt=3; g.items={ito:1,kawari:2};
@@ -316,18 +327,18 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const qNew=bySub(3)[0].id, qRev=bySub(3)[1].id, qLate=bySub(3)[2].id, qNig=bySub(3)[3].id, qEarly=bySub(3)[4].id;
   seenSt(c,qRev); seenSt(c,qLate,{due:c.today-9,la:c.today-12}); seenSt(c,qNig,{ng:true,c:0,w:1,due:c.today}); seenSt(c,qEarly,{due:c.today+5,la:c.today-1});
   ok(KE.classOf(c.ST.q[qNew],c.today)==="new"&&KE.classOf(c.ST.q[qRev],c.today)==="rev"&&KE.classOf(c.ST.q[qNig],c.today)==="nig"&&KE.classOf(c.ST.q[qEarly],c.today)==="other","問題の状態: まだ／期限の来た復習／前にまちがえた／期限前");
-  e0(); let gn=ans(c,qNew,true); ok(gn.g===10&&gn.mon.cls==="new"&&k.ef[2]===K.kinds[0].ef&&k.ef[3]===0&&k.ef[4]===0,"あたらしい問題の正解 → ちから(コイン10)");
-  e0(); gn=ans(c,qRev,true); ok(gn.g===20&&gn.mon.cls==="rev"&&k.ef[3]===0.12&&k.ef[2]===0,"復習の正解 → ねばり(コイン20)");
-  e0(); gn=ans(c,qLate,true); ok(gn.mon.late&&k.ef[3]===0.24,"7日以上ためた復習は けいこ値2倍");
-  e0(); gn=ans(c,qNig,true); ok(gn.g===30&&gn.mon.cls==="nig"&&k.ef[4]===0.12&&k.ef[2]===0&&k.ef[3]===0,"苦手つぶしの正解 → ひらめき(コイン30)");
+  e0(); let gn=ans(c,qNew,true); ok(gn.g===10&&gn.mon.cls==="new"&&k.ef[2]===K.kinds[0].ef&&k.ef[3]===0&&k.ef[4]===0,"あたらしい問題の正解 → ちから(コイン10・けいこ値 "+K.kinds[0].ef+")");
+  e0(); gn=ans(c,qRev,true); ok(gn.g===20&&gn.mon.cls==="rev"&&k.ef[3]===K.kinds[1].ef&&k.ef[2]===0,"復習の正解 → ねばり(コイン20)");
+  e0(); gn=ans(c,qLate,true); ok(gn.mon.late&&k.ef[3]===K.kinds[1].ef*2,"7日以上ためた復習は けいこ値2倍");
+  e0(); gn=ans(c,qNig,true); ok(gn.g===30&&gn.mon.cls==="nig"&&k.ef[4]===K.kinds[2].ef&&k.ef[2]===0&&k.ef[3]===0,"苦手つぶしの正解 → ひらめき(コイン30)");
   e0(); gn=ans(c,qEarly,true); ok(gn.g<=5&&k.ef.every(v=>v===0),"期限前の問題は ほぼ何も出ない");
   e0(); gn=ans(c,bySub(3)[5].id,false); ok(gn.g===0&&k.ef.every(v=>v===0)&&gn.mon.xp===0,"まちがいは何も出ない");
-  e0(); c.mm.combo=4; gn=ans(c,bySub(3)[6].id,true); ok(c.mm.combo===5&&k.ef[0]===K.comboEf,"連続正解5問ごとに いきおい");
-  e0(); const exId=MM.garden.examIds()[0]; gn=ans(c,exId,true); ok(k.ef[1]===K.examEf,"本試験形式の正解で かしこさ");
+  e0(); c.mm.combo=4; gn=ans(c,bySub(3)[6].id,true); ok(c.mm.combo===5&&k.ef[0]===K.comboEf&&k.ef[2]===K.kinds[0].ef,"連続正解5問ごとに いきおい");
+  e0(); const exId=MM.exam.ids()[0]; gn=ans(c,exId,true); ok(k.ef[1]===K.examEf,"本試験形式の正解で かしこさ");
   e0(); gn=ans(c,qNew,true); ok(gn.g<10&&k.ef.every(v=>v===0),"同じ日のくり返しでは けいこ値は入らない");
   /* 1回10問・4問に1問は本試験形式・あたらしい問題は1回=1科目 */
   { const c2=fresh(22); let s=KE.start(c2,"new"); const sub0=s.sub, subs=new Set(), ex=[]; let n=0;
-    while(s.qid!=null){ const q=win.qById(s.qid); subs.add(q.s); ex.push(MM.garden.isExam(q)?1:0); const o=(n%3!==0); const gain=ans(c2,s.qid,o); KE.advance(c2,s,o,gain); n++; }
+    while(s.qid!=null){ const q=win.qById(s.qid); subs.add(q.s); ex.push(MM.exam.isExam(q)?1:0); const o=(n%3!==0); const gain=ans(c2,s.qid,o); KE.advance(c2,s,o,gain); n++; }
     ok(n===10&&s.over&&s.n===10&&subs.size===1&&[...subs][0]===sub0,"1回は10問で終わる・あたらしい問題は1回=1科目");
     ok(ex.join("")==="0001000100","4問に1問は本試験形式 ("+ex.join("")+")");
     ok(s.coin>0&&s.xp>0&&s.hits===6,"1回ぶんの コイン・経験・正解数がまとまる");
@@ -396,7 +407,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   /* けいこの1問ぶん */
   const st0=(c,id,o)=>{ c.ST.q[id]=Object.assign({c:1,w:0,ng:false,s:0,bm:false,box:1,due:c.today-1,la:c.today-3,ease:2.3},o||{}); };
   const keiko=(tr,o)=>{ o=o||{}; const c=fresh(900+(keiko.n=(keiko.n||0)+1)), g=M.W(c), k=M.kanban(g); k.tr=tr.slice(); k.lv=o.lv||40; k.xp=0; k.ef=[0,0,0,0,0];
-    let id; if(o.exam)id=MM.garden.examIds()[0]; else id=Q.filter(q=>q.s===2)[3].id;
+    let id; if(o.exam)id=MM.exam.ids()[0]; else id=Q.filter(q=>q.s===2)[3].id;
     if(o.cls==="rev")st0(c,id); else if(o.cls==="nig")st0(c,id,{ng:true,c:0,w:1,due:c.today});
     if(o.combo)c.mm.combo=o.combo-1;
     const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); return {xp:gain.mon.xp,coin:gain.g,ef:gain.mon.ef,k}; };
@@ -547,7 +558,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const ST={q:{},rq:[],mm:null}; win.gameState=ST; const base=UI.ctx; UI.ctx=()=>MM.state.ctx({ST,rand:mkRand(31)});
   UI.open(); ok(UI.route.screen==="intro","初回起動はオープニングから");
   const op=UI.screens.intro(UI.route.params); chk("オープニング",op);
-  ok((op.match(/class="mm-v2-eggbtn"/g)||[]).length===3&&op.indexOf("街が育つんだモン")<0&&op.indexOf("横綱")>0,"オープニングは1画面: 物語3行と タマゴ3つ(旧い文言は出ない)");
+  ok((op.match(/class="mm-v2-eggbtn"/g)||[]).length===3&&op.indexOf("横綱")>0,"オープニングは1画面: 物語3行と タマゴ3つ(旧い文言は出ない)");
   let taps=0; UI.opPick(1); taps++;
   const g=M.W(UI.ctx()), k=M.kanban(g);
   ok(UI.route.screen==="intro"&&UI.route.params.page===2&&g.st===1&&g.mons.length===1&&k.k===D.STARTERS[1]&&M.rarOf(k)===0&&ST.mm.ms.intro===1,"1タップめ: えらんだタマゴから最初の1体(N)が生まれる");
@@ -567,6 +578,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   ok(["けいこ","タマゴ","配合","品評会"].every(w=>text(menu).indexOf(w)>0)&&(menu.match(/class="mm-gmenu[^"]*"[^>]*>(.*?)<\/div>/)[1].match(/<button/g)||[]).length===3&&menu.indexOf("mm-v2-keiko")>0,"ホームのボタンは4つ(けいこ／タマゴ／配合／品評会)");
   ok((tabs.match(/<button/g)||[]).length===4&&["ホーム","なかま","図鑑","きろく"].every(w=>tabs.indexOf(w)>0),"下のタブは4つ(ホーム／なかま／図鑑／きろく)");
   ok(btns<=12,"ホームの押せるものは12こ以下("+btns+")");
+  ok(h.indexOf("あたらしい遊びに なりました")<0,"はじめて遊ぶ人には 引っ越しのお知らせは出ない");
   /* 番付が上がると街の景色がにぎやかになる */
   { const c=UI.ctx(), z=BZ.Z(c), cnt=[], seen=new Set(); for(let i=0;i<6;i++)M.pull(Object.assign(c,{rand:mkRand(40+i)}),true)&&(g.free="");
     [61,55,50,44,32,22,8,1].forEach(pos=>{ z.pos=pos; const sc=UI.scene2(c,g,M.kanban(g)); cnt.push((sc.match(/class="mm-bld/g)||[]).length+(sc.match(/class="mm-walker/g)||[]).length); seen.add(sc); });
@@ -575,25 +587,73 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   chk("z2(図鑑)",UI.screens.z2()); ok(text(UI.screens.z2()).indexOf("/105")>0&&(UI.screens.z2().match(/class="mm-dex mm-v2-dex/g)||[]).length===105,"図鑑は105種 × はんこ3つ");
   chk("r2(きろく)",UI.screens.r2()); ok(D.ITEMS.every(it=>UI.screens.r2().indexOf(it.name)>0)&&UI.screens.r2().indexOf("Lvの上限")>0,"きろくに 育成どうぐ12種 と Lvの上限(9科目)");
   chk("n2",UI.screens.n2()); chk("n2d",UI.screens.n2d({id:g.mons[1].i})); chk("t2",UI.screens.t2()); chk("k2m",UI.screens.k2m()); UI.b2Open(); chk("b2",UI.screens.b2()); UI.bzS.noScroll=1; chk("bz",UI.screens.bz()); chk("bzPre",UI.screens.bzPre());
-  ["garden","gContest","town","build","zukan","record","gGacha"].forEach(sn=>UI.go(sn)); ok(UI.route.screen==="h2","旧い画面(街・建設・ガチャ・旧図鑑・旧記録)へは行けない");
+  ["garden","gContest","town","build","zukan","record","gGacha"].forEach(sn=>UI.go(sn)); ok(UI.route.screen==="h2","知らない名前の画面へは行かない(ホームへ寄せる)");
   ok(Object.keys(UI.v2ok).every(sn=>UI.screens[sn]),"登録した画面はすべて在る("+Object.keys(UI.v2ok).length+")");
   UI.ctx=base;
 
-  /* ---------- 自動で遊ばせる(1日60問・正答率75%・180日。配合・けいこ込み。つり合わせの仕上げはスライス8) ---------- */
-  { const r=require("./sim-v2.js").run({seed:42,days:180,marks:[7,30,90,180]}), at=r.at;
-    console.log("  自動プレイ:",[7,30,90,180].map(d=>d+"日 "+at[d].dan+at[d].pos+"枚目 つよさ"+at[d].pw+" SSR以上"+at[d].ssr+"体 図鑑"+at[d].dex+" 配合"+at[d].breeds+" 習熟"+at[d].mast.join(",")).join("\n             "),"\n             横綱",r.yoko||"—","日目 / 才能40・45・50までの配合",r.t40,r.t45,r.t50);
-    ok(at[7].pos>=49&&at[7].pos<=58,"7日: 序二段あたり ("+at[7].dan+at[7].pos+"枚目)");
-    ok(at[30].pos>=34&&at[30].pos<=47,"30日: 幕下あたり ("+at[30].dan+at[30].pos+"枚目)");
-    ok(at[90].pos>=9&&at[90].pos<=32,"90日: 十両の上〜前頭 ("+at[90].dan+at[90].pos+"枚目)");
-    ok(at[180].pos<=14,"180日: 前頭の上〜横綱 ("+at[180].dan+at[180].pos+"枚目)"+(r.yoko?" 横綱 "+r.yoko+"日目":""));
-    ok(!r.yoko||r.yoko>=120,"横綱は早くても4か月より先");
-    ok(at[30].ssr<=4&&at[90].ssr<=12&&at[30].lg===0&&at[90].lg===0,"SSR以上は 30日で数体・90日で十体ほどまで("+at[30].ssr+"・"+at[90].ssr+"・180日 "+at[180].ssr+")、LGは90日では出ない");
-    ok(at[30].pw<at[90].pw&&at[90].pw<=at[180].pw&&at[180].pw<1450,"看板のつよさは伸び続け、上限に張りつかない("+at[30].pw+" → "+at[90].pw+" → "+at[180].pw+")");
-    ok(at[30].dex>=35&&at[30].dex<=65&&at[180].dex<105,"図鑑: 30日で "+at[30].dex+"種・180日で "+at[180].dex+"種(105種はうまらない)");
+  /* ---------- 自動で遊ばせる(1日60問。配合・けいこ・かけら交換こみ)= つり合わせの目安 ----------
+     手ぎわの良い自動プレイなので 到達は上限寄り。数字を直すのは data/kinds.js(KEIKO・LVCAP・GIFT)と data/banzuke.js(ANCHOR)。
+     目安: 正答率75% → 30日で幕下あたり・90日で前頭あたり・横綱まで約6か月 / 60% → 止まらず少しずつ上がる / 90% → 3か月より早くは横綱に届かない */
+  { const sim=require("./sim-v2.js").run, line=(at,ds)=>ds.map(d=>d+"日 "+at[d].dan+at[d].pos+"枚目 つよさ"+at[d].pw+" Lv"+at[d].lv+" SSR以上"+at[d].ssr+"体 図鑑"+at[d].dex+" 配合"+at[d].breeds+" けいこ値"+at[d].ef+" どうぐ"+at[d].items).join("\n             ");
+    const r=sim({seed:42,days:230,marks:[7,30,90,180,230]}), at=r.at;
+    console.log("  自動プレイ(正答率75%):\n             "+line(at,[7,30,90,180]),"\n             横綱",r.yoko||"—","日目 / けいこ値が満ちた日",r.efFull||"—","/ 才能40・45・50までの配合",r.t40,r.t45,r.t50);
+    ok(at[7].pos>=49&&at[7].pos<=58,"75%・7日: 序二段あたり ("+at[7].dan+at[7].pos+"枚目)");
+    ok(at[30].pos>=36&&at[30].pos<=47,"75%・30日: 幕下あたり ("+at[30].dan+at[30].pos+"枚目)");
+    ok(at[90].pos>=9&&at[90].pos<=28,"75%・90日: 前頭あたり ("+at[90].dan+at[90].pos+"枚目)");
+    ok(at[180].pos<=12,"75%・180日: 三役〜横綱 ("+at[180].dan+at[180].pos+"枚目)");
+    ok(r.yoko>=150&&r.yoko<=230,"75%: 横綱まで 約6か月(5〜7か月半) → "+r.yoko+"日目");
+    ok(at[30].ssr<=6&&at[90].ssr<=14&&at[30].lg===0&&at[90].lg===0,"SSR以上は 30日で数体・90日で十体ほどまで("+at[30].ssr+"・"+at[90].ssr+"・180日 "+at[180].ssr+")、LGは90日では出ない");
+    ok(at[30].pw<at[90].pw&&at[90].pw<at[180].pw&&at[180].pw<1500,"看板のつよさは伸び続け、上限に張りつかない("+at[30].pw+" → "+at[90].pw+" → "+at[180].pw+")");
+    ok(at[30].dex>=40&&at[30].dex<=66&&at[180].dex<105,"図鑑: 30日で約半分("+at[30].dex+"種)・180日で "+at[180].dex+"種(105種はうまらない)");
     [30,90,180].forEach(d=>{ const m=at[d].mast, sh=at[d].share, sn=at[d].seen; ok(Math.max(...m)-Math.min(...m)<=6&&Math.max(...sn)-Math.min(...sn)<=6&&Math.max(...sh)<=18,d+"日: 9科目の習熟がそろう("+m.join(",")+"%)・1科目に出題が偏らない(最大"+Math.max(...sh)+"%)"); });
-    ok(at[30].lv<=at[30].cap&&at[180].cap===50,"まんべんなく解けば Lvの上限は Lv50 まで開く(30日 Lv"+at[30].lv+"/"+at[30].cap+"・180日 Lv"+at[180].lv+"/"+at[180].cap+")");
+    ok(at[30].lv<=at[30].cap&&at[230].cap===50,"まんべんなく解けば Lvの上限は Lv50 まで開く(30日 Lv"+at[30].lv+"/"+at[30].cap+"・180日 Lv"+at[180].lv+"/"+at[180].cap+")");
+    ok(at[30].ef<=80&&at[90].ef<=200&&(!r.efFull||r.efFull>=150),"けいこ値は すぐには満ちない(30日 "+at[30].ef+"・90日 "+at[90].ef+"・満ちた日 "+(r.efFull||"230日より先")+")");
+    ok(at[180].items<=80&&at[180].gifts>=40,"育成どうぐは たまりすぎない(180日で もらった"+at[180].gifts+"こ・手もと"+at[180].items+"こ)");
+    ok(at[30].breeds<=36&&at[180].tickets>=150,"配合は ほぼ1日1回(30日で"+at[30].breeds+"回・180日で券"+at[180].tickets+"枚)");
     ok(r.t45===0||r.t45>=8,"才能45以上は 配合を重ねてから("+r.t40+"・"+r.t45+"・"+r.t50+"回目)");
-    ok(at[180].tickets>=150&&at[180].breeds>=100,"配合券は ほぼ毎日1枚("+at[180].tickets+"枚・配合"+at[180].breeds+"回)");
-    const js=JSON.stringify(r.ST.mm.g2); ok(js.indexOf("NaN")<0&&js.length<60000,"セーブの大きさ "+js.length+" バイト・NaNなし"); }
+    ok(at[180].story>=6&&at[180].stamps>at[30].stamps,"物語は番付といっしょに進む(180日で第"+at[180].story+"話)・はんこは増え続ける("+at[30].stamps+" → "+at[180].stamps+")");
+    const js=JSON.stringify(r.ST.mm.g2); ok(js.indexOf("NaN")<0&&js.length<60000,"セーブの大きさ "+js.length+" バイト・NaNなし");
+    /* 正答率60%: 止まり切らずに少しずつ上がる */
+    const lo=sim({acc:0.6,seed:42,days:180,marks:[30,90,180]});
+    console.log("  自動プレイ(正答率60%):\n             "+line(lo.at,[30,90,180]),"\n             番付が動かなかった最長",lo.maxStall,"日");
+    ok(lo.at[30].pos>lo.at[90].pos&&lo.at[90].pos>lo.at[180].pos&&lo.at[180].pos<=34&&lo.maxStall<=45,"60%: 止まり切らずに上がる("+lo.at[30].pos+" → "+lo.at[90].pos+" → "+lo.at[180].pos+"枚目・動かなかった最長 "+lo.maxStall+"日)");
+    ok(lo.at[30].pw<lo.at[90].pw&&lo.at[90].pw<lo.at[180].pw,"60%: つよさも伸び続ける("+lo.at[30].pw+" → "+lo.at[90].pw+" → "+lo.at[180].pw+")");
+    /* 正答率90%: 3か月より早くは横綱に届かない */
+    const hi=sim({acc:0.9,seed:42,days:120,marks:[30,90,120]});
+    console.log("  自動プレイ(正答率90%):\n             "+line(hi.at,[30,90,120]),"\n             横綱",hi.yoko||"120日より先");
+    ok(!hi.yoko||hi.yoko>95,"90%: 3か月より早くは横綱に届かない("+(hi.yoko?hi.yoko+"日目":"120日より先")+"・90日 "+hi.at[90].dan+hi.at[90].pos+"枚目)");
+    ok(hi.at[90].pos<at[90].pos+4&&hi.at[30].pos<=at[30].pos+2,"正答率が高いほうが 早く上がる(90日: 90% "+hi.at[90].pos+"枚目・75% "+at[90].pos+"枚目)"); }
+}
+/* ================= スライス8: 決まり(禁止の言葉・姉妹アプリと違う遊び・使っていないファイルが無い) ================= */
+{
+  const {banHit,rpgHit}=require("./lib-load.js"); const root=path.join(__dirname,"..");
+  const walk=(d,out)=>{ for(const e of fs.readdirSync(d,{withFileTypes:true})){ const p=path.join(d,e.name); if(e.isDirectory()){ if(e.name!=="questions")walk(p,out); } else if(/\.(js|css|html|txt|json)$/.test(e.name)&&e.name!=="save-v1.json")out.push(p); } return out; };
+  const files=walk(path.join(root,"js"),[]).concat(walk(path.join(root,"css"),[]),walk(path.join(root,"tools"),[]).filter(p=>!/lib-load\.js$/.test(p)),walk(path.join(root,"docs"),[]),[path.join(root,"index.html"),path.join(root,"sw.js")]);
+  const hits=[]; files.forEach(p=>{ const w=banHit(fs.readFileSync(p,"utf8")); if(w)hits.push(path.relative(root,p)+":"+w); });
+  ok(!hits.length,"ソースに禁止の言葉が無い("+files.length+"ファイル) "+hits.slice(0,5).join(" "));
+  /* 画面に出る文(データの名前・説明・せりふ)に、冒険して戦う遊びの言葉が無い */
+  const texts=[].concat(D.kinds.map(k=>k.name),D.TRAITS.map(t=>t.name+t.desc),D.COMBOS.map(t=>t.name+t.desc),D.ITEMS.map(t=>t.name+t.desc),D.natures.map(n=>n.name),D.DAN.map(d=>d.name),
+    GD.rivals.map(r=>r.name+r.boss+r.taunt+r.lose+r.win),GD.families.map(f=>f.name),[D.YOKOZUNA.name+D.YOKOZUNA.taunt+D.YOKOZUNA.lose+D.YOKOZUNA.win],D.STORY.eps.map(e=>e.title+e.lines.map(l=>l.t).join("")),[fs.readFileSync(path.join(root,"docs/whatsnew.txt"),"utf8")]);
+  const rh=texts.map(t=>rpgHit(t)||banHit(t)).filter(Boolean); ok(!rh.length,"データの文(種類・特性・どうぐ・ライバルのせりふ・物語・お知らせ)に、体力・攻撃・装備・マップ・敵 などの言葉が無い "+rh.join());
+  const srcAll=walk(path.join(root,"js","machimon"),[]).map(p=>fs.readFileSync(p,"utf8")).join("\n")+fs.readFileSync(path.join(root,"css/machimon.css"),"utf8")+fs.readFileSync(path.join(root,"index.html"),"utf8");
+  ok(!/hp[-_]?bar|damage|attack|equip|dungeon|weapon|skill|enemy|monster/i.test(srcAll.replace(/machimon/gi,"")),"コードと見た目(CSS)にも、体力の棒・ダメージ・攻撃・装備・マップ・敵 の部品が無い");
+  /* 読みこむファイルと置いてあるファイルが一致(使わなくなったファイルを残さない) */
+  const html=fs.readFileSync(path.join(root,"index.html"),"utf8"), swSrc=fs.readFileSync(path.join(root,"sw.js"),"utf8");
+  const scripts=[...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m=>m[1]), css=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m=>m[1]);
+  const onDisk=walk(path.join(root,"js"),[]).concat(fs.readdirSync(path.join(root,"js","questions")).map(f=>path.join(root,"js","questions",f))).filter(p=>/\.js$/.test(p)).map(p=>path.relative(root,p)).sort();
+  ok(JSON.stringify(scripts.slice().sort())===JSON.stringify(onDisk),"js/ にあるファイルは すべて index.html が読みこむ(あまりなし) "+onDisk.filter(f=>!scripts.includes(f)).concat(scripts.filter(f=>!onDisk.includes(f))).join());
+  const cssDisk=fs.readdirSync(path.join(root,"css")).map(f=>"css/"+f).sort(); ok(JSON.stringify(css.slice().sort())===JSON.stringify(cssDisk),"css/ も同じ("+cssDisk.join()+")");
+  const assets=[...swSrc.matchAll(/"\.\/([^"]+)"/g)].map(m=>m[1]).filter(Boolean);
+  ok(assets.every(a=>fs.existsSync(path.join(root,a)))&&scripts.concat(css).every(f=>assets.includes(f)),"sw.js のキャッシュ一覧: 無いファイルを指さない・読みこむファイルを ぜんぶ持つ "+assets.filter(a=>!fs.existsSync(path.join(root,a))).concat(scripts.concat(css).filter(f=>!assets.includes(f))).join());
+  ok(/const C = "machimon-v(\d+)"/.test(swSrc)&&Number(RegExp.$1)>=28,"sw キャッシュ番号 v"+RegExp.$1);
+  ok(!/\b(garden|town|incident|boss|hatch|evolve|gacha|tutorial|onboard)\.js/.test(html+swSrc)&&["garden","town","incident","boss","hatch","evolve","gacha","zukan","tutorial","onboard","power","audio"].every(k=>!MM[k]),"1.x の遊びのコード(暦・大会・評議会・街・事件・建設)は 残っていない");
+  /* 文字は10px未満にしない */
+  const small=(fs.readFileSync(path.join(root,"css/machimon.css"),"utf8")+html).match(/font-size:\s*([0-9.]+)px/g).map(x=>parseFloat(x.split(":")[1])).filter(v=>v<10); ok(!small.length,"CSSに 10px未満の文字が無い "+small.join());
+  /* お知らせ(リリースノート) */
+  const wn=fs.readFileSync(path.join(root,"docs/whatsnew.txt"),"utf8").trim().split("\n"); ok(wn.length>=3&&wn.length<=5&&wn.every(l=>l.length<=70),"お知らせは3〜5行("+wn.length+"行)");
+  /* 全部の画面を、まっさらなセーブで開いて回る(落ちない・禁止の言葉なし) */
+  { const ST={q:{},rq:[],mm:null}; win.gameState=ST; const b0=UI.ctx; UI.ctx=()=>MM.state.ctx({ST,rand:module.exports.mkRand(77)}); UI.open(); UI.opPick(0); UI.bzS.noScroll=1; let bad="";
+    Object.keys(UI.v2ok).forEach(sn=>{ let h=""; try{ h=UI.screens[sn]({})||""; }catch(e){ h="ERR "+e.message; } const w=banHit(h)||rpgHit(h); if(h.length<200||h.indexOf("undefined")>=0||h.indexOf("NaN")>=0||h.indexOf("ERR")===0||w)bad+=sn+(w?":"+w:"")+" "; });
+    ok(!bad,"登録した"+Object.keys(UI.v2ok).length+"画面すべて: まっさらなセーブでも描ける・禁止の言葉なし "+bad); UI.ctx=b0; }
 }
 if(require.main===module)console.log(process.exitCode?"FAILED":"ALL OK (v2)");

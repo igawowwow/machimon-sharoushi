@@ -1,6 +1,6 @@
 "use strict";
 /* ============================================================
-   machimon/ui/v2.js — 新しい遊び(GD.V2)の画面: 共通の部品・ホーム・なかま・個体の詳細・タマゴ
+   machimon/ui/v2.js — 共通の部品・ホーム・なかま・個体の詳細・タマゴ
    ★ホームの真ん中に看板マチモン。その下に つよさ・番付の位置・次の相手まであといくつ。
      ボタンは4つ(けいこ／タマゴ／配合／品評会)、下のタブは4つ(ホーム／なかま／図鑑／きろく)。
    ★どの画面でも、マチモンの横に「つよさ」の数字を1つ。並びはいつも つよさ順。
@@ -17,8 +17,7 @@
   function sfx(n,a){ try{ if(MM.sfx&&MM.sfx[n])MM.sfx[n](a); }catch(e){} }
   function save(){ MM.game.save(); }
 
-  UI.v2on=function(){ return !!(GD().V2&&MM.mon); };
-  UI.v2ok={intro:1,h2:1,n2:1,n2d:1,t2:1,t2r:1};
+  UI.v2ok.h2=1; UI.v2ok.n2=1; UI.v2ok.n2d=1; UI.v2ok.t2=1; UI.v2ok.t2r=1;
   UI.v2={quiz:null,last:null};
 
   /* ---------- 部品 ---------- */
@@ -106,6 +105,8 @@
       +'<span class="mm-v2-hero-name">'+esc(k.n)+' '+rarB(k)+'</span>'
       +'<span class="mm-pw mm-pw-big">つよさ <b>'+fmt(M().power(k))+'</b></span>'
       +lvBar(c,k)+'</button>';
+    /* 1.x から来た人へ、1回だけ(とじるまで) */
+    if(g.mig&&!g.mn)h+='<div class="mm-gbloom mm-v2-mig"><b>あたらしい遊びに なりました</b><br>なかま <b>'+g.mons.length+'体</b>は 引っ越しずみ。学習の記録は そのまま。<br>いちばん強い子が <b>看板</b>。けいこで育てて、番付の <b>横綱</b>へ。<button class="small-btn" onclick="MM.ui.h2MigOk()">わかった</button></div>';
     if(UI.storyHome)h+=UI.storyHome(c);
     if(UI.bzHome)h+=UI.bzHome(c);
     /* けいこ: きょうの配合券まで あといくつ */
@@ -121,6 +122,8 @@
       +'<button onclick="MM.ui.go(\'bz\')"><span>🏆</span>品評会'+(st&&st.left>0?'<i class="mm-gdot">あと'+st.left+'番</i>':'')+'</button></div>';
     return h+'</div>'+UI.tabs2("h2");
   };
+
+  UI.h2MigOk=function(){ var c=UI.ctx(); M().W(c).mn=1; save(); UI.render(); };
 
   /* ---------- なかまの一覧(つよさ順) ---------- */
   UI.screens.n2=function(){

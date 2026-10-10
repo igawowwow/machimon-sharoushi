@@ -1,6 +1,6 @@
 {
   "name": "machimon-sharoushi",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "MACHIMON 社労士。Web版は完全静的(ビルド不要)。iOSネイティブ配布時のみ Capacitor を開発依存として使う。",
   "scripts": {
@@ -10,7 +10,8 @@
     "ios:open": "npm run ios:sync && npx cap open ios",
     "ios:release": "bash tools/ios-release.sh",
     "ios:status": "ASC_BUNDLE_ID=com.ville.machimon node tools/asc-status.js",
-    "test": "node tools/test-garden.js && node tools/test-v2.js"
+    "test": "node tools/test-v2.js",
+    "sim": "node tools/sim-v2.js"
   },
   "license": "UNLICENSED",
   "devDependencies": {

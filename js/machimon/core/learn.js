@@ -19,7 +19,7 @@
   function bank(){ return G.Q||[]; }
   function qOf(id){ return (typeof G.qById==="function")?G.qById(id):null; }
 
-  /* 問題別の学習履歴(既存 ST.q と共有 = どちらのモードで解いても同じ記憶が育つ) */
+  /* 問題別の学習履歴(ST.q) */
   function stat(c,id){
     var q=c.ST.q||(c.ST.q={});
     return q[id]||(q[id]={c:0,w:0,ng:false,s:0,bm:false,box:0,due:0,la:-1,ease:2.3});
@@ -106,7 +106,7 @@
     cand.sort(function(a,b){ return b.p-a.p; });
     var out=[],used={};
     /* 科目の偏り防止は「複数科目から選べるとき」だけ効かせる。
-       解放エリアが1つしかない序盤に効かせると、枠が埋まらず事件が足りなくなる。 */
+       1科目だけから選ぶときに効かせると、枠が埋まらず問題が足りなくなる。 */
     var nSub=(opt.subs&&opt.subs.length)?opt.subs.length:9;
     var wide=(typeof opt.sub!=="number")&&nSub>1;
     var perSub={},cap=Math.max(2,Math.ceil(n/Math.min(3,nSub)));

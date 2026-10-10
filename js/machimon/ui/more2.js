@@ -1,6 +1,6 @@
 "use strict";
 /* ============================================================
-   machimon/ui/more2.js — 新しい遊び(GD.V2)の オープニング・きろく
+   machimon/ui/more2.js — オープニング・きろく
    ★オープニングは1画面: 3行の物語 → タマゴを1つ選ぶ(1タップ) → 生まれた子 →「さっそく けいこ」(2タップ目)で最初の問題。
    ★きろく: 実力メーター・物語(読み返す)・Lvの上限(9科目の習熟)・番付のあゆみ・もちもの・街の名前。図鑑は ui/zukan2.js。
    ============================================================ */
@@ -11,11 +11,11 @@
   var esc=function(s){ return UI.esc(s); };
   function fmt(n){ return UI.v2p.fmt(n); }
   function save(){ MM.game.save(); }
-  UI.v2ok.r2=1;
+  UI.v2ok.r2=1; UI.v2ok.intro=1;
 
   /* ---------- オープニング(最初の1体をもらうまで) ---------- */
   var TYPE={a:"バランス",o:"💪 ちから",j:"🛡 ねばり",h:"🔥 いきおい",s:"💡 ひらめき",m:"📘 かしこさ"};
-  UI.screens.op2=function(p){
+  UI.screens.intro=function(p){
     var c=UI.ctx();
     if(p&&p.page===2){
       var g=M().W(c), k=M().kanban(g), fam=GD().families[M().kindOf(k).f];
@@ -39,7 +39,7 @@
   };
   UI.opPick=function(i){
     var c=UI.ctx();
-    MM.tutorial.finishIntro(c,"マチモンタウン"); M().starter(c,i); save();
+    MM.game.finishIntro(c,"マチモンタウン"); M().starter(c,i); save();
     UI.play({step:7,fx:"gold",haptic:"heavy"}); UI.go("intro",{page:2});
   };
   UI.opGo=function(){ UI.k2Go("new"); };
@@ -48,8 +48,7 @@
   UI.screens.r2=function(){
     var c=UI.ctx(), g=M().W(c), BZ=MM.banzuke, lc=MM.keiko.lvCap(c), names=G.SUBJECTS||[], T=D().LVCAP.steps, top=T[T.length-1];
     var h='<div class="mm-wrap">'+UI.resBar2(c)+'<div class="mm-h">📊 きろく</div>';
-    if(UI.passCard)h+=UI.passCard(c);
-    if(UI.storyList)h+=UI.storyList(c);
+    h+=UI.passCard(c)+UI.storyList(c);
     /* Lvの上限: 9科目の習熟 */
     h+='<div class="mm-h" style="font-size:14px">📚 科目の習熟 と Lvの上限 <span class="mm-sub">いま <b>Lv'+lc.cap+'</b> まで</span></div><div class="mm-q mm-v2-cap">';
     lc.per.forEach(function(x){

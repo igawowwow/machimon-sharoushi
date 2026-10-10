@@ -45,8 +45,6 @@
     if(s.err){ UI.toast(s.err); UI.go("k2m"); return; }
     s.t0=Date.now(); s.fb=null; s.sen={picks:[]}; UI.v2.quiz=s; UI.go("k2");
   };
-  /* 旧い入口(ホームの「けいこ」)は えらぶ画面へ */
-  UI.k2Start=function(){ UI.go("k2m"); };
 
   function strip(c,s){
     var g=M().W(c), k=M().kanban(g), kd=D().keikoById[s.kind], st=D().kstat[kd.stat], e=k.ef[M().KEYS.indexOf(kd.stat)]||0, full=e>=D().EF_MAX;
@@ -84,7 +82,7 @@
       +UI.qz.explainHtml(q,v,s.sen)+'<button class="mm-cta" onclick="MM.ui.k2Next()">'+(s.over?'けいこ おわり ▶':'つぎの問題 ▶')+'</button>';
     if(extra)sfx("big");
     UI.render();
-    if(ok&&!extra&&!s.over&&!MM.garden.isExam(q)){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.v2.quiz&&UI.v2.quiz.fb&&UI.route.screen==="k2")UI.k2Next(); },1300); }
+    if(ok&&!extra&&!s.over&&!MM.exam.isExam(q)){ clearTimeout(UI._gt); UI._gt=setTimeout(function(){ if(UI.v2.quiz&&UI.v2.quiz.fb&&UI.route.screen==="k2")UI.k2Next(); },1300); }
   };
   UI.k2Next=function(){
     clearTimeout(UI._gt); var s=UI.v2.quiz; if(!s)return UI.go("h2");

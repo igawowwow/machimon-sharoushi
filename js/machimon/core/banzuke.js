@@ -105,7 +105,7 @@
     settleAbandoned(c);
     var z=Z(c); if(leftToday(c)<=0)return {err:"きょうの取組は おわり(1日"+perDay(c)+"番まで)。あした また来てね"};
     var nf=nextFoe(c), g=MM.mon.W(c), p=MM.mon.kanban(g), nEx=R().exam, n=R().rounds, all=[0,1,2,3,4,5,6,7,8];
-    var ex=[]; try{ ex=MM.garden.pickExam(c,nEx)||[]; }catch(e){ ex=[]; }
+    var ex=[]; try{ ex=MM.exam.pick(c,nEx)||[]; }catch(e){ ex=[]; }
     var qs=MM.learn.pick(n-ex.length,c,{subs:all,filter:function(q){ return ex.indexOf(q.id)<0; }}).concat(ex);
     if(qs.length<n)return {err:"問題が用意できなかった"};
     if(z.day.d!==c.dstr)z.day={d:c.dstr,n:0};

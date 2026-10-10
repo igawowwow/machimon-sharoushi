@@ -1,15 +1,15 @@
 "use strict";
 /* ============================================================
-   machimon/core/mon.js — 個体(種類×才能×性格×特性)と「つよさ」。新しい遊び(GD.V2)の土台。
+   machimon/core/mon.js — 個体(種類×才能×性格×特性)と「つよさ」。遊びの土台。
    ★つよさの式(運なし・1つの数字):
        能力k = (種類の基礎値k × (1+0.04×(Lv−1)) × (0.60+0.08×才能k) × 性格の補正k ＋ けいこ値k) × 特性の補正
        つよさ = 5つの能力の合計
      才能の幅は 0.60〜1.40 倍。設計書の 0.70〜1.30 では「才能のいいNがふつうのSRを超える」が
      成り立たない(満点のNでも195 < SRの真ん中200)ので広げた。満点のN=210 > SRの真ん中200。
-   ★セーブは c.mm.g2 の1キー(旧版の c.mm.gd とは別。GD.V2 が偽のあいだは作られない)。
-   ★旧セーブからの引っ越しは最初の1回だけ。学習の記録(ST.q / ST.rq)には一切さわらない。
-     失敗したら旧セーブ(c.mm.gd)をそのまま残し、新しい遊びは最初の1体から始める(mf=1 を立てる)。
-   ★MM.power は旧版(GD.V2 が偽)の画面用の「つよさ」。旧版を消すとき(スライス8)に一緒に消す。
+   ★セーブは c.mm.g2 の1キー(1.x の c.mm.gd とは別)。
+   ★1.x のセーブからの引っ越しは最初の1回だけ。学習の記録(ST.q / ST.rq)には一切さわらない。
+     失敗したら 1.x のセーブ(c.mm.gd)をそのまま残し、最初の1体から始める(mf=1 を立てる)。
+     1.x のセーブ全体は、起動のときに boot.js が別のキー(machimon-v1-backup)へ写してある。
    ============================================================ */
 (function(){
   var G=(typeof window!=="undefined")?window:globalThis;
@@ -23,26 +23,11 @@
   function int(v,d,lo,hi){ return Math.round(num(v,d,lo,hi)); }
   function r2(v){ return Math.round(v*100)/100; }
 
-  /* ================= 旧版(V1)の画面に出す つよさ ================= */
-  function v1TraitMul(p,k){ var m=1; if(p.tr==="star")m*=1.06; if(p.tr==="cosmos")m*=1.10; if(k==="o"&&p.tr==="giant")m*=1.15; return m; }
-  function v1Of(g,p){
-    if(!p||p.dead)return 0;
-    var s=0, adult=(p.bw!=null);
-    for(var i=0;i<KEYS.length;i++){ var k=KEYS[i]; s+=adult?MM.garden.cur(g,p,k):Math.round((p[k]||0)*v1TraitMul(p,k)); }
-    return Math.round(s);
-  }
-  function v1Best(g){ var b=null,bv=-1; for(var i=0;i<g.plots.length;i++){ var p=g.plots[i]; if(!p||p.dead)continue; var v=v1Of(g,p); if(v>bv){ bv=v; b=p; } } return b?{p:b,v:bv}:null; }
-  function v1Diff(g,p){ var b=v1Best(g), v=v1Of(g,p); if(!b)return {v:v,d:0,top:false,none:true}; return {v:v,d:v-b.v,top:b.p===p,none:false}; }
-  function v1Sum(p){ var s=0; for(var i=0;i<KEYS.length;i++)s+=p[KEYS[i]]||0; return s; }
-  function v1Rar(p){ var R=GD().RARITY, s=v1Sum(p), out=0; for(var i=0;i<R.length;i++)if(s>=R[i].min)out=i; return out; }
-  function v1Pct(p){ var R=GD().RARITY, s=v1Sum(p), r=v1Rar(p), lo=r===0?150:R[r].min, hi=R[r+1]?R[r+1].min:500; return Math.max(0,Math.min(1,(s-lo)/Math.max(1,hi-lo))); }
-  MM.power={ of:v1Of, best:v1Best, diff:v1Diff, pct:v1Pct };
-
   /* ================= セーブ ================= */
   function defaults(){
     return { v:2, on:0, nid:1, mons:[], kan:"", sub:[], shard:0, pity:0, pulls:0, free:"", dex:{}, hall:[],
              bt:0, btd:"", items:{}, hn:[], hnf:{}, bz:null, mig:0, mf:0, shiny:0, rel:0,
-             st:0, brd:0, gn:[0,0], rv:null, cd:null, ms:null, boost:{xp:0,ef:0}, sdex:{}, sread:0, buy:0 };
+             st:0, brd:0, gn:[0,0], rv:null, cd:null, ms:null, boost:{xp:0,ef:0}, sdex:{}, sread:0, buy:0, mn:0 };
   }
   function normMon(p){
     p=obj(p); if(!p||!D().kindById[p.k])return null;
@@ -80,7 +65,7 @@
     o.bz=(MM.banzuke&&MM.banzuke.norm)?MM.banzuke.norm(s.bz):(obj(s.bz)||null);
     o.mig=s.mig?1:0; o.mf=s.mf?1:0; o.shiny=int(s.shiny,0,0,1e9); o.rel=int(s.rel,0,0,1e9);
     var sd=obj(s.sdex)||{}; for(var sk in sd){ if(D().kindById[sk]&&sd[sk])o.sdex[sk]=1; }
-    o.sread=int(s.sread,0,0,8); o.buy=int(s.buy,0,0,1e9);
+    o.sread=int(s.sread,0,0,8); o.buy=int(s.buy,0,0,1e9); o.mn=s.mn?1:0;
     return o;
   }
   var seen=(typeof WeakSet==="function")?new WeakSet():null;
@@ -143,19 +128,18 @@
   /* ---------- 引っ越し(純関数: 引数を書きかえない。同じ入力なら必ず同じ結果) ---------- */
   function idNum(id){ var n=parseInt(String(id).replace(/\D/g,""),10); return isFinite(n)?n:0; }
   function migrateV1toV2(old,mm){
-    var gd=MM.garden.normalize(old), g=defaults(); g.on=1; g.mig=1;
-    var list=[]; gd.plots.forEach(function(p){ if(p&&!p.dead)list.push(p); }); gd.seeds.forEach(function(p){ list.push(p); });
-    list.forEach(function(p){
-      var r5=v1Rar(p), rar=Math.min(4,r5), n=idNum(p.i);
+    var gd=MM.legacy.read(old), g=defaults(); g.on=1; g.mig=1;
+    gd.mons.slice(0,D().RATE2.cap).forEach(function(p){
+      var r5=MM.legacy.rar(p), rar=Math.min(4,r5), n=idNum(p.i);
       var pool=D().kindsByRar[rar].filter(function(k){ return k.f===p.f; }); if(!pool.length)pool=D().kindsByRar[rar];
       var kd=pool[n%pool.length];
-      var m={ i:"a"+(g.nid++), k:kd.id, n:p.n||kd.name, lv:(p.bw!=null)?D().LV_ADULT:1, xp:0,
+      var m={ i:"a"+(g.nid++), k:kd.id, n:p.n||kd.name, lv:p.adult?D().LV_ADULT:1, xp:0,
               tl:KEYS.map(function(k){ return Math.max(0,Math.min(10,Math.round((p[k]||0)/10))); }),
-              na:D().natures[n%D().natures.length].id, tr:p.tr?[p.tr]:[], ef:[0,0,0,0,0], a:[], w:(p.r&&p.r.w)||0 };
+              na:D().natures[n%D().natures.length].id, tr:p.tr?[p.tr]:[], ef:[0,0,0,0,0], a:[], w:p.w||0 };
       if(p.sh)m.sh=1; if(r5>=5)m.first=1;
       m=normMon(m); if(m){ g.mons.push(m); mark(g,m); if(adult(m))markAdult(g,m); }   /* 旧版で おとな まで育てた子は「おとなにした」のはんこ つき */
     });
-    gd.mb.forEach(function(m){ if(m.own&&g.hall.length<10)g.hall.push(m.n); });
+    gd.hall.forEach(function(n){ if(g.hall.length<10)g.hall.push(n); });
     var coin=int(mm.res&&mm.res.g,0,0,1e12), over=Math.max(0,coin-5000);
     g.shard=Math.min(300,Math.floor(over/1000))+3*(int(mm.tix,0,0,9999)+int(gd.medal,0,0,1e6));
     g.pulls=gd.pulls; g.shiny=gd.shiny; g.st=1;

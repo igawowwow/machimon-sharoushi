@@ -312,6 +312,4 @@
   MM.px=function(spId,size,cls){
     return '<img class="mm-px '+(cls||"")+'" alt="" src="'+MM.pxData(spId)+'" style="width:'+(size||36)+'px;height:'+(size||36)+'px">';
   };
-  /* 建物の絵文字(シーン用) */
-  D.bldIcon={home:"🏠",office:"🏢",factory:"🏭",site:"🚧",clinic:"🚑",hw:"🏢",tax:"🏦",hosp:"🏥",city:"🏛️",pens:"🏦",gov:"🏛️"};
 })();
