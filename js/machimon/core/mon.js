@@ -160,7 +160,7 @@
   /* 「看板と同じLv・同じけいこ値まで育てたら」のつよさ。Lv1の新入りとLv30の看板を、同じ土俵で比べるため */
   function atLv(p,lv,ef){ var q={k:p.k,lv:lv,tl:p.tl,na:p.na,tr:p.tr,ef:ef||p.ef}; return power(q); }
   function pot(g,p){ var k=kanban(g); if(!k)return {v:power(p),d:0,top:false,none:true}; if(k===p)return {v:power(p),d:0,top:true,none:false};
-    var v=atLv(p,Math.max(p.lv,k.lv),p.lv>=k.lv?p.ef:k.ef), kv=p.lv>k.lv?atLv(k,p.lv,k.ef):power(k); return {v:v,d:v-kv,top:false,none:false}; }
+    var L=Math.max(p.lv,k.lv), v=atLv(p,L,k.ef), kv=atLv(k,L,k.ef); return {v:v,d:v-kv,top:false,none:false}; }   /* 両方を同じLv・同じけいこ値(看板のもの)にそろえて比べる */
   function need(lv){ return 40+64*lv; }                         /* 次のLvまでの経験 */
   function adult(p){ return p.lv>=D().LV_ADULT; }
   function spId(p){ return adult(p)?p.k:p.k+"c"; }              /* 絵のid(こども=小物なし) */
@@ -224,6 +224,15 @@
     var m=(mast||MM.learn.masteryBySub(c))[GD().families[kindOf(p).f].sub]||0;
     return m>=0.7?50:(m>=0.4?40:30);
   }
+  /* けいこの出題(仮の形): 4問に1問は本試験形式。それ以外の半分は「看板の族の科目」から出す
+     (Lvの上限がその科目の習熟で決まるので、看板を育てたい人がその科目を進められるように)。n=これまでに出した数 */
+  function pickQ(c,n){
+    var ids=null, all=[0,1,2,3,4,5,6,7,8], k=kanban(W(c));
+    if(n%4===3){ try{ ids=MM.garden.pickExam(c,1); }catch(e){ ids=null; } }
+    if((!ids||!ids.length)&&k&&n%2===0)ids=MM.learn.pick(1,c,{sub:GD().families[kindOf(k).f].sub});
+    if(!ids||!ids.length)ids=MM.learn.pick(1,c,{subs:all});
+    return ids[0];
+  }
   function addXp(p,xp,cap){
     var ups=0; if(p.lv>=cap){ p.xp=Math.min(p.xp+xp,need(p.lv)-1); return 0; }
     p.xp+=xp;
@@ -262,5 +271,5 @@
     kindOf:kindOf, rarOf:rarOf, rarInfo:rarInfo, natOf:natOf, stat:stat, stats:stats, power:power, talent:talent, rank:rank, need:need, adult:adult, spId:spId,
     atLv:atLv, pot:pot, roll:roll, byId:byId, sorted:sorted, kanban:kanban, diff:diff, setKan:setKan, toggleSub:toggleSub, mark:mark,
     rollRar:rollRar, freeReady:freeReady, pityLeft:pityLeft, canPull:canPull, pull:pull, release:release,
-    lvCap:lvCap, addXp:addXp, addEf:addEf, onAnswer:onAnswer, TRAIT_FX:TRAIT_FX };
+    lvCap:lvCap, pickQ:pickQ, addXp:addXp, addEf:addEf, onAnswer:onAnswer, TRAIT_FX:TRAIT_FX };
 })();

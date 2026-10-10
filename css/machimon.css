@@ -524,3 +524,70 @@
 .mm-v2-strip{ display:flex; align-items:center; gap:8px; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:6px 10px; margin:6px 0; }
 .mm-v2-strip-b{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
 .mm-v2-strip-n{ font-size:12px; color:#6B6578; white-space:nowrap; }
+
+/* ================= 番付・五番勝負(GD.V2) ================= */
+.mm-bz-home{ display:flex; flex-direction:column; gap:4px; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff;
+  padding:10px 12px; margin:8px 0; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; }
+.mm-bz-home-r{ font-size:16px; font-weight:900; }
+.mm-bz-home-r b{ font-size:22px; }
+.mm-bz-home-s{ font-size:14px; font-weight:900; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-home-f{ font-size:13px; }
+.mm-bz-home-f b{ font-size:15px; }
+.mm-bz-home-v{ font-size:14px; font-weight:900; border-radius:10px; padding:4px 8px; }
+.mm-bz-warn{ background:#FFF3C4; color:#8A6A00; }
+.mm-bz-promo{ color:#fff; background:#E8484F; border-radius:999px; padding:1px 10px; font-size:13px; }
+.mm-bz-stars{ display:inline-flex; gap:3px; font-size:18px; letter-spacing:0; }
+.mm-bz-stars i{ font-style:normal; font-weight:900; }
+.mm-bz-w{ color:#1F8A3B; font-style:normal; font-weight:900; } .mm-bz-l{ color:#33303E; font-style:normal; font-weight:900; } .mm-bz-n{ color:#C9C3B6; font-style:normal; }
+.mm-bz-top{ padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+.mm-bz-rule{ font-size:12px; line-height:1.6; }
+.mm-bz-list{ margin-top:10px; }
+.mm-bz-dan{ font-size:14px; font-weight:900; background:#33303E; color:#fff; border-radius:10px; padding:4px 10px; margin:10px 0 4px; }
+.mm-bz-row{ display:flex; align-items:center; gap:8px; background:#fff; border:2px solid #E4DED0; border-radius:12px; padding:4px 10px 4px 6px; margin:3px 0; min-height:44px; }
+.mm-bz-pos{ width:26px; text-align:center; font-size:14px; color:#6B6578; }
+.mm-bz-nm{ flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+.mm-bz-nm b{ font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-nm .mm-sub{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-pw{ font-size:16px; font-weight:900; min-width:44px; text-align:right; }
+.mm-bz-done{ opacity:.55; }
+.mm-bz-next{ border-color:#E8484F; background:#FFF1F1; opacity:1; }
+.mm-bz-me{ border:3px solid #B58900; background:linear-gradient(90deg,#FFF3C4,#fff); }
+.mm-bz-tag{ font-style:normal; font-size:11px; font-weight:900; color:#fff; background:#E8484F; border-radius:6px; padding:0 6px; white-space:nowrap; }
+.mm-bz-tag2{ background:#8A8494; }
+.mm-bz-flip img{ transform:scaleX(-1); }
+.mm-bz-vs{ display:flex; align-items:center; justify-content:space-around; gap:6px; margin:6px 0; }
+.mm-bz-side{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:15px; min-width:0; }
+.mm-bz-side b{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-x{ font-size:22px; font-weight:900; color:#E8484F; }
+.mm-bz-table{ padding:10px; }
+.mm-bz-tr{ display:grid; grid-template-columns:92px 1fr 44px; gap:6px; align-items:center; }
+.mm-bz-th{ display:flex; gap:14px; justify-content:center; font-size:12px; color:#6B6578; }
+.mm-bz-dot{ display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:4px; vertical-align:-1px; }
+.mm-bz-dot-me{ background:#3ED6C0; } .mm-bz-dot-foe{ background:#C9C3B6; }
+.mm-bz-tr{ margin:8px 0; }
+.mm-bz-sn{ font-size:14px; font-weight:900; white-space:nowrap; }
+.mm-bz-bars{ display:flex; flex-direction:column; gap:3px; }
+.mm-bz-bar{ position:relative; display:flex; align-items:center; gap:6px; height:16px; }
+.mm-bz-bar i{ display:block; height:12px; border-radius:6px; min-width:4px; }
+.mm-bz-bar b{ font-size:13px; white-space:nowrap; }
+.mm-bz-bar-me i{ background:#3ED6C0; } .mm-bz-bar-foe i{ background:#C9C3B6; } .mm-bz-bar-foe b{ color:#6B6578; }
+.mm-bz-mark{ display:inline-block; font-style:normal; font-weight:900; font-size:20px; width:36px; height:30px; line-height:30px; text-align:center; border-radius:8px; }
+.mm-bz-m3{ background:#DFF5E3; color:#1F8A3B; } .mm-bz-m2{ background:#E3F0FF; color:#2F6BFF; } .mm-bz-m1{ background:#FFF3C4; color:#8A6A00; } .mm-bz-m0{ background:#F0EEE8; color:#8A8494; }
+.mm-bz-legend{ display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; font-size:12px; margin-top:8px; border-top:1px dashed #D8D2C4; padding-top:8px; }
+.mm-bz-legend span{ display:flex; align-items:center; gap:4px; }
+.mm-bz-legend .mm-bz-mark{ font-size:14px; width:24px; height:22px; line-height:22px; }
+.mm-bz-head{ display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:900; margin:6px 2px; }
+.mm-bz-duel{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px 10px; margin:6px 0; text-align:center; }
+.mm-bz-duel-k{ font-size:15px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-duel-k .mm-bz-mark{ font-size:15px; width:26px; height:24px; line-height:24px; }
+.mm-bz-duel-n{ display:flex; align-items:flex-end; justify-content:center; gap:14px; margin-top:4px; }
+.mm-bz-duel-n span{ display:flex; flex-direction:column; align-items:center; min-width:90px; }
+.mm-bz-duel-n small{ font-size:12px; color:#6B6578; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-duel-n b{ font-size:30px; line-height:1.1; }
+.mm-bz-duel-n i{ font-style:normal; font-size:20px; font-weight:900; color:#8A8494; padding-bottom:4px; }
+.mm-bz-duel-win{ background:#EFFBE6; border-color:#3E9B4F; } .mm-bz-duel-lose{ background:#F3F0E8; }
+.mm-bz-duel-r{ font-size:16px; font-weight:900; margin-top:2px; }
+.mm-bz-rr{ display:grid; grid-template-columns:92px 26px 1fr 24px; gap:6px; align-items:center; font-size:14px; padding:5px 0; border-bottom:1px solid #EDE9DF; }
+.mm-bz-rn b{ font-size:16px; }
+.mm-bz-move{ font-size:15px; text-align:center; }
+.mm-bz-down{ border-color:#8A8494; background:#F3F0E8; }

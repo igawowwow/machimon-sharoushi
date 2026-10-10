@@ -112,9 +112,7 @@ ok(GA.shareText(c).length>20,"share text");
   ok(all.every(p=>{ const x=PW.pct(p); return x>=0&&x<=1; }),"power.pct in 0..1");
   ok(UI.screens.garden().indexOf("つよさ")>=0&&UI.screens.gSeeds({}).indexOf("つよさ")>=0&&UI.screens.gContest({}).indexOf("相手の最高")>=0,"つよさ / 相手の最高 が画面に出る");
 }
-const BAN=["ウイニングポスト","ウイポ","Kirby","カービィ","勇者30","ポケモン","ダビスタ","ドラクエ","ウマ娘","たまごっち","黒猫","ダービー",
-  "合格率","合格力","馬主","サイアー","種付","種牡馬","競馬","騎手","厩舎","ステークス","天皇賞","インブリード","ニックス","血統","重賞"];
-const banHit=(t)=>{ for(const w of BAN)if(t.indexOf(w)>=0)return w; if(/(^|[^A-Za-z_"'.])AI([^A-Za-z_]|$)/.test(t))return "AI"; return ""; };
+const banHit=require("./lib-load.js").banHit;
 {
   const walk=(d,out)=>{ for(const e of fs.readdirSync(d,{withFileTypes:true})){ const p=path.join(d,e.name); if(e.isDirectory()){ if(e.name!=="questions")walk(p,out); } else if(/\.(js|css|html)$/.test(e.name))out.push(p); } return out; };
   const files=walk(path.join(root,"js"),[]).concat(walk(path.join(root,"css"),[]),[path.join(root,"index.html"),path.join(root,"sw.js")]);

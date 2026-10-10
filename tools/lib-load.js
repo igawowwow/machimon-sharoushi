@@ -25,3 +25,12 @@ vm.createContext(win);
 for(const s of srcs){ try{ vm.runInContext(fs.readFileSync(path.join(root,s),"utf8"),win,{filename:s}); }catch(e){ console.log("LOAD FAIL",s,e.message); } }
 return {win,MM:win.MM,store};
 };
+
+/* きまりに触れる言葉(他社のゲーム名・キャラ名／禁止の言い方／競馬の言葉)。ソースと全画面に無いことを検査する */
+const BAN=["ウイニングポスト","ウイポ","Kirby","カービィ","勇者30","ポケモン","ダビスタ","ドラクエ","ウマ娘","たまごっち","黒猫","ダービー",
+  "合格率","合格力","馬主","サイアー","種付","種牡馬","競馬","騎手","厩舎","ステークス","天皇賞","インブリード","ニックス","血統","重賞"];
+module.exports.BAN=BAN;
+module.exports.banHit=(t)=>{ for(const w of BAN)if(t.indexOf(w)>=0)return w; if(/(^|[^A-Za-z_"'.])AI([^A-Za-z_]|$)/.test(t))return "AI"; return ""; };
+/* 姉妹アプリ(冒険して戦うRPG)と違う遊びに保つ: 新しい遊びの画面に出してはいけない言葉 */
+const RPG=["HP","ＨＰ","体力","ダメージ","こうげき","攻撃","装備","ダンジョン","マップ","必殺","わざ","敵","モンスター","討伐","たおす","倒す"];
+module.exports.rpgHit=(t)=>{ const x=t.replace(/<[^>]*>/g," "); for(const w of RPG)if(x.indexOf(w)>=0)return w; return ""; };

@@ -147,7 +147,7 @@
 
   /* ---------- 📚 けいこ(問題。仮の形: 出題はおまかせ・4問に1問は本試験形式) ---------- */
   UI.k2Start=function(){ UI.v2.quiz={n:0,hits:0,qid:null}; nextQ(); UI.go("k2"); };
-  function nextQ(){ var c=UI.ctx(), s=UI.v2.quiz, ids=null; if(s.n%4===3)ids=MM.garden.pickExam(c,1); if(!ids||!ids.length)ids=MM.learn.pick(1,c,{subs:[0,1,2,3,4,5,6,7,8]}); s.qid=ids[0]; s.t0=Date.now(); s.fb=null; s.sen={picks:[]}; }
+  function nextQ(){ var c=UI.ctx(), s=UI.v2.quiz; s.qid=M().pickQ(c,s.n); s.t0=Date.now(); s.fb=null; s.sen={picks:[]}; }
   UI.screens.k2=function(){
     var c=UI.ctx(), s=UI.v2.quiz; if(!s)return UI.screens.h2();
     var q=(typeof G.qById==="function"&&s.qid!=null)?G.qById(s.qid):null; if(!q){ UI.v2.quiz=null; return UI.screens.h2(); }

@@ -134,7 +134,7 @@
   var KEYS=["h","m","o","j","s"];
   function baseOf(type,famSpec,total,salt){
     var w={}, tot=0, out={}, sum=0;
-    KEYS.forEach(function(k,i){ w[k]=1+(k===type?0.9:0)+(k===famSpec?0.3:0)+(((salt*7+i*13)%9)-4)*0.02; tot+=w[k]; });
+    KEYS.forEach(function(k,i){ w[k]=1+(k===type?0.6:0)+(k===famSpec?0.2:0)+(((salt*7+i*13)%9)-4)*0.02; tot+=w[k]; });
     KEYS.forEach(function(k){ out[k]=Math.floor(total*w[k]/tot); sum+=out[k]; });
     var top=type==="a"?famSpec:type; out[top]+=total-sum;
     return out;
