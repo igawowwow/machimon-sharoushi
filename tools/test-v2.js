@@ -90,16 +90,34 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   ok(g2.mons.length===alive&&g2.mig===1,"個体の数が保たれる("+g2.mons.length+")");
   ok(g2.mons.filter(p=>p.lv===10).length===adults&&g2.mons.every(p=>p.lv===1||p.lv===10),"おとなはLv10・それ以外はLv1");
   ok(g2.mons.filter(p=>p.lv===10).every(p=>(g2.dex[p.k]&2)===2)&&Object.keys(g2.dex).filter(k=>g2.dex[k]&2).length<=adults,"1.x で おとな まで育てた種類には「おとなにした」のはんこ");
-  ok(g2.mons.filter(p=>p.first).length===lg&&g2.mons.every(p=>M.rarOf(p)<=4),"LGは同じ族のURへ移し「初代」の印");
+  ok(g2.mons.filter(p=>p.first).length===lg,"1.x で LG だった子には「初代」の印");
+  { const kan=M.kanban(g2), oldAd=FX.save.mm.gd.plots.filter(p=>p&&!p.dead&&p.bw!=null).sort((a,b)=>MM.legacy.sum(b)-MM.legacy.sum(a))[0];
+    ok(kan.n===oldAd.n&&M.kindOf(kan).f===oldAd.f&&kan.lv===10,"1.x でいちばん強かった おとな が、名前と族をそのままに 看板として来る("+kan.n+")");
+    ok(g2.mons.every(p=>M.rarOf(p)<=(p===kan?D.MIG.rarTop:D.MIG.rar))&&g2.mons.filter(p=>M.rarOf(p)>=3).length<=1,"引っ越しのレア度: 看板だけ SSR まで・ほかは SR まで(UR・LG は持ちこせない)");
+    ok(g2.mons.every(p=>M.talent(p)<=D.MIG.talent)&&g2.mons.some(p=>M.talent(p)===D.MIG.talent),"引っ越しの才能: 合計 "+D.MIG.talent+" まで");
+    ok(M.capTalent([10,10,10,10,10],35).join()==="7,7,7,7,7"&&M.capTalent([10,2,9,9,10],35).reduce((a,b)=>a+b,0)===35&&M.capTalent([10,2,9,9,10],35)[1]<=2&&M.capTalent([3,4,5,6,7],35).join()==="3,4,5,6,7","才能の上限は 形(どれが得意か)を保って ちぢめる・上限より下は そのまま");
+    const st=MM.banzuke.Z(c2), fo=MM.banzuke.foes(st), can=(pos)=>["sure","can"].includes(MM.banzuke.forecast(c2,D.bzAt(pos),kan).verdict);
+    ok(fo.every(can)&&!can(44),"引っ越し直後の看板(つよさ "+M.power(kan)+"): 最初の場所は全問正解なら7番とも勝てるが、幕下には まだ届かない"); }
   ok(g2.mons.every(p=>GD.families[M.kindOf(p).f]&&p.tl.every(t=>t>=0&&t<=10)),"才能は0〜10");
   ok(g2.mons.filter(p=>p.tr.length).length===meta.traits&&g2.mons.filter(p=>p.sh).length===meta.shiny&&Object.keys(g2.sdex).length===meta.shiny&&g2.hall.length===meta.ownMb,"特性・色ちがい・名マチモンの名前を引きつぐ");
   ok(c2.mm.res.g===5000&&g2.shard===7+3*(7+4),"コインは5,000まで・超えたぶんと券はかけらへ(かけら "+g2.shard+")");
   ok(store[M.BACKUP_KEY]===raw,"1.x のセーブを別のキーへ写してある(戻せる)");
   ok(c2.mm.gd===null&&c2.mm.tix===0,"写しが取れたので 1.x のデータは手放す");
   const js=JSON.stringify(ST); ok(js.indexOf("NaN")<0&&js.indexOf("undefined")<0&&js.length<raw.length,"NaN が無い・セーブは小さくなる("+raw.length+" → "+js.length+"バイト)");
-  ok(M.kanban(g2)&&M.power(M.kanban(g2))===Math.max(...g2.mons.map(p=>M.power(p))),"いちばん強い子が看板に立つ");
   const g2b=M.W(mkCtx(ST,rand)); ok(g2b===g2,"引っ越しは1回きり(2回目の起動では走らない)");
   const rt=M.normalize(JSON.parse(JSON.stringify(g2))); ok(JSON.stringify(rt.mons)===JSON.stringify(g2.mons)&&rt.kan===g2.kan&&rt.shard===g2.shard,"保存して読み直しても同じ");
+  /* 1.x をやり込んだセーブ(高レア・高い能力が90体以上): 上限がかかる */
+  { const STh=JSON.parse(raw), gd=STh.mm.gd, src=gd.seeds.concat(gd.plots.filter(Boolean)); gd.seeds=[];
+    for(let i=0;i<90;i++){ const p=JSON.parse(JSON.stringify(src[i%src.length])); p.i="s"+(1000+i); const v=i<40?96:(i<70?84:70); ["h","m","o","j","s"].forEach(k=>{ p[k]=Math.max(1,Math.min(100,v-((i*7+k.charCodeAt(0))%9))); }); gd.seeds.push(p); }
+    gd.plots.forEach(p=>{ if(p){ ["h","m","o","j","s"].forEach(k=>{ p[k]=97; }); p.bw=1; delete p.dead; } }); gd.medal=40; STh.mm.res.g=9e6;
+    const qh=JSON.stringify(STh.q); STh.mm=MM.state.normalize(STh.mm); const ch=mkCtx(STh,rand), gh=M.W(ch), kh=M.kanban(gh), BZ=MM.banzuke;
+    const cnt=[0,0,0,0,0,0]; gh.mons.forEach(p=>cnt[M.rarOf(p)]++);
+    ok(gh.mons.length===D.MIG.keep&&gh.mons.length<D.RATE2.cap&&M.canPull(ch),"なかまが多すぎる人: "+D.MIG.keep+"体まで残し、のこりは かけら に(すぐタマゴを もらえる)");
+    ok(cnt[4]===0&&cnt[5]===0&&cnt[3]===1&&M.rarOf(kh)===3&&gh.mons.every(p=>M.talent(p)<=D.MIG.talent),"やり込んだ人でも: SSR は看板の1体だけ・UR なし・才能は"+D.MIG.talent+"まで ("+cnt.slice(0,5).join("/")+")");
+    ok(gh.shard===D.MIG.shard&&gh.shard<D.SHARD_COST.ssr&&ch.mm.res.g===5000,"かけらは ぜんぶで "+D.MIG.shard+" まで(すぐには SSR・UR と交換できない)・コインは5,000まで");
+    let top=61; for(let pos=60;pos>=1;pos--){ if(["sure","can"].includes(BZ.forecast(ch,D.bzAt(pos),kh).verdict))top=pos; else break; }
+    ok(top<=55&&top>=45,"やり込んだ人の看板(つよさ "+M.power(kh)+"): 全問正解で勝てるのは 序二段〜三段目の相手まで("+D.danOf(top).name+top+"枚目)");
+    ok(JSON.stringify(STh.q)===qh&&Object.keys(gh.dex).length>=10,"学習の記録は変わらない・かけらに替えた子の種類も 図鑑の「見つけた」には残る"); }
   /* 引っ越し直後に起動できる: オープニングを出さずにホームへ。全部の画面が描ける */
   { const STu=loadV1(); win.gameState=STu; const b0=UI.ctx; UI.ctx=()=>mkCtx(STu,rand); let e9=""; try{ UI.open(); }catch(e){ e9=e.message; }
     { const hm=UI.screens.h2(); ok(hm.indexOf("あたらしい遊びに なりました")>0&&hm.indexOf(meta.alive+"体")>0,"引っ越し直後のホームに、1回だけ お知らせが出る"); UI.h2MigOk(); ok(UI.screens.h2().indexOf("あたらしい遊びに なりました")<0&&M.normalize(JSON.parse(JSON.stringify(STu.mm.g2))).mn===1,"「わかった」で消え、もう出ない"); }
@@ -541,6 +559,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     ok(taps===E[0].lines.length-1&&E[0].lines.every(l=>h1.indexOf(UI.esc(l.t))>0)&&h1.indexOf("とじる")>0,"タップで1行ずつ進み、さいごに「とじる」("+taps+"タップ)");
     UI.storyClose(); ok(g.sread===1&&UI.route.screen==="h2"&&UI.storyHome(c).indexOf("第2話")>0,"とじると 読んだ ことになり、つぎの話がホームに出る");
     UI.storyRead(4); ok(UI.screens.st().indexOf("mm-st-head")<0,"まだひらいていない第4話は読めない");
+    { z.story=8; let cls=true; for(let n=1;n<=8;n++){ UI.storyRead(n,"r2"); for(let i=0;i<9;i++)UI.storyTap(); const hx=UI.screens.st(); if(/class="mm-st-l [^"]*\bmm-st-b\b/.test(hx)||(hx.match(/class="mm-st-b"/g)||[]).length!==D.STORY.eps[n-1].lines.filter(l=>l.w!=="n").length)cls=false; } z.story=3; ok(cls,"物語の行の入れ物と ふきだし のクラス名が ぶつからない(全8話)"); }
     g.sread=3; const hl=UI.storyList(c); ok(UI.storyHome(c)===""&&(hl.match(/class="mm-st-row"/g)||[]).length===3&&(hl.match(/mm-st-lock/g)||[]).length===5&&hl.indexOf(E[4].title+"<")<0&&hl.indexOf("十両に上がると")>0,"きろく: ひらいた3話は読み返せる・のこりは題を見せず「◯◯に上がると ひらく」");
     ok(UI.screens.r2().indexOf("消えた看板")>0,"きろく の画面に 物語の一覧"); chk("r2(物語つき)",UI.screens.r2());
     UI.storyRead(2,"r2"); for(let i=0;i<9;i++)UI.storyTap(); UI.storyClose(); ok(g.sread===3&&UI.route.screen==="r2","読み返しても 読んだ数は減らない・きろくへ もどる");
@@ -651,6 +670,13 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const small=(fs.readFileSync(path.join(root,"css/machimon.css"),"utf8")+html).match(/font-size:\s*([0-9.]+)px/g).map(x=>parseFloat(x.split(":")[1])).filter(v=>v<10); ok(!small.length,"CSSに 10px未満の文字が無い "+small.join());
   /* お知らせ(リリースノート) */
   const wn=fs.readFileSync(path.join(root,"docs/whatsnew.txt"),"utf8").trim().split("\n"); ok(wn.length>=3&&wn.length<=5&&wn.every(l=>l.length<=70),"お知らせは3〜5行("+wn.length+"行)");
+  /* App Store の素材(docs/appstore/) */
+  { const dir=path.join(root,"docs/appstore"), rd=(f)=>fs.readFileSync(path.join(dir,f),"utf8"), d=rd("description.txt"), kw=rd("keywords.txt"), pr=rd("promo.txt"), rn=rd("review-notes.txt");
+    ok(d.length<=4000&&kw.length<=100&&pr.length<=170&&rn.trim().split("\n").length<=5,"ストアの文: 説明 "+d.length+"字・キーワード "+kw.length+"字・一言 "+pr.length+"字・審査メモ "+rn.trim().split("\n").length+"行");
+    const old=["ガーデン","大会","評議会","G1","寿命","ガチャ","事件","建設","名声"].filter(w=>(d+kw+pr).indexOf(w)>=0); ok(!old.length&&!banHit(d+kw+pr+rn)&&!rpgHit(d+kw+pr),"ストアの文に 1.x の遊びの言葉・禁止の言葉・戦う遊びの言葉が無い "+old.join());
+    ok(["看板マチモン","つよさ","番付","五番勝負","配合","けいこ","物語","3,100問","オフライン"].every(w=>d.indexOf(w)>=0),"説明文は 2.0 の遊び(看板・つよさ・番付・五番勝負・配合・けいこ・物語)を書いている");
+    const shots=fs.readdirSync(path.join(dir,"shots")).filter(f=>/\.png$/.test(f)).sort(); const dim=(f)=>{ const b=fs.readFileSync(path.join(dir,"shots",f)); return b.readUInt32BE(16)+"x"+b.readUInt32BE(20); };
+    ok(shots.length===8&&shots.every(f=>dim(f)==="1320x2868")&&shots[0].indexOf("01-home")===0,"スクリーンショット8枚・どれも 1320×2868・1枚目はホーム("+shots.join(" ")+")"); }
   /* 全部の画面を、まっさらなセーブで開いて回る(落ちない・禁止の言葉なし) */
   { const ST={q:{},rq:[],mm:null}; win.gameState=ST; const b0=UI.ctx; UI.ctx=()=>MM.state.ctx({ST,rand:module.exports.mkRand(77)}); UI.open(); UI.opPick(0); UI.bzS.noScroll=1; let bad="";
     Object.keys(UI.v2ok).forEach(sn=>{ let h=""; try{ h=UI.screens[sn]({})||""; }catch(e){ h="ERR "+e.message; } const w=banHit(h)||rpgHit(h); if(h.length<200||h.indexOf("undefined")>=0||h.indexOf("NaN")>=0||h.indexOf("ERR")===0||w)bad+=sn+(w?":"+w:"")+" "; });

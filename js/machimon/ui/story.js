@@ -26,7 +26,7 @@
   function lineHtml(ep,ln,cls){
     var p=who(ep,ln.w);
     if(!p)return '<div class="mm-st-n '+cls+'">'+esc(ln.t)+'</div>';
-    return '<div class="mm-st-l mm-st-'+ln.w+' '+cls+'"><span class="mm-st-pic">'+p.pic+'</span><span class="mm-st-b"><b>'+esc(p.name)+'</b><span>'+esc(ln.t)+'</span></span></div>';
+    return '<div class="mm-st-l mm-st-w'+ln.w+' '+cls+'"><span class="mm-st-pic">'+p.pic+'</span><span class="mm-st-b"><b>'+esc(p.name)+'</b><span>'+esc(ln.t)+'</span></span></div>';
   }
   UI.storyRead=function(no,back){ UI.stS={ep:no,line:0,back:back||"r2"}; UI.go("st"); };
   UI.screens.st=function(){

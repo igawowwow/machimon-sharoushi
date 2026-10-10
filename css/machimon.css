@@ -494,7 +494,7 @@ button.mm-v2-dex{ border:0; font-family:inherit; color:inherit; min-height:84px;
 .mm-st-b{ flex:1; min-width:0; display:flex; flex-direction:column; background:#fff; border:2px solid #33303E; border-radius:4px 16px 16px 16px; padding:8px 12px; box-shadow:0 3px 0 rgba(51,48,62,.18); }
 .mm-st-b b{ font-size:12px; color:#8A6FD1; }
 .mm-st-b span{ font-size:16px; line-height:1.8; font-weight:700; }
-.mm-st-m .mm-st-b b{ color:#E85A9A; } .mm-st-y .mm-st-b{ background:#FFF9E0; border-color:#B58900; } .mm-st-y .mm-st-b b{ color:#8A6A00; }
+.mm-st-wm .mm-st-b b{ color:#E85A9A; } .mm-st-wy .mm-st-b{ background:#FFF9E0; border-color:#B58900; } .mm-st-wy .mm-st-b b{ color:#8A6A00; }
 .mm-st-old{ opacity:.5; }
 .mm-st-dots{ display:flex; gap:6px; justify-content:center; margin:16px 0 6px; }
 .mm-st-dots i{ width:8px; height:8px; border-radius:50%; background:#D8D2C4; } .mm-st-dots i.mm-on{ background:#33303E; }
@@ -514,3 +514,5 @@ button.mm-v2-dex{ border:0; font-family:inherit; color:inherit; min-height:84px;
 .mm-st-dot{ position:static; display:inline-block; margin-left:6px; font-size:11px; }
 .mm-v2-mig{ font-size:14px; line-height:1.7; text-align:center; border-color:#B58900; background:#FFF9E0; }
 .mm-v2-mig .small-btn{ display:block; margin:6px auto 0; min-height:44px; padding:4px 28px; font-size:15px; }
+/* 大きい iPhone(幅430前後)でも、主ボタンは ほかのカードと同じ幅にそろえる */
+.mm-wrap .mm-cta{ max-width:none; }

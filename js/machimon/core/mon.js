@@ -127,25 +127,51 @@
 
   /* ---------- 引っ越し(純関数: 引数を書きかえない。同じ入力なら必ず同じ結果) ---------- */
   function idNum(id){ var n=parseInt(String(id).replace(/\D/g,""),10); return isFinite(n)?n:0; }
+  /* 引っ越しの上限(D.MIG)。1.x は高レア・高い能力が かんたんに出た。そのまま移すと、2.0 の芯(少しずつ最強を作る)が
+     最初から無くなる。だから:
+       ・いちばん強かった1体(おとながいれば おとな の中から)= 看板。名前と族はそのまま、レア度は SSR まで。
+       ・ほかの子は SR まで。才能の合計は どの子も 35 まで(能力の形=どれが得意か は保つ)。
+       ・なかまは 50体まで。超えた子は かけら に替える(タマゴが引けない状態で始めない)。
+       ・かけらは ぜんぶ合わせて 250 まで(すぐには SSR・UR と交換できない量)。
+     引っ越し直後の看板は、序二段〜三段目で 勝ったり負けたりする強さになる。 */
+  function capTalent(tl,max){
+    var sum=0, i; for(i=0;i<5;i++)sum+=tl[i]; if(sum<=max)return tl;
+    var out=tl.map(function(v){ return Math.floor(v*max/sum); }), s2=0; for(i=0;i<5;i++)s2+=out[i];
+    /* 切り捨てで余ったぶんは、もとが高い能力から1つずつ戻す */
+    var ord=[0,1,2,3,4].sort(function(x,y){ return tl[y]-tl[x]||x-y; });
+    for(i=0;s2<max&&i<5;i++){ if(out[ord[i]]<tl[ord[i]]){ out[ord[i]]++; s2++; } }
+    return out;
+  }
   function migrateV1toV2(old,mm){
-    var gd=MM.legacy.read(old), g=defaults(); g.on=1; g.mig=1;
-    gd.mons.slice(0,D().RATE2.cap).forEach(function(p){
-      var r5=MM.legacy.rar(p), rar=Math.min(4,r5), n=idNum(p.i);
+    var gd=MM.legacy.read(old), g=defaults(), C=D().MIG; g.on=1; g.mig=1;
+    /* 看板にする子: おとな の中でいちばん能力の合計が高い子。おとながいなければ全体から */
+    var src=gd.mons.slice(), ad=src.filter(function(p){ return p.adult; }), top=null;
+    (ad.length?ad:src).forEach(function(p){ if(!top||MM.legacy.sum(p)>MM.legacy.sum(top))top=p; });
+    var made=[];
+    src.forEach(function(p){
+      var r5=MM.legacy.rar(p), rar=Math.min(p===top?C.rarTop:C.rar,r5), n=idNum(p.i);
       var pool=D().kindsByRar[rar].filter(function(k){ return k.f===p.f; }); if(!pool.length)pool=D().kindsByRar[rar];
       var kd=pool[n%pool.length];
       var m={ i:"a"+(g.nid++), k:kd.id, n:p.n||kd.name, lv:p.adult?D().LV_ADULT:1, xp:0,
-              tl:KEYS.map(function(k){ return Math.max(0,Math.min(10,Math.round((p[k]||0)/10))); }),
+              tl:capTalent(KEYS.map(function(k){ return Math.max(0,Math.min(10,Math.round((p[k]||0)/10))); }),C.talent),
               na:D().natures[n%D().natures.length].id, tr:p.tr?[p.tr]:[], ef:[0,0,0,0,0], a:[], w:p.w||0 };
       if(p.sh)m.sh=1; if(r5>=5)m.first=1;
-      m=normMon(m); if(m){ g.mons.push(m); mark(g,m); if(adult(m))markAdult(g,m); }   /* 旧版で おとな まで育てた子は「おとなにした」のはんこ つき */
+      m=normMon(m); if(m)made.push({m:m,top:p===top});
+    });
+    /* 50体まで。看板 → つよい順に残し、あふれた子は かけら に */
+    made.sort(function(x,y){ return (y.top?1:0)-(x.top?1:0)||power(y.m)-power(x.m)||(idNum(x.m.i)-idNum(y.m.i)); });
+    var extra=0, kanId="";
+    made.forEach(function(x,ix){
+      if(ix<C.keep){ g.mons.push(x.m); mark(g,x.m); if(adult(x.m))markAdult(g,x.m); if(x.top)kanId=x.m.i; }   /* 1.x で おとな まで育てた子は「おとなにした」のはんこ つき */
+      else { extra+=shardOf(x.m); g.rel++; g.dex[x.m.k]=(g.dex[x.m.k]||0)|1; }
     });
     gd.hall.forEach(function(n){ if(g.hall.length<10)g.hall.push(n); });
     var coin=int(mm.res&&mm.res.g,0,0,1e12), over=Math.max(0,coin-5000);
-    g.shard=Math.min(300,Math.floor(over/1000))+3*(int(mm.tix,0,0,9999)+int(gd.medal,0,0,1e6));
+    g.shard=Math.min(C.shard,Math.floor(over/1000)+3*(int(mm.tix,0,0,9999)+int(gd.medal,0,0,1e6))+extra);
     g.pulls=gd.pulls; g.shiny=gd.shiny; g.st=1;
     if(!g.mons.length){ var kd0=D().kindsByRar[0][0]; var st=normMon({i:"a"+(g.nid++),k:kd0.id,lv:1,tl:[5,5,5,5,5],na:"n0"}); g.mons.push(st); mark(g,st); }
-    var s=sorted(g); g.kan=s[0].i; g.sub=s.slice(1,3).map(function(x){ return x.i; });
-    return { g2:g, coins:Math.min(coin,5000), shards:g.shard };
+    var s=sorted(g); g.kan=kanId||s[0].i; g.sub=[];
+    return { g2:g, coins:Math.min(coin,5000), shards:g.shard, released:Math.max(0,made.length-C.keep) };
   }
 
   /* ================= 個体 ================= */
@@ -313,7 +339,7 @@
   function onAnswer(rw,gain,c){ return MM.keiko.onAnswer(rw,gain,c); }
   function shardOf(p){ return D().SHARD[rarOf(p)]||1; }
 
-  MM.mon={ KEYS:KEYS, BACKUP_KEY:BACKUP_KEY, defaults:defaults, normalize:normalize, normMon:normMon, W:W, fresh:fresh, migrateV1toV2:migrateV1toV2, backupOnce:backupOnce,
+  MM.mon={ KEYS:KEYS, BACKUP_KEY:BACKUP_KEY, defaults:defaults, normalize:normalize, normMon:normMon, W:W, fresh:fresh, migrateV1toV2:migrateV1toV2, capTalent:capTalent, backupOnce:backupOnce,
     kindOf:kindOf, rarOf:rarOf, rarInfo:rarInfo, natOf:natOf, stat:stat, stats:stats, power:power, talent:talent, rank:rank, need:need, adult:adult, spId:spId,
     atLv:atLv, pot:pot, roll:roll, byId:byId, sorted:sorted, kanban:kanban, diff:diff, setKan:setKan, toggleSub:toggleSub, mark:mark,
     rollRar:rollRar, freeReady:freeReady, pityLeft:pityLeft, canPull:canPull, pull:pull, release:release,

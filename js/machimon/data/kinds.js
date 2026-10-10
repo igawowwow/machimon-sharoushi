@@ -173,6 +173,9 @@
   D.ADULT_NEED=30;                               /* 図鑑の「おとなにした」: 看板として この数だけ正解する(Lv10以上で) */
   /* かけら交換のねだん(育成どうぐ) */
   D.SHOP_ITEM={ito:80,omamori:60,suzu:60,futago:100,utsushi:100,kawari:30,mi:80,ishi:100,happa:30,wasure:30,cho:40,mochi:40};
+  /* 1.x のセーブからの引っ越しの上限(core/mon.js の migrateV1toV2)。
+     rarTop=看板にする1体のレア度の上限(SSR) rar=ほかの子(SR) talent=才能の合計 keep=残す数 shard=かけらの合計 */
+  D.MIG={ rarTop:3, rar:2, talent:35, keep:50, shard:250 };
   /* 最初の1体: 3つのタマゴから1つ選ぶ(どれもN。才能は ふつう〜やや良い) */
   D.STARTERS=["k001","k061","k031"];
 

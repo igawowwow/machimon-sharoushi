@@ -106,7 +106,7 @@
       +'<span class="mm-pw mm-pw-big">つよさ <b>'+fmt(M().power(k))+'</b></span>'
       +lvBar(c,k)+'</button>';
     /* 1.x から来た人へ、1回だけ(とじるまで) */
-    if(g.mig&&!g.mn)h+='<div class="mm-gbloom mm-v2-mig"><b>あたらしい遊びに なりました</b><br>なかま <b>'+g.mons.length+'体</b>は 引っ越しずみ。学習の記録は そのまま。<br>いちばん強い子が <b>看板</b>。けいこで育てて、番付の <b>横綱</b>へ。<button class="small-btn" onclick="MM.ui.h2MigOk()">わかった</button></div>';
+    if(g.mig&&!g.mn)h+='<div class="mm-gbloom mm-v2-mig"><b>あたらしい遊びに なりました</b><br>なかま <b>'+g.mons.length+'体</b>が 引っ越してきた。学習の記録は そのまま。<br>いちばん強かった <b>'+esc(k.n)+'</b> が 街の<b>看板</b>。<br>つよさは 数えなおし。けいこで育てて、番付の <b>横綱</b>へ。<button class="small-btn" onclick="MM.ui.h2MigOk()">わかった</button></div>';
     if(UI.storyHome)h+=UI.storyHome(c);
     if(UI.bzHome)h+=UI.bzHome(c);
     /* けいこ: きょうの配合券まで あといくつ */
