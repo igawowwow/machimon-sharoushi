@@ -52,10 +52,7 @@
     })();
   }
 
-  /* 牧場の血統: 殿堂入りの直仔なら父を表示(ダービーの力+3) */
-  function sire(c,uid){
-    try{ var s=MM.derby&&MM.derby.sireOf(c,uid); if(!s)return ""; return '<div class="mm-sire">🧬 父: '+MM.px(s.sp,20)+' '+UI.esc(s.name)+' の血を引く <span class="mm-sub">(ダービー +'+(MM.DATA.SIRE_BONUS||3)+')</span></div>'; }catch(e){ return ""; }
-  }
+  function sire(){ return ""; }
   function view(c,uid,rare){
     var m=c.mm.mons[uid];
     if(!m)return UI.screens.mons();

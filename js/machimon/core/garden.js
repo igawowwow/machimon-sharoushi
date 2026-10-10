@@ -1,11 +1,11 @@
 "use strict";
 /* ============================================================
-   machimon/core/garden.js — タマゴ配合 × マチモン街 × 大会(ウイニングポスト式の配合シミュレーション)
+   machimon/core/garden.js — タマゴ配合 × マチモン街 × 大会
    ★時間は「正解10問 = 1週」でしか進まない。ボタンで週を送る仕組みは無い
      = 解けば解くほど季節が巡り、マチモンが育ち、大会が開かれ、ライバルの街も世代交代する。
    ★コインはクイズ(と街の放置生産)からしか来ない。おとなになったマチモンの「稼ぎ」は正解のコインを増やすだけ。
-   ★配合理論(爆発力): ニックス / 隠しニックス / 異系の活力 / 同系の固定 / インブリード /
-     季節の相性 / 系統の勢い / 得意の重ね。子の素質 = 0.94×両親平均 + 3 + 爆発力×0.6 + ばらつき。
+   ★配合理論(相性パワー): 族の相性 / 隠し相性 / 異系の活力 / 同系の固定 / 血の重ね /
+     季節の相性 / 系統の勢い / 得意の重ね。子の素質 = 0.94×両親平均 + 3 + 相性パワー×0.6 + ばらつき。
      平均へ戻る力があるので、理論を使わないと代を重ねても強くならない(=配合を考える意味)。
    ★セーブは c.mm.gd の1キー。乱数は c.rand(テストで固定できる)。
    ============================================================ */
@@ -99,11 +99,11 @@
   function plotCount(g){ var F=GD().FACILITY.plot; return F.base+F.per*(g.fac.plot||0); }
   function seedCap(g){ var F=GD().FACILITY.seedbox; return F.base+F.per*(g.fac.seedbox||0); }
 
-  /* ---------- 初期化(名マチモン・ライバルの街・隠しニックス・最初のタマゴ) ---------- */
+  /* ---------- 初期化(名マチモン・ライバルの街・隠し相性・最初のタマゴ) ---------- */
   function init(c,g){
     var r=c.rand; g.on=1;
     g.mb=GD().meiboku.map(function(x,i){ return mbFrom(x,i,r); });
-    /* 隠しニックス: 異なる子系統のペアを乱数で選ぶ(セーブごとに違う=自分で見つける楽しみ) */
+    /* 隠し相性: 異なる子系統のペアを乱数で選ぶ(セーブごとに違う=自分で見つける楽しみ) */
     var L=GD().lines.map(function(l){ return l.id; }), hn={};
     for(var t=0;t<200&&Object.keys(hn).length<GD().HIDDEN_NICKS;t++){ var a=pick(L,r),b=pick(L,r); if(a!==b)hn[pairKey(a,b)]=1; }
     g.hn=Object.keys(hn);
@@ -160,7 +160,7 @@
     for(var guard=0;guard<30&&sum(p)!==target;guard++){
       var d=target-sum(p), k=pick(KEYS,r); p[k]=clamp(p[k]+(d>0?1:-1)*Math.min(Math.abs(d),3),1,100);
     }
-    /* 血統: その系統の名マチモンを父に、別の名マチモンを母に(=ガチャのタマゴにも祖先がいる→インブリードが組める) */
+    /* 家系: その系統の名マチモンを父に、別の名マチモンを母に(=ガチャのタマゴにも祖先がいる→血の重ねが組める) */
     var sires=g.mb.filter(function(m){ return m.l===line.id; }); if(!sires.length)sires=g.mb.filter(function(m){ return m.f===fam; });
     var A=sires.length?pick(sires,r):null, B=pick(g.mb,r);
     if(A&&B&&A.i!==B.i)p.a=[A.i,B.i,A.a[0]||"",A.a[1]||"",B.a[0]||"",B.a[1]||""];
@@ -352,18 +352,18 @@
   function theory(c,A,B){
     var g=W(c), T=GD().THEORY, out=[], burst=0, sig=GD().SIGMA;
     function add(name,pt,note){ out.push({name:name,pt:pt,note:note||""}); burst+=pt; }
-    if(A.f!==B.f&&famNick(A.f,B.f))add("ニックス",T.nick,GD().families[A.f].name+"×"+GD().families[B.f].name+" は相性◎");
+    if(A.f!==B.f&&famNick(A.f,B.f))add("族の相性",T.nick,GD().families[A.f].name+"×"+GD().families[B.f].name+" は相性◎");
     var hk=pairKey(A.l,B.l);
-    if(A.l!==B.l&&g.hn.indexOf(hk)>=0){ if(g.hnf[hk]===2)add("隠しニックス",T.hiddenNick,"評議会で教わった黄金配合"); else if(g.hnf[hk])add("隠しニックス",T.hiddenNick,"発見済みの黄金配合"); else add("？？？",T.hiddenNick,"何かが起きる予感…"); }
+    if(A.l!==B.l&&g.hn.indexOf(hk)>=0){ if(g.hnf[hk]===2)add("隠し相性",T.hiddenNick,"評議会で教わった黄金配合"); else if(g.hnf[hk])add("隠し相性",T.hiddenNick,"発見済みの黄金配合"); else add("？？？",T.hiddenNick,"何かが起きる予感…"); }
     if(A.f!==B.f)add("異系の活力",T.hetero,"違う族どうしは丈夫に育つ");
     if(A.l===B.l)add("系統の固定",T.lineFix,"同じ系統=ばらつき小・得意が伸びる");
-    /* インブリード: 3代以内に同じ祖先 */
+    /* 血の重ね: 3代以内に同じ祖先 */
     var sa=[A.i].concat(A.a), sb=[B.i].concat(B.a), common=[];
     for(var i=0;i<sa.length;i++){ if(sa[i]&&sb.indexOf(sa[i])>=0&&common.indexOf(sa[i])<0)common.push(sa[i]); }
     if(A.i===B.i)common=[A.i];
-    if(common.length){ var n=Math.min(T.inbreedMax,common.length); add("インブリード",T.inbreed*n,common.map(function(id){ return nameOfId(g,id); }).join("・")+" の血を重ねる(丈夫さ↓)"); }
+    if(common.length){ var n=Math.min(T.inbreedMax,common.length); add("血の重ね",T.inbreed*n,common.map(function(id){ return nameOfId(g,id); }).join("・")+" の血を重ねる(丈夫さ↓)"); }
     if(A.se===B.se)add("季節の相性",T.season,GD().SEASONS[A.se]+"どうし");
-    var hot=hotLines(g); if(hot.indexOf(A.l)>=0)add("系統の勢い",T.lineHot,lineById(g,A.l).name+" は昨年のリーディング上位");
+    var hot=hotLines(g); if(hot.indexOf(A.l)>=0)add("系統の勢い",T.lineHot,lineById(g,A.l).name+" は昨年の年間1位上位");
     var la=lineById(g,A.l); if(bestKey(A)===la.spec&&bestKey(B)===la.spec)add("得意の重ね",T.doubleSpec,"両親とも"+statName(la.spec)+"が得意");
     if(A.l===B.l)sig*=0.6;
     var grd=burst>=12?"S":burst>=8?"A":burst>=5?"B":burst>=2?"C":"D";
@@ -404,7 +404,7 @@
     if(!MM.economy.spend(c,"g",pv.cost))return {err:"コインが足りない(🪙"+pv.cost+")"};
     var A=pv.A,B=pv.B,th=pv.th,line=pv.line,r=c.rand, n=1+((r()<0.15+0.1*(g.fac.lab||0)+((has(A,"lucky")||has(B,"lucky"))?0.25:0))?1:0), out=[];
     var hk=pairKey(A.l,B.l), found=false;
-    if(A.l!==B.l&&g.hn.indexOf(hk)>=0&&g.hnf[hk]!==1){ g.hnf[hk]=1; found=true; ev(g,"💡","隠しニックス発見！ "+lineById(g,A.l).name+"×"+lineById(g,B.l).name); }
+    if(A.l!==B.l&&g.hn.indexOf(hk)>=0&&g.hnf[hk]!==1){ g.hnf[hk]=1; found=true; ev(g,"💡","隠し相性発見！ "+lineById(g,A.l).name+"×"+lineById(g,B.l).name); }
     for(var t=0;t<n&&g.seeds.length<seedCap(g);t++){
       var p={ i:"s"+(g.nid++), n:genName(r), f:A.f, l:A.l, t:(r()<0.6?(r()<0.5?A.t:B.t):Math.floor(r()*3)), se:(r()<0.5?A.se:B.se), c:Math.floor(r()*6),
               a:[A.i,B.i,A.a[0]||"",A.a[1]||"",B.a[0]||"",B.a[1]||""], r:{w:0,g1:0,gr:0,pz:0,run:0} };
@@ -458,11 +458,11 @@
     if(def.world&&g.fame<GD().WORLD_FAME)return "名声"+GD().WORLD_FAME+"で出場できる";
     if(def.g===5&&p.r.w>0)return "新人戦は未勝利のみ";
     if(def.g===2&&p.r.w<1)return "1勝以上が必要";
-    if(def.g===1&&!(p.r.gr>=1||p.r.w>=3))return "重賞1勝か通算3勝が必要";
+    if(def.g===1&&!(p.r.gr>=1||p.r.w>=3))return "上位大会1勝か通算3勝が必要";
     if(def.rookie&&p.bw<(g.y-1)*GD().YEAR_WEEKS)return "今年おとなになったマチモンのみ";
     return "";
   }
-  /* 出場者(ライバル)を選ぶ: G1=上位、G2/G3=中位、OP=下位。同じ強豪が何度も現れる=因縁が生まれる */
+  /* 出場者(ライバル)を選ぶ: 特級=上位、上級/中級=中位、OP=下位。同じ強豪が何度も現れる=因縁が生まれる */
   function field(c,def,excl){
     var g=W(c), alive=rivalAlive(g).filter(function(p){ return g.used[p.i]!==aw(g)&&p.i!==excl; });
     if(def.world)alive=alive.concat([]);
@@ -521,7 +521,7 @@
     g.done[doneKey(g,def.id)]=1;
     if(!g.ent||g.ent.w!==aw(g))g.ent={w:aw(g),n:0}; g.ent.n++; dailyAdd(c,g,"c",1);
     var me=board[pos-1].p;
-    /* ライバルライバルとの勝敗 */
+    /* ライバルとの勝敗 */
     var owners=[], seenO={};
     board.forEach(function(b,idx){ if(b.me||seenO[b.ow])return; seenO[b.ow]=1; var rv=GD().rivalById[b.ow]; if(!rv)return;
       var beat=pos<idx+1, x=g.rv[b.ow]||(g.rv[b.ow]={w:0,l:0}); if(beat)x.w++; else x.l++;
@@ -582,14 +582,14 @@
     for(var j=g.rp.length-1;j>=0;j--){ var q=g.rp[j]; if(A-q.bw>=(q.life||30)){
         if(q.r.g1>=1||q.r.gr>=3)addMeiboku(c,g,q,false);
         var rv=GD().rivalById[q.ow]; g.rp.splice(j,1); if(rv)g.rp.push(rivalPlant(c,g,rv,-Math.floor(c.rand()*3)-4)); } }
-    /* 自分の名マチモンの種付け料収入(人気=質の順位) */
+    /* 自分の名マチモンへのお礼(収入)(人気=質の順位) */
     var mine=g.mb.filter(function(m){ return m.own; });
     if(mine.length){ var inc=0; mine.forEach(function(m){ inc+=Math.round((m.fee||0)*0.25*(1+rarity(m)*0.4)); }); inc=Math.min(inc,3000); if(inc>0){ c.mm.res.g+=inc; out.income=inc; } }
     if(GD().COUNCIL_WEEKS.indexOf(g.w)>=0)out.council=council(c);
     g.w++;
     if(g.w>GD().YEAR_WEEKS){ out.year=yearEnd(c); g.w=1; g.y++; }
     var cs=contestsOf(c,g.w).filter(function(x){ return x.g===1; });
-    ev(g,cal(c).sIcon,cal(c).label+(cs.length?" — 今週は "+cs[0].name+"(G1)":"")+(out.income?" / 種付け料 🪙"+out.income:""));
+    ev(g,cal(c).sIcon,cal(c).label+(cs.length?" — 今週は "+cs[0].name+"(特級)":"")+(out.income?" / 名親のお礼 🪙"+out.income:""));
     rankCheck(c,g);
     if(out.council)g.pend.push({t:"council",res:out.council});
     if(out.year)g.pend.push({t:"year",y:g.y-1,awards:out.year});
@@ -625,7 +625,7 @@
       if(g.seeds.length<seedCap(g)+5){ g.seeds.push(sd); noteSeed(g,sd); got.seeds.push(sd); }
     }
     if(pr.statue&&g.statue<GD().STATUE_MAX){ g.statue++; got.statue=1; }
-    /* 銀賞以上: 隠しニックスのヒント(まだ知らない黄金配合を1つ教えてもらえる) */
+    /* 銀賞以上: 隠し相性のヒント(まだ知らない黄金配合を1つ教えてもらえる) */
     if(pos<=6){ var un=g.hn.filter(function(k){ return !g.hnf[k]; }); if(un.length){ var hk=un[Math.floor(c.rand()*un.length)]; g.hnf[hk]=2; var ab=hk.split("|"); got.hint=lineById(g,ab[0]).name+"×"+lineById(g,ab[1]).name; } }
     var res={ y:g.y, w:g.w, season:season(g.w), pos:pos, prize:pr.name, icon:pr.icon, score:me.total, detail:me, board:all.slice(0,12), got:got, n:all.length };
     g.council.push({y:g.y,s:season(g.w),pos:pos,p:pr.name,sc:me.total}); while(g.council.length>40)g.council.shift();
@@ -641,7 +641,7 @@
     g.plots.forEach(function(p){ if(p&&p.bw!=null&&!p.dead&&(!best||sum(p)>sum(best)))best=p; });
     return "🏙 MACHIMON 社労士 — "+(c.mm.name||"わたしの街")+"\n街ランク: "+rk.cur.icon+rk.cur.name+" / 街の評価 "+ts.total+"点\n"
       +(best?"自慢の株: "+GD().families[best.f].icon+best.n+"("+rarInfo(best).name+(best.tr?"・"+GD().traitById[best.tr].name:"")+")\n":"")
-      +"黄金像 "+g.statue+"体 / G1 "+g.total.g1+"勝 / 第"+g.y+"年\n社労士の問題を解くほど街が育つ #マチモン社労士";
+      +"黄金像 "+g.statue+"体 / 特級 "+g.total.g1+"勝 / 第"+g.y+"年\n社労士の問題を解くほど街が育つ #マチモン社労士";
   }
 
   /* ---------- 年度末 ---------- */
@@ -664,7 +664,7 @@
     /* 系統の勢い・系統確立 */
     g.lastYr={lp:yr.lp};
     lineCheck(c,g);
-    /* 名マチモンの人気(種付け料)を実績で更新・古い名マチモンの整理 */
+    /* 名マチモンの人気(お礼の額)を実績で更新・古い名マチモンの整理 */
     g.mb.forEach(function(x){ x.fee=feeOf(x,yr.mbp[x.i]||0); });
     if(g.mb.length>160){ g.mb.sort(function(a,b){ return (b.own-a.own)||(mbScore(b)-mbScore(a)); }); g.mb=g.mb.slice(0,160); }
     g.yr={pl:{},own:{},mbp:{},lp:{}};
@@ -691,7 +691,7 @@
     g.plots[plotIdx]=null;
     g.titles.meiboku=g.titles.meiboku||g.y; c.mm.tix=(c.mm.tix||0)+0;
     titleCheck(c,g); rankCheck(c,g);
-    ev(g,"👑",m.n+" が名マチモンになった！ ほかの街からも種付けを求められる(毎週 種付け料)");
+    ev(g,"👑",m.n+" が名マチモンになった！ ほかの街から名親をたのまれる(毎週 お礼がとどく)");
     return m;
   }
   function compost(c,plotIdx){
@@ -700,7 +700,7 @@
     if(p.r.w>0){ g.hall.push({i:p.i,n:p.n,f:p.f,l:p.l,r:p.r,y:g.y,rar:rarity(p)}); while(g.hall.length>100)g.hall.shift(); }
     g.plots[plotIdx]=null; c.mm.res.mat+=mat; return {mat:mat};
   }
-  /* 系統確立: 名マチモンの「子(第1親がその名マチモン)」の名マチモンが3本以上 かつ 子孫の重賞勝ちが8以上 */
+  /* 系統確立: 名マチモンの「子(第1親がその名マチモン)」の名マチモンが3本以上 かつ 子孫の上位大会勝ちが8以上 */
   function lineCheck(c,g){
     g.mb.forEach(function(m){
       if(allLines(g).some(function(l){ return l.from===m.i; }))return;
@@ -772,7 +772,7 @@
     return out;
   }
   function isExam(q){ return !!(q&&(q.examFmt||q.nendo||q.sentaku)); }
-  /* 合格力(目安): ○×の習熟度 と 本試験形式の正答率 を科目ごとに合成。70%を合格ラインの目安にする */
+  /* 実力メーター: ○×の習熟度 と 本試験形式の正答率 を科目ごとに合成。70%を目標ラインにする */
   function passMeter(c){
     var mast=MM.learn.masteryBySub(c), ex={}, ids=examIds();
     for(var i=0;i<ids.length;i++){ var q=G.qById(ids[i]); if(!q)continue; var st=MM.learn.stat(c,q.id); var e=ex[q.s]||(ex[q.s]={c:0,n:0,tot:0}); e.tot++; if((st.c||0)+(st.w||0)>0){ e.n++; if(st.box>=2||(st.c||0)>(st.w||0))e.c++; } }
@@ -857,7 +857,7 @@
     plant:plant, stage:stage, needOf:needOf, phase:phase, cur:cur, age:age, lifeOf:lifeOf, statusText:statusText,
     onAnswer:onAnswer, yieldBonus:yieldBonus, setMon:setMon, monBonus:monBonus,
     scenery:scenery, rankOf:rankOf, theory:theory, preview:preview, breed:breed, ref:ref, lineById:lineById, allLines:allLines, nameOfId:nameOfId, famNick:famNick,
-    contestsOf:contestsOf, contestById:contestById, eligible:eligible, isDone:isDone, start:start, step:step, finish:finish, rivalAlive:rivalAlive, catScore:catScore,
+    contestsOf:contestsOf, contestById:contestById, eligible:eligible, isDone:isDone, start:start, step:step, finish:finish, rivalAlive:rivalAlive, catScore:catScore, field:field,
     tick:tick, yearEnd:yearEnd, canMeiboku:canMeiboku, mbFull:mbFull, gardenScore:gardenScore, toMeiboku:toMeiboku, compost:compost, facCost:facCost, upgrade:upgrade,
     titleCheck:titleCheck, takePend:takePend, examIds:examIds, pickExam:pickExam, isExam:isExam, passMeter:passMeter, dailyList:dailyList, claimDaily:claimDaily, streakInfo:streakInfo, claimStreak:claimStreak, hatchTama:hatchTama, prod:prod, markDex:markDex, council:council, councilPreview:councilPreview, townScore:townScore, shareText:shareText, banner:banner, freeReady:freeReady, has:has, seasonTrait:seasonTrait, rollTrait:rollTrait, advice:advice, openSubs:openSubs, hotLines:hotLines, feeOf:feeOf, mbScore:mbScore };
   /* 旧タマゴの孵化(オンボーディング・事件報酬)を遺伝子つきマチモンへ差し替える */

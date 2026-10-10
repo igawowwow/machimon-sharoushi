@@ -1,4 +1,4 @@
-const C = "machimon-v20";
+const C = "machimon-v21";
 const ASSETS = [
   "./",
   "./index.html",
@@ -89,6 +89,7 @@ const ASSETS = [
   "./js/machimon/core/sfx.js",
   "./js/machimon/core/exam.js",
   "./js/machimon/core/garden.js",
+  "./js/machimon/core/power.js",
   "./js/machimon/core/game.js",
   "./js/machimon/ui/root.js",
   "./js/machimon/ui/coach.js",

@@ -119,7 +119,7 @@
     var se=obj(s.exam)||{};
     out.exam={ date:(typeof se.date==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(se.date))?se.date:"" };
     out.log=Array.isArray(s.log)?s.log.slice(-20):[];
-    /* 旧・社労士ダービーのセーブは消さずに持ち越す(ガーデンへ移行済み) */
+    /* 旧版のセーブ(wp)は消さずに持ち越す(ガーデンへ移行済み) */
     out.wp=obj(s.wp)||null;
     /* ガーデン(core/garden.js)。未ロードなら生のまま持ち越す(garden側で遅延正規化) */
     try{ out.gd=(MM.garden&&MM.garden.normalize&&obj(s.gd))?MM.garden.normalize(s.gd):(obj(s.gd)||null); }catch(e){ out.gd=obj(s.gd)||null; }

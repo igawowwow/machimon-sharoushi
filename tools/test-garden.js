@@ -98,4 +98,29 @@ UI.gd.last={seeds:g.seeds.slice(0,10),from:"gacha"}; ok(UI.screens.gReveal().ind
 UI.gQuizStart(); ok(UI.screens.gQuiz().indexOf("mm-q")>=0,"render gQuiz");
 const cr=GA.council(c); ok(cr&&cr.pos>=1,"council direct "+cr.pos+" "+cr.prize);
 ok(GA.shareText(c).length>20,"share text");
+
+/* ---------- スライス1: つよさの数字 / きまりに触れる言葉が無いこと ---------- */
+{
+  const PW=MM.power; const all=g.plots.filter(p=>p&&!p.dead).concat(g.seeds,g.mb,g.rp);
+  ok(all.length>50&&all.every(p=>{ const v=PW.of(g,p); return Number.isFinite(v)&&v>0; }),"power.of finite & positive for all "+all.length);
+  const ad=GA.rivalAlive(g).concat(g.plots.filter(p=>p&&p.bw!=null&&!p.dead));
+  const rk=(arr)=>{ const o=arr.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]); const r=[]; o.forEach((x,i)=>{ r[x[1]]=i; }); return r; };
+  const ra=rk(ad.map(p=>PW.of(g,p))), rb=rk(ad.map(p=>GA.catScore(g,p,"a",99))); let d2=0; ra.forEach((x,i)=>{ d2+=(x-rb[i])*(x-rb[i]); });
+  const rho=1-6*d2/(ad.length*(ad.length*ad.length-1));
+  ok(rho>=0.95,"power order ~ 総合部門の点 order (rank corr "+rho.toFixed(3)+", n="+ad.length+")");
+  const b=PW.best(g); ok(b&&PW.diff(g,b.p).top&&PW.diff(g,b.p).d===0,"power.best / diff");
+  ok(all.every(p=>{ const x=PW.pct(p); return x>=0&&x<=1; }),"power.pct in 0..1");
+  ok(UI.screens.garden().indexOf("つよさ")>=0&&UI.screens.gSeeds({}).indexOf("つよさ")>=0&&UI.screens.gContest({}).indexOf("相手の最高")>=0,"つよさ / 相手の最高 が画面に出る");
+}
+const BAN=["ウイニングポスト","ウイポ","Kirby","カービィ","勇者30","ポケモン","ダビスタ","ドラクエ","ウマ娘","たまごっち","黒猫","ダービー",
+  "合格率","合格力","馬主","サイアー","種付","種牡馬","競馬","騎手","厩舎","ステークス","天皇賞","インブリード","ニックス","血統","重賞"];
+const banHit=(t)=>{ for(const w of BAN)if(t.indexOf(w)>=0)return w; if(/(^|[^A-Za-z_"'.])AI([^A-Za-z_]|$)/.test(t))return "AI"; return ""; };
+{
+  const walk=(d,out)=>{ for(const e of fs.readdirSync(d,{withFileTypes:true})){ const p=path.join(d,e.name); if(e.isDirectory()){ if(e.name!=="questions")walk(p,out); } else if(/\.(js|css|html)$/.test(e.name))out.push(p); } return out; };
+  const files=walk(path.join(root,"js"),[]).concat(walk(path.join(root,"css"),[]),[path.join(root,"index.html"),path.join(root,"sw.js")]);
+  const hits=[]; files.forEach(p=>{ const w=banHit(fs.readFileSync(p,"utf8")); if(w)hits.push(path.relative(root,p)+":"+w); });
+  ok(!hits.length,"source has no banned words ("+files.length+" files) "+hits.slice(0,5).join(" "));
+  const hits2=[]; for(const sc of Object.keys(UI.screens)){ let h=""; try{ h=UI.screens[sc]({plot:0,page:2})||""; }catch(e){} const w=banHit(h); if(w)hits2.push(sc+":"+w); }
+  ok(!hits2.length,"screens have no banned words "+hits2.slice(0,5).join(" "));
+}
 console.log(process.exitCode?"FAILED":"ALL OK");
