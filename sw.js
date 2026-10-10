@@ -1,4 +1,4 @@
-const C = "machimon-v19";
+const C = "machimon-v20";
 const ASSETS = [
   "./",
   "./index.html",
