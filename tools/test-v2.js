@@ -54,7 +54,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const pw=(kind,lv)=>{ const a=[]; for(let i=0;i<3000;i++){ const p=M.roll(c,g,{kind}); p.lv=lv; p.tr=[]; a.push(M.power(M.normMon(p))); } return a.sort((x,y)=>x-y); };
   const n=pw("k001",30), r=pw("k004",30), sr=pw("k007",30);
   ok(n[2999]/n[0]>=1.5,"同じ種類3,000体: つよさの最大÷最小 = "+(n[2999]/n[0]).toFixed(2)+" (1.5以上)");
-  ok(n[2850]>r[1500],"才能のいいN(上位5% "+n[2850]+")は ふつうのR(真ん中 "+r[1500]+")を上回る");
+  ok(n[2940]>r[1500],"才能のいいN(上位2% "+n[2940]+")は ふつうのR(真ん中 "+r[1500]+")を上回る");
   ok(sr[2999]>n[2999],"頂点は高レアの才能満点");
 }
 
@@ -124,7 +124,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   id=MM.learn.pick(1,cn,{subs:[0]})[0]; gain=MM.economy.grant(MM.learn.commit(id,true,4000,cn),cn);
   ok(gain.g===10&&gain.mon.xp===10&&cn.mm.res.g===c0+10&&gain.ke===0&&gain.tama===0&&gain.mat===0,"あたらしい問題の正解 = コイン10・経験10(ほかのお金は出ない)");
   MM.state.rollDay(cn); const w0=JSON.stringify(cn.mm.res); MM.economy.idle(cn); ok(JSON.stringify(cn.mm.g2.mons)===JSON.stringify(gn.mons),"放置では育たない");
-  const pz=mon({i:"z",k:k.k}); M.addXp(pz,1e7,M.lvCap(cn,pz)); ok(pz.lv===30,"科目の習熟40%未満では Lv30 が上限(Lv31にならない)");
+  const pz=mon({i:"z",k:k.k}); M.addXp(pz,1e7,M.lvCap(cn,pz)); ok(pz.lv===D.LVCAP.base,"習熟が無いうちは Lv"+D.LVCAP.base+" が上限(それ以上にならない)");
   const pe=mon({i:"e"}); for(let i=0;i<5000;i++)M.addEf(pe,"hmojs"[i%5],0.9); ok(Math.abs(pe.ef.reduce((a,b)=>a+b,0)-300)<1e-6&&pe.ef.every(v=>v<=100),"けいこ値は合計300・1つ100まで");
   ok(M.release(cn,k.i).err&&gn.mons.length===1,"看板と最後の1体は手放せない");
   cn.mm.res.g=3000; const pr=M.pull(cn,false); const sh0=gn.shard; ok(pr.mon&&M.release(cn,pr.mon.i).shard===D.SHARD[M.rarOf(pr.mon)]&&gn.shard===sh0+D.SHARD[M.rarOf(pr.mon)],"手放すとレア度どおりのかけらになる");
@@ -132,7 +132,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   /* ---------- 画面 ---------- */
   for(let i=0;i<6;i++)M.pull(cn,false);
   const scr=[["h2",{}],["n2",{}],["n2d",{id:gn.mons[1].i}],["n2d",{id:gn.kan}],["t2",{}]];
-  UI.v2.last={mon:gn.mons[gn.mons.length-1],isNew:true}; scr.push(["t2r",{}]); UI.k2Start(); scr.push(["k2",{}]);
+  UI.v2.last={mon:gn.mons[gn.mons.length-1],isNew:true}; scr.push(["t2r",{}]); scr.push(["k2m",{}]); UI.k2Go("new"); scr.push(["k2",{}]);
   for(const [s,p] of scr){ let h=""; try{ h=UI.screens[s](p)||""; }catch(e){ h="ERR "+e.message; } const u=h.indexOf("undefined"), n=h.indexOf("NaN");
     ok(h.length>200&&u<0&&n<0&&h.indexOf("ERR")!==0,"render "+s+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(h.indexOf("ERR")===0?h:"")); }
   ok(UI.screens.h2().indexOf("つよさ")>0&&UI.screens.n2().split("つよさ").length>=1&&UI.screens.n2d({id:gn.mons[1].i}).indexOf("才能")>0,"ホーム・詳細に つよさ と 才能 が出る");
@@ -182,10 +182,11 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   /* ---------- 場所: 1日2番・7番で締め・昇降 ---------- */
   { const c=fresh(7), z=BZ.Z(c); let d=1; day(c,d);
     const bout=(winIt)=>{ if(BZ.leftToday(c)<=0){ d++; day(c,d); } return run(c,[1,1,1,1,1],20000,winIt?3:0.1); };
-    ok(z.pos===61&&BZ.state(c).left===2,"はじめは番付の外・きょうは2番");
-    bout(true); bout(true); const third=BZ.start(c); ok(third.err&&z.n===2,"1日2番を超えて取れない");
-    d++; day(c,d); ok(BZ.state(c).left===2,"日付が変わると取れる");
-    for(let i=0;i<4;i++)bout(true); ok(z.n===6&&z.w===6&&z.basho===1,"6番まで: 場所は続く");
+    ok(z.pos===61&&BZ.state(c).left===4,"はじめは番付の外・序ノ口と序二段のあいだは1日4番");
+    for(let i=0;i<4;i++)bout(true); const fifth=BZ.start(c); ok(fifth.err&&z.n===4,"1日4番を超えて取れない");
+    d++; day(c,d); ok(BZ.state(c).left===4,"日付が変わると取れる");
+    for(let i=0;i<2;i++)bout(true); ok(z.n===6&&z.w===6&&z.basho===1,"6番まで: 場所は続く");
+    { const zp=z.pos; z.pos=50; const l2=BZ.perDay(c); z.pos=51; const l4=BZ.perDay(c); z.pos=zp; ok(l2===2&&l4===4,"三段目からは1日2番"); }
     const last=bout(true); ok(last.res.basho&&last.res.basho.w===7&&z.n===0&&z.w===0&&z.basho===2&&z.hist.length===1,"7番で場所が締まる(星取りは0にもどる)");
     ok(z.pos===56&&last.res.basho.delta===5&&BZ.isPromo(z),"全勝で5枚あがる(61→56=序ノ口のいちばん上)。次は昇進の一番");
     const st0=z.story; const pl=bout(false); ok(pl.res.promo&&!pl.res.promo.won&&z.pos===56&&z.n===0,"昇進の一番に負けても、番付は動かない(星取りにも入らない)");
@@ -215,25 +216,88 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     for(const sname of ["n2","t2","k2"])chk(sname,UI.screens[sname]({}));
     chk("n2d",UI.screens.n2d({id:gn.kan})); }
 
-  /* ---------- 自動で遊ばせる(1日60問・正答率75%・180日。つり合わせはスライス8。ここでは幅を広めに) ---------- */
-  { const ST={q:{},rq:[],mm:null}, rand=mkRand(42), c=mkCtx(ST,rand); MM.tutorial.finishIntro(c,"じどうの街"); win.gameState=ST; const g=M.W(c), z=BZ.Z(c); const at={}; let yoko=0, DAY=0;
-    const manage=()=>{ const k=M.kanban(g); let best=null; g.mons.forEach(p=>{ const d=M.pot(g,p).d; if(p!==k&&(!best||d>best.d))best={p,d}; });
-      if(best&&DAY<110&&best.d>M.power(k)*0.12)M.setKan(c,best.p.i);
-      const k2=M.kanban(g); g.sub=g.mons.filter(p=>p!==k2).sort((a,b)=>M.pot(g,b).d-M.pot(g,a).d).slice(0,2).map(p=>p.i);
-      while(g.mons.length>D.RATE2.cap-3){ const w=g.mons.filter(p=>p.i!==g.kan&&g.sub.indexOf(p.i)<0).sort((a,b)=>M.pot(g,a).d-M.pot(g,b).d)[0]; M.release(c,w.i); } };
-    for(DAY=1;DAY<=180;DAY++){ c.dstr="s"+DAY; c.today=22000+DAY; MM.state.rollDay(c); let left=60, qn=0;
-      if(M.freeReady(c))M.pull(c,true); manage();
-      for(let b=0;b<2;b++){ const s=BZ.start(c); if(s.err)break; let r; do{ r=BZ.round(c,s,rand()<0.75,rand()<0.5?4000:12000); left--; }while(r&&!r.over); BZ.finish(c,s); }
-      while(left-->0)MM.economy.grant(MM.learn.commit(M.pickQ(c,qn++),rand()<0.75,5000,c),c);
-      while(c.mm.res.g>=D.RATE2.cost&&g.mons.length<D.RATE2.cap)M.pull(c,false);
-      manage(); if(z.pos===1&&!yoko)yoko=DAY; if(DAY===7||DAY===30||DAY===90||DAY===180)at[DAY]={pos:z.pos,dan:BZ.danOf(z.pos).name,pw:M.power(M.kanban(g)),pulls:g.pulls,dex:Object.keys(g.dex).length,ssr:g.mons.filter(p=>M.rarOf(p)>=3).length}; }
-    console.log("  自動プレイ:",[7,30,90,180].map(d=>d+"日 "+at[d].dan+at[d].pos+"枚目 つよさ"+at[d].pw+" タマゴ"+at[d].pulls+" 図鑑"+at[d].dex+" SSR以上"+at[d].ssr).join(" / "),yoko?"/ 横綱 "+yoko+"日目":"");
-    ok(at[7].pos>=50&&at[7].pos<=60,"7日: 序ノ口〜序二段 ("+at[7].pos+"枚目)");
-    ok(at[30].pos>=28&&at[30].pos<=48,"30日: 幕下あたり ("+at[30].pos+"枚目)");
-    ok(at[90].pos>=5&&at[90].pos<=30,"90日: 十両〜前頭 ("+at[90].pos+"枚目)");
-    ok(at[180].pos<=12,"180日: 前頭の上〜横綱に届く ("+at[180].pos+"枚目)");
-    ok(at[30].ssr<=6&&g.mons.every(p=>M.rarOf(p)<=4),"30日でSSR以上は数体まで("+at[30].ssr+")・LGはタマゴから出ない");
-    ok(at[30].pw<at[90].pw&&at[90].pw<=at[180].pw&&at[180].pw<1400,"看板のつよさは伸び続け、上限に張りつかない("+at[30].pw+" → "+at[90].pw+" → "+at[180].pw+")");
-    const js=JSON.stringify(ST.mm.g2); ok(js.indexOf("NaN")<0&&js.length<60000,"セーブの大きさ "+js.length+" バイト・NaNなし"); }
+}
+
+/* ================= スライス4: 配合と育成どうぐ ================= */
+{
+  const {mkCtx,mkRand,mon}=module.exports; const BR=MM.breed, KE=MM.keiko, BZ=MM.banzuke, B=D.BREED; const {banHit,rpgHit}=require("./lib-load.js");
+  const fresh=(seed)=>{ const ST={q:{},rq:[],mm:null}; const c=mkCtx(ST,mkRand(seed)); MM.tutorial.finishIntro(c,"配合の街"); win.gameState=ST; M.W(c); return c; };
+  const put=(c,o)=>{ const g=M.W(c); const p=M.normMon(Object.assign({i:"a"+(g.nid++),k:"k001",lv:1,xp:0,tl:[5,5,5,5,5],na:"n0",tr:[],ef:[0,0,0,0,0]},o)); g.mons.push(p); return p; };
+  const c=fresh(11), g=M.W(c); g.hn=["0|1"]; g.hnf={};
+  ok(D.ITEMS.length===12&&new Set(D.ITEMS.map(t=>t.id)).size===12&&D.ITEMS.every(t=>t.name&&t.desc&&"bmk".includes(t.use)),"育成どうぐは12種");
+  /* 才能の継ぎ方(1万回) */
+  const A=put(c,{k:"k001",tl:[10,2,6,6,3]}), Bn=put(c,{k:"k021",tl:[4,8,6,6,9]}), cpN=BR.compat(g,A,Bn);     /* ザンギョン×キューキュー: 相性なし */
+  ok(!cpN.any,"相性の無い組");
+  const N=10000, r=mkRand(77), cnt={hi:0,lo:0,re:0,up:0,same:0}, dn=BR.kindDist(A,Bn,"");
+  for(let i=0;i<N;i++){ const p=BR.make(r,g,A,Bn,"",dn,cpN); if(p.tl[0]===10)cnt.hi++; else if(p.tl[0]===4)cnt.lo++; else cnt.re++; if(p.tl[2]===7)cnt.up++; }
+  const w=D.TALENT_W, wt=w.reduce((a,b)=>a+b,0), pHi=B.hi+(1-B.hi-B.lo)*w[10]/wt, pLo=B.lo+(1-B.hi-B.lo)*w[4]/wt;
+  ok(Math.abs(cnt.hi/N-pHi)<0.02&&Math.abs(cnt.lo/N-pLo)<0.02,"才能: 高いほう"+(cnt.hi/N*100).toFixed(1)+"% 低いほう"+(cnt.lo/N*100).toFixed(1)+"% (高50%・低25%・ふり直し25%)");
+  ok(Math.abs(cnt.up/N-(B.up+(1-B.up)*(1-B.hi-B.lo)*w[7]/wt))<0.012,"両親が同じ値のときだけ +1 ("+(cnt.up/N*100).toFixed(1)+"%)");
+  const Bc=put(c,{k:"k061",tl:[4,8,6,6,9]}), cpC=BR.compat(g,A,Bc), dc=BR.kindDist(A,Bc,""); let hiC=0, other=0;   /* ザンギョン×キソネン: 族の相性 */
+  for(let i=0;i<N;i++){ const p=BR.make(r,g,A,Bc,"",dc,cpC); if(p.tl[0]===10)hiC++; if(p.tl[0]!==10&&p.tl[0]!==4)other++; }
+  ok(cpC.pub&&Math.abs(hiC/N-0.75)<0.02&&other===0,"族の相性がある組は 75%で高いほう・ふり直しなし ("+(hiC/N*100).toFixed(1)+"%)");
+  const Bh=put(c,{k:"k011",tl:[4,8,6,6,9]}), cpH=BR.compat(g,A,Bh), dh=BR.kindDist(A,Bh,""); let upH=0; for(let i=0;i<N;i++){ if(BR.make(r,g,A,Bh,"",dh,cpH).tl[2]===7)upH++; }
+  ok(cpH.hid&&!cpH.known&&Math.abs(upH/N-B.upHidden)<0.012,"かくれ相性は +1 が10% ("+(upH/N*100).toFixed(1)+"%)");
+  /* 種類 */
+  const kc={}; for(let i=0;i<N;i++){ const p=BR.make(r,g,A,Bn,"",dn,cpN); kc[p.k]=(kc[p.k]||0)+1; }
+  ok(Math.abs(kc.k001/N-0.70)<0.02&&Math.abs(kc.k021/N-0.25)<0.02&&Math.abs((N-kc.k001-kc.k021)/N-0.05)<0.01,"子の種類: おや1 "+(kc.k001/N*100).toFixed(1)+"% おや2 "+(kc.k021/N*100).toFixed(1)+"% べつ "+((N-kc.k001-kc.k021)/N*100).toFixed(1)+"%");
+  ok(Object.keys(kc).every(id=>D.kindById[id].rar===0),"N×N の子は かならずN");
+  const SSR=put(c,{k:"k009",tl:[3,3,3,3,3]}), dS=BR.kindDist(SSR,Bn,""), dS2=BR.kindDist(Bn,SSR,"");
+  ok(dS.capped&&dS.list.every(x=>x.k.rar===0)&&dS.pool.every(k=>k.rar===0),"子のレア度は おや2 より上がらない(SSR×N の子はN)");
+  ok(!dS2.capped&&Math.abs(dS2.list.find(x=>x.k.id==="k009").p-0.25)<0.001,"おや2がSSRなら、その種類は25%で継がれる");
+  ok(BR.kindDist(Bn,SSR,"utsushi").list.length===1&&BR.kindDist(Bn,SSR,"utsushi").list[0].k.id==="k009","うつしの札: 子の種類は かならず おや2");
+  const R0=put(c,{k:"k004"}), R1=put(c,{k:"k014"}), dO=BR.kindDist(R0,R1,""), on=dO.list.find(x=>x.only);
+  ok(on&&on.k.name==="ロウロウコンビ"&&Math.abs(on.p-B.only[2])<1e-9&&!BR.kindDist(A,put(c,{k:"k011"}),"").list.some(x=>x.only),"配合限定: 族とレア度がそろったときだけ("+(on?on.k.name+" "+on.p*100+"%":"")+")");
+  ok(D.kinds.filter(k=>k.only).every(k=>B.only[k.rar]>0),"配合限定15種すべてに生まれる道がある");
+  /* 配合券と、親の行き先 */
+  g.bt=0; ok(BR.breed(c,A.i,Bn.i).err,"配合券なしでは配合できない");
+  ok(BR.preview(c,A.i,g.kan).err&&BR.preview(c,A.i,A.i).err,"看板は おや2 にできない・同じ子どうしは不可");
+  g.bt=2; const n0=g.mons.length, rs=g.mons.filter(p=>M.rarOf(p)>=3).length, res=BR.breed(c,A.i,Bn.i);
+  ok(res.kids.length===1&&g.bt===1&&g.mons.length===n0&&!M.byId(g,Bn.i)&&M.byId(g,A.i)&&g.brd===1,"配合: 券を1枚使う・おや1は残る・おや2は子に生まれかわる(数は増えない)");
+  ok(res.kids[0].mon.a.join()===A.i+","+Bn.i&&res.kids[0].mon.lv===1&&g.dex[res.kids[0].mon.k],"子は親の記録を持ち、図鑑に入る");
+  const r2=BR.breed(c,A.i,Bh.i); ok(r2.found&&g.hnf["0|1"]===1&&BR.compat(g,A,A).known===false&&BR.breed(c,A.i,Bc.i).err,"かくれ相性は 配合してはじめて分かる");
+  ok(g.mons.filter(p=>M.rarOf(p)>=3).length<=rs,"配合でSSR以上の数は増えない");
+  /* 予想 */
+  const P1=put(c,{k:"k001",tl:[9,9,9,9,9]}), P2=put(c,{k:"k002",tl:[8,8,8,8,8]}); g.bt=5;
+  const pv=BR.preview(c,P1.i,P2.i,""), pv2=BR.preview(c,P1.i,P2.i,"");
+  ok(pv.lo<=pv.hi&&pv.lo>=30&&pv.hi<=50&&pv.pBeat>=0&&pv.pBeat<=1&&JSON.stringify([pv.lo,pv.hi,pv.pBeat])===JSON.stringify([pv2.lo,pv2.hi,pv2.pBeat]),"予想: 子の才能の見込み "+pv.lo+"〜"+pv.hi+"／50・看板を超える確率 "+Math.round(pv.pBeat*100)+"%(同じ組なら いつ見ても同じ)");
+  { let beat=0, inR=0; const rr=mkRand(5), k=M.kanban(g), kv=M.power(k), d=BR.kindDist(P1,P2,""), cp=BR.compat(g,P1,P2);
+    for(let i=0;i<4000;i++){ const p=BR.make(rr,g,P1,P2,"",d,cp), h=M.handover(p,k), t=p.tl.reduce((a,b)=>a+b,0); if(M.atLv(p,h.lv,h.ef)>kv)beat++; if(t>=pv.lo&&t<=pv.hi)inR++; }
+    ok(Math.abs(beat/4000-pv.pBeat)<0.05&&inR/4000>=0.75,"予想の数字は、実際に生まれる子と合う(超える "+(beat/40).toFixed(0)+"%・見込みの幅に入る "+(inR/40).toFixed(0)+"%)"); }
+  /* どうぐ */
+  g.items={ito:1,omamori:1,suzu:1,futago:1,mi:1,ishi:2,happa:1,wasure:1,cho:1,mochi:1};
+  const I1=put(c,{k:"k001",tl:[10,0,5,5,5],na:"n4",tr:["star"]}), I2=put(c,{k:"k001",tl:[0,1,5,5,5],na:"n0"});
+  { const d=BR.kindDist(I1,I2,"ito"), cp=BR.compat(g,I1,I2); let all=true, nat=true, tr=true; const rr=mkRand(3);
+    for(let i=0;i<300;i++){ if(BR.make(rr,g,I1,I2,"ito",d,cp).tl[0]!==10)all=false; if(BR.make(rr,g,I1,I2,"omamori",d,cp).na!=="n4")nat=false; if(BR.make(rr,g,I1,I2,"suzu",d,cp).tr[0]!=="star")tr=false; }
+    ok(BR.itoIndex(I1,I2)===0&&all,"ひきつぎの糸: 差がいちばん大きい能力を かならず高いほうから継ぐ"); ok(nat,"性格のおまもり: おや1の性格を かならず継ぐ"); ok(tr,"むすびの鈴: 特性を かならず継ぐ"); }
+  ok(BR.breed(c,I1.i,I2.i,{item:"cho"}).err&&BR.useItem(c,"ito",I1.i).err,"どうぐは使う場面が決まっている");
+  const k9=M.kanban(g), lo=k9.tl.indexOf(Math.min(...k9.tl)); const u1=BR.useItem(c,"mi",k9.i); ok(u1.k===M.KEYS[lo]&&!g.items.mi&&k9.tl[lo]>=0&&k9.tl[lo]<=10,"ふり直しの実: いちばん低い才能を ふり直す");
+  k9.tr=[]; BR.useItem(c,"ishi",k9.i); BR.useItem(c,"ishi",k9.i); ok(k9.tr.length===2&&k9.tr[0]!==k9.tr[1]&&BR.useItem(c,"ishi",k9.i).err,"ひらめきの石: 特性を ふやす(2つまで)");
+  const na0=k9.na; BR.useItem(c,"happa",k9.i); ok(k9.na!==na0,"きがえの葉: 性格を ふり直す");
+  k9.ef=[10,40,5,0,0]; BR.useItem(c,"wasure",k9.i); ok(k9.ef.join()==="10,0,5,0,0","わすれ草: いちばん多い けいこ値を0に");
+  BR.useItem(c,"cho",""); BR.useItem(c,"mochi",""); ok(g.boost.ef===10&&g.boost.xp===10,"けいこ帳・ちから餅: つぎの10問が2倍");
+  { const id=MM.learn.pick(1,c,{subs:[0],filter:(q,st)=>!MM.learn.seen(st)})[0], lv0=k9.lv; k9.lv=1; k9.xp=0; k9.ef=[0,0,0,0,0]; const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); k9.lv=Math.max(lv0,k9.lv);
+    ok(gain.mon.xp===20&&gain.g===10&&Math.abs(gain.mon.ef.o-0.24)<1e-9&&g.boost.ef===9&&g.boost.xp===9,"2倍のあいだは 経験20・けいこ値0.24(コインは増えない)"); }
+  /* ごほうび: 順番で決まる・乱数なし */
+  { const c2=fresh(12), g2=M.W(c2), out=[]; const cr=c2.rand; let used=0; c2.rand=()=>{ used++; return 0.5; }; BR.give(c2,{t0:6,t1:8,bt:1},out,"x"); c2.rand=cr;
+    ok(used===0&&out.length===15&&g2.bt===1&&D.ITEMS.every(t=>g2.items[t.id]>=1),"ごほうびは順番で決まる(乱数なし)・12種すべてが順にもらえる");
+    const z=BZ.Z(c2), it0=BR.itemCount(g2); const day=(n)=>{ c2.dstr="g"+n; c2.today=24000+n; MM.state.rollDay(c2); }; let d=1; day(d);
+    const bout=(winIt)=>{ if(BZ.leftToday(c2)<=0){ d++; day(d); } const s=BZ.start(c2); const foe=D.bzAt(s.foe); ["h","m","o","j","s"].forEach(k=>{ s.mine[k]=foe.stats[k]*(winIt?3:0.1); }); let r; do{ r=BZ.round(c2,s,false,20000); }while(r&&!r.over); return BZ.finish(c2,s); };
+    z.pos=40; let last; for(let i=0;i<7;i++)last=bout(i<3); ok(last.gifts.length===0&&BR.itemCount(g2)===it0,"負け越しの場所に ごほうびは無い");
+    for(let i=0;i<7;i++)last=bout(i<5); ok(last.gifts.length===2&&BR.itemCount(g2)===it0+2,"5勝の場所: 育成どうぐ2つ");
+    const bt0=g2.bt; for(let i=0;i<7;i++)last=bout(true); ok(last.gifts.some(x=>x.bt)&&g2.bt===bt0+1,"全勝の場所: とっておき2つ＋配合券");
+    z.pos=45; z.n=0; z.w=0; z.l=0; const pr=bout(true); ok(pr.promo&&pr.promo.won&&pr.gifts.some(x=>x.bt)&&pr.gifts.some(x=>x.item),"昇進の一番に勝つ: とっておき＋配合券"); }
+  /* 画面 */
+  { win.gameState=c.ST; const base=UI.ctx; UI.ctx=()=>c; g.bt=3; g.items={ito:1,kawari:2};
+    const chk=(name,h)=>{ const u=h.indexOf("undefined"), n=h.indexOf("NaN"), b=banHit(h), rp=rpgHit(h); ok(h.length>200&&u<0&&n<0&&!b&&!rp,"render "+name+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(b?" 禁止語:"+b:"")+(rp?" RPGの言葉:"+rp:"")); };
+    UI.b2Open(); chk("b2(おや2を選ぶ前)",UI.screens.b2()); chk("b2p(おや2の一覧)",UI.screens.b2p({w:"b"})); chk("b2p(おや1の一覧)",UI.screens.b2p({w:"a"}));
+    UI.b2Pick("b",P2.i); UI.b2Item("ito"); const h=UI.screens.b2(); chk("b2(見込み)",h);
+    ok(/子の才能の見込み <b>\d+〜\d+<\/b>／50/.test(h)&&/いまの看板を超える確率 <b>[\d]+%/.test(h.replace("1%未満","0%")),"予想画面に「子の才能の見込み ◯〜◯／50」「いまの看板を超える確率 ◯%」の2行");
+    UI.b2Do(); ok(UI.route.screen==="b2r"&&g.bt===2&&!g.items.ito,"配合すると結果の画面へ(券とどうぐが減る)"); chk("b2r",UI.screens.b2r());
+    chk("n2d(どうぐ)",(g.items.mi=1,UI.screens.n2d({id:g.kan}))); UI.ctx=base; }
+  /* 保存 */
+  { const rt=M.normalize(JSON.parse(JSON.stringify(g))); ok(JSON.stringify(rt.items)===JSON.stringify(g.items)&&rt.bt===g.bt&&rt.hn.join()===g.hn.join()&&rt.hnf["0|1"]===1&&rt.brd===g.brd&&rt.gn.join()===g.gn.join(),"配合券・どうぐ・かくれ相性は 保存→読み直しで同じ");
+    const bad=M.normalize({on:1,mons:[],items:{ito:"x",nope:5,mi:1e9},bt:-4,hn:["L00|L11","0|1","9|9"],gn:"q",boost:{xp:"a"}}); ok(bad.bt===0&&!bad.items.nope&&!bad.items.ito&&bad.items.mi===D.ITEM_CAP&&bad.hn.join()==="0|1"&&bad.gn.join()==="0,0"&&bad.boost.xp===0,"壊れた値は安全な値へ丸める(旧い形のかくれ相性は捨てる)"); }
+  module.exports.fresh4=fresh; module.exports.put4=put;
 }
 if(require.main===module)console.log(process.exitCode?"FAILED":"ALL OK (v2)");

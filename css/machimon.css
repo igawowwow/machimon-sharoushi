@@ -476,8 +476,7 @@
 .mm-v2-tabs button{ font-size:12px; min-height:56px; }
 .mm-v2-tabs span{ font-size:20px; }
 .mm-v2-rar{ font-size:12px; padding:1px 7px; }
-.mm-v2-hero{ display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; border:3px solid #8A8494; border-radius:20px;
-  background:linear-gradient(#fff 55%,#EAD9B8); padding:12px 10px 14px; margin:8px 0; font-family:inherit; color:inherit; }
+.mm-v2-hero{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; border:0; background:none; padding:2px 8px 4px; font-family:inherit; color:inherit; }
 .mm-v2-hero-tag{ font-size:13px; font-weight:900; color:#8A6A00; background:#FFF3C4; border:2px solid #E0B94A; border-radius:999px; padding:2px 12px; }
 .mm-v2-hero-name{ font-size:18px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
 .mm-v2-lv{ display:flex; align-items:center; gap:8px; width:100%; max-width:260px; font-size:14px; }
@@ -486,7 +485,8 @@
 .mm-v2-lv .mm-bar{ flex:1; margin-top:0; height:10px; }
 .mm-v2-max img{ filter:drop-shadow(0 0 4px #FFD34D) drop-shadow(0 0 8px #FFC53C); }
 .mm-v2-menu{ grid-template-columns:repeat(3,1fr); }
-.mm-v2-menu button{ font-size:14px; min-height:64px; }
+.mm-v2-menu button{ font-size:15px; min-height:68px; }
+.mm-v2-menu .mm-gdot{ font-size:11px; }
 .mm-v2-hint{ font-size:12px; color:#6B6578; margin:0 0 6px; }
 .mm-v2-row{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:2px solid #D8D2C4; border-left:8px solid #8A8494; border-radius:14px;
   background:#fff; padding:6px 10px 6px 6px; margin:5px 0; min-height:60px; font-family:inherit; color:inherit; }
@@ -591,3 +591,126 @@
 .mm-bz-rn b{ font-size:16px; }
 .mm-bz-move{ font-size:15px; text-align:center; }
 .mm-bz-down{ border-color:#8A8494; background:#F3F0E8; }
+
+/* ================= スライス4〜6: ホーム・けいこ3択・配合・図鑑・きろく ================= */
+.mm-v2-res{ justify-content:center; flex-wrap:nowrap; gap:4px; padding:6px 4px; }
+.mm-res.mm-v2-res .mm-chip{ font-size:12px; padding:4px 7px; }
+.mm-res.mm-v2-res b{ font-size:14px; }
+.mm-v2-home .mm-res{ margin-bottom:0; }
+/* 街の景色(番付の段でにぎやかになる)。真ん中に看板マチモン */
+.mm-v2-scene{ display:block; width:100%; height:176px; padding:0; font-family:inherit; color:inherit; margin:6px 0 2px; }
+.mm-v2-sky0{ background:linear-gradient(#C9CCD6 60%,#D9D6CC); }
+.mm-v2-sky0 .mm-ground{ background:linear-gradient(#B9B49A,#A39E86); border-top-color:#8C876F; }
+.mm-v2-bld{ font-size:28px; bottom:22px; opacity:.92; }
+.mm-v2-kan{ position:absolute; left:50%; bottom:14px; margin-left:-52px; z-index:3; }
+.mm-v2-kan img{ filter:drop-shadow(0 3px 0 rgba(51,48,62,.25)); }
+.mm-v2-noren{ position:absolute; left:50%; top:8px; transform:translateX(-50%); font-size:12px; font-weight:900; color:#8A6A00; background:#FFF3C4; border:2px solid #E0B94A; border-radius:999px; padding:1px 12px; z-index:3; white-space:nowrap; }
+.mm-v2-noren-off{ color:#6B6578; background:#EDEBE4; border-color:#B9B4A6; border-style:dashed; }
+.mm-v2-fw{ position:absolute; top:8px; font-size:22px; animation:mm-hop 1.6s ease-in-out infinite; }
+.mm-v2-scene .mm-townname{ font-size:12px; }
+.mm-v2-keiko{ min-height:64px; font-size:19px; margin-top:6px; }
+.mm-v2-keiko .mm-sub{ font-size:13px; color:#33303E; }
+.mm-v2-keiko .mm-sub b{ font-size:15px; }
+.mm-bz-home{ padding:8px 12px; gap:3px; margin:4px 0; }
+.mm-bz-home-r{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-home-f{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.mm-bz-home-v b{ font-size:17px; }
+.mm-v2-lv i{ font-size:12px; }
+.mm-v2-fc{ font-size:13px; font-weight:900; border-radius:10px; padding:4px 10px; margin-top:4px; }
+.mm-v2-efrow{ font-size:14px; margin-top:8px; padding-top:8px; border-top:1px dashed #D8D2C4; }
+.mm-v2-efrow b{ font-size:15px; margin:0 6px 0 2px; }
+.mm-v2-trow{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:13px; font-weight:900; color:#6B6578; }
+.mm-v2-trow i{ font-style:normal; white-space:nowrap; }
+.mm-v2-row-s .mm-v2-trow{ display:flex; flex-wrap:nowrap; gap:3px; font-size:10px; justify-content:flex-start; }
+.mm-v2-kanbtn{ display:flex; flex-direction:column; align-items:center; gap:2px; min-height:60px; padding:6px 8px; font-size:16px; }
+.mm-v2-kanbtn .mm-sub{ font-size:12px; color:#33303E; font-weight:700; }
+.mm-v2-kanbtn .mm-sub b{ font-size:15px; }
+.mm-v2-usebox{ border:2px dashed #B9B4A6; border-radius:14px; padding:8px; margin:6px 0; display:flex; flex-direction:column; gap:6px; }
+.mm-v2-use{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; min-height:52px; text-align:left; padding:6px 10px; font-size:14px; margin:4px 0; }
+.mm-v2-use .mm-sub{ font-size:12px; }
+.mm-v2-use-on{ background:#FFF3C4; border-color:#B58900; }
+.mm-v2-item{ display:inline-block; font-size:14px; font-weight:900; background:#fff; border:2px solid #E0B94A; border-radius:10px; padding:1px 8px; margin:2px; white-space:nowrap; }
+.mm-v2-gift{ font-size:14px; text-align:center; border-color:#E0B94A; background:#FFF9E0; }
+/* けいこを えらぶ */
+.mm-v2-kbtn{ display:flex; align-items:center; gap:10px; width:100%; min-height:84px; text-align:left; border:3px solid var(--ink,#33303E); border-radius:18px; background:#fff; box-shadow:0 4px 0 #33303E;
+  padding:8px 12px; margin:10px 0; font-family:inherit; color:inherit; }
+.mm-v2-kbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #33303E; }
+.mm-v2-kbtn:disabled{ opacity:.45; box-shadow:none; }
+.mm-v2-k-new{ background:linear-gradient(135deg,#FFE9C4,#fff); } .mm-v2-k-rev{ background:linear-gradient(135deg,#CFF3E6,#fff); } .mm-v2-k-nig{ background:linear-gradient(135deg,#FFE1EB,#fff); }
+.mm-v2-kicon{ font-size:34px; line-height:1; }
+.mm-v2-kbody{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.mm-v2-kbody>b{ font-size:19px; }
+.mm-v2-kdesc{ font-size:13px; color:#4A4658; }
+.mm-v2-kdesc b{ font-size:16px; color:#33303E; }
+.mm-v2-kstat{ display:flex; flex-direction:column; align-items:center; font-size:26px; line-height:1.1; min-width:58px; background:#fff; border:2px solid #D8D2C4; border-radius:12px; padding:4px 2px; }
+.mm-v2-kstat i{ font-style:normal; font-size:12px; font-weight:900; }
+.mm-v2-khint{ line-height:1.6; }
+.mm-v2-tk{ font-size:15px; padding:10px 12px; text-align:center; }
+.mm-v2-tk b{ font-size:17px; }
+.mm-v2-efbar{ display:flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; }
+.mm-v2-efbar b{ font-size:15px; }
+.mm-v2-efbar .mm-bar{ flex:1; margin-top:0; height:10px; }
+.mm-v2-efbar .mm-bar i{ background:linear-gradient(90deg,#FFC53C,#FF8A3D); }
+.mm-v2-strip .mm-pw-col{ font-size:11px; }
+/* 配合 */
+.mm-v2-slots{ display:flex; align-items:stretch; gap:6px; margin:8px 0; }
+.mm-v2-slot{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px; border:3px solid #8A8494; border-radius:16px; background:#fff; padding:8px 4px; font-family:inherit; color:inherit; min-height:170px; font-size:14px; }
+.mm-v2-slot>b{ font-size:15px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-v2-slot-l{ font-size:13px; font-weight:900; }
+.mm-v2-slot-l i{ font-style:normal; font-size:11px; font-weight:700; color:#fff; background:#8A8494; border-radius:999px; padding:1px 7px; margin-left:2px; white-space:nowrap; }
+.mm-v2-slot-empty{ border-style:dashed; justify-content:center; background:#FBF8F1; }
+.mm-v2-slot-plus{ font-size:40px; color:#B9B4A6; line-height:1; }
+.mm-v2-slot .mm-v2-trow{ font-size:11px; gap:3px; }
+.mm-v2-x{ align-self:center; font-size:22px; font-weight:900; color:#E85A9A; }
+.mm-v2-pv{ padding:12px; text-align:center; }
+.mm-v2-pv1{ font-size:16px; font-weight:900; }
+.mm-v2-pv1 b{ font-size:28px; }
+.mm-v2-pv2{ font-size:16px; font-weight:900; border-radius:12px; padding:6px 10px; margin:6px 0; }
+.mm-v2-pv2 b{ font-size:28px; }
+.mm-v2-pvk{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; font-size:14px; border-top:1px dashed #D8D2C4; padding-top:8px; margin-top:8px; text-align:left; }
+.mm-v2-pvkind{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.mm-v2-pvkind b{ font-size:16px; }
+.mm-v2-pvkind i{ font-style:normal; font-size:11px; font-weight:900; color:#fff; background:#E85A9A; border-radius:6px; padding:0 6px; }
+.mm-v2-compat{ font-size:13px; font-weight:900; color:#1F8A3B; background:#DFF5E3; border-radius:10px; padding:4px 8px; margin-top:6px; text-align:left; }
+.mm-v2-row-p .mm-sub{ font-size:11px; font-style:normal; font-weight:700; }
+/* オープニング */
+.mm-v2-op{ gap:8px; padding:20px 14px 30px; background:linear-gradient(#EDEBE4,#FFF8EC); min-height:100dvh; }
+.mm-v2-op .mm-intro-logo{ font-size:28px; }
+.mm-v2-op-scene{ height:110px; max-width:380px; }
+.mm-v2-op .mm-talk{ margin-top:4px; }
+.mm-v2-op .mm-talk-text{ font-size:15px; line-height:1.8; }
+.mm-v2-op-t{ font-size:18px; font-weight:900; margin-top:6px; }
+.mm-v2-eggs{ display:flex; gap:8px; width:100%; max-width:380px; }
+.mm-v2-eggbtn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; border:3px solid var(--ink,#33303E); border-radius:18px; background:#fff; box-shadow:0 4px 0 #33303E; padding:10px 2px; font-family:inherit; color:inherit; min-height:132px; animation:mm-cta 1.6s ease-in-out infinite; }
+.mm-v2-eggbtn:nth-child(2){ animation-delay:-.5s; } .mm-v2-eggbtn:nth-child(3){ animation-delay:-1s; }
+.mm-v2-eggbtn b{ font-size:14px; white-space:nowrap; }
+.mm-v2-eggbtn .mm-sub{ font-size:11px; }
+.mm-v2-eggpic{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:40px; border:2px solid var(--ink,#33303E); }
+/* 図鑑 */
+.mm-v2-dexrow{ display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+.mm-v2-dex{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 1px; min-width:0; }
+.mm-v2-dex b{ font-size:10px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-v2-st{ display:inline-flex; gap:1px; font-size:10px; }
+.mm-v2-st i{ font-style:normal; color:#D8D2C4; } .mm-v2-st i.mm-on{ color:#E8484F; }
+/* きろく */
+.mm-v2-cap{ padding:10px; }
+.mm-v2-caprow{ display:grid; grid-template-columns:104px 1fr 38px 36px; gap:6px; align-items:center; font-size:12px; margin:6px 0; }
+.mm-v2-caprow>span:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
+.mm-v2-capbar{ position:relative; height:12px; border-radius:6px; background:#EDE9DF; overflow:hidden; }
+.mm-v2-capbar i{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#FFC53C,#3ED6C0); }
+.mm-v2-capbar b{ position:absolute; top:0; bottom:0; width:2px; background:#33303E; opacity:.5; }
+.mm-v2-capn{ text-align:right; font-weight:900; font-size:13px; }
+.mm-v2-caprow .mm-v2-st{ font-size:12px; }
+.mm-v2-bag{ padding:8px 10px; }
+.mm-v2-bagrow{ display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #EDE9DF; }
+.mm-v2-bag0{ opacity:.5; }
+.mm-v2-bagi{ font-size:26px; width:34px; text-align:center; }
+.mm-v2-bagb{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:14px; }
+.mm-v2-bagb .mm-sub{ font-size:11px; line-height:1.4; }
+.mm-v2-bagn{ font-size:17px; }
+.mm-v2-name{ font-size:16px; min-height:48px; }
+@media (prefers-reduced-motion: reduce){ .mm-v2-eggbtn,.mm-v2-fw{ animation:none !important; } }
+.mm-cta>.mm-sub{ display:block; font-size:12px; font-weight:700; color:#33303E; }
+.mm-gbtns-col .small-btn,.mm-v2-detail+.mm-gbtns .small-btn{ min-height:46px; }
+.mm-v2-chips{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.mm-v2-chipbtn{ min-height:46px; border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; font-family:inherit; color:inherit; font-size:13px; font-weight:900; padding:4px 6px; text-align:left; }

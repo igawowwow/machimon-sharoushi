@@ -8,7 +8,7 @@
      体力も、けずり合いも無い。「見せて比べる」だけ。
    ★だから「強さが足りないと全問正解でも勝てない」「強ければ1問落としても勝てる」がはっきり出る。
      始める前に、能力ごとの見込み(◎▲△▼)を出す。
-   ★場所: 7番で1場所・1日2番まで。4勝+1枚 5勝+2 6勝+3 全勝+5 / 3勝以下は1枚さがる。
+   ★場所: 7番で1場所・1日2番まで(序ノ口・序二段のあいだは1日4番)。4勝+1枚 5勝+2 6勝+3 全勝+5 / 3勝以下は1枚さがる。
      段のいちばん上まで来たら「昇進の一番」(関門の相手に勝つと次の段へ・物語が1話ひらく)。
    ★乱数は出題(MM.learn.pick)にしか使わない。勝ち負けは 能力・正解・速さ だけで決まる。
    ★保存: g.bz = {pos, w, l, n, day:{d,n}, cur, hist, story, basho, tw, tl, best}
@@ -37,7 +37,9 @@
   /* 自分の段。番付の外(61)は序ノ口あつかい */
   function danOf(pos){ return D().danOf(Math.min(60,pos)); }
   function isPromo(z){ return z.pos>1&&z.pos===danOf(z.pos).top; }       /* 段のいちばん上=次は昇進の一番 */
-  function leftToday(c){ var z=Z(c); return Math.max(0,R().perDay-(z.day.d===c.dstr?z.day.n:0)); }
+  /* 1日に取れる番数。序ノ口・序二段(と番付の外)のあいだは4番、三段目からは2番(最初の1週間で手応えが出るように) */
+  function perDay(c){ return Z(c).pos>=R().lowFrom?R().perDayLow:R().perDay; }
+  function leftToday(c){ var z=Z(c); return Math.max(0,perDay(c)-(z.day.d===c.dstr?z.day.n:0)); }
   /* 今場所の相手7人(弱い順)。同じ段の上の相手 → 足りなければ下の相手 → それでも足りなければ上から繰り返し */
   function foes(z){
     var top=danOf(z.pos).top, A=[], B=[], p, n=R().bouts;
@@ -77,7 +79,7 @@
   function state(c){
     var z=Z(c), dan=danOf(z.pos), nf=nextFoe(c);
     return { pos:z.pos, dan:dan, ranked:z.pos<=60, yokozuna:z.pos===1, w:z.w, l:z.l, n:z.n, bashoLeft:R().bouts-z.n, basho:z.basho,
-             left:leftToday(c), promo:nf.promo, foe:nf.foe, foes:foes(z), story:z.story, tw:z.tw, tl:z.tl, hist:z.hist, best:z.best };
+             left:leftToday(c), perDay:perDay(c), promo:nf.promo, foe:nf.foe, foes:foes(z), story:z.story, tw:z.tw, tl:z.tl, hist:z.hist, best:z.best };
   }
   /* 途中でやめた取組は負け(不戦敗)にする = 負けそうなときに閉じて無かったことにできない */
   function settleAbandoned(c){ var z=Z(c); if(!z.cur)return null; var cu=z.cur; z.cur=null; return apply(c,cu,false,true); }
@@ -85,7 +87,7 @@
   /* 取組をはじめる: 5問を選ぶ(あとの2本は本試験形式) */
   function start(c){
     settleAbandoned(c);
-    var z=Z(c); if(leftToday(c)<=0)return {err:"きょうの取組は おわり(1日"+R().perDay+"番まで)。あした また来てね"};
+    var z=Z(c); if(leftToday(c)<=0)return {err:"きょうの取組は おわり(1日"+perDay(c)+"番まで)。あした また来てね"};
     var nf=nextFoe(c), g=MM.mon.W(c), p=MM.mon.kanban(g), nEx=R().exam, n=R().rounds, all=[0,1,2,3,4,5,6,7,8];
     var ex=[]; try{ ex=MM.garden.pickExam(c,nEx)||[]; }catch(e){ ex=[]; }
     var qs=MM.learn.pick(n-ex.length,c,{subs:all,filter:function(q){ return ex.indexOf(q.id)<0; }}).concat(ex);
@@ -111,11 +113,12 @@
   }
   /* 取組の結果を番付へ(勝ち負け・星取り・場所の締め・昇降・昇進の一番) */
   function apply(c,cu,won,forfeit){
-    var z=Z(c), g=MM.mon.W(c), out={won:!!won,forfeit:!!forfeit,promo:null,basho:null,story:0,from:z.pos,to:z.pos};
+    var z=Z(c), g=MM.mon.W(c), out={won:!!won,forfeit:!!forfeit,promo:null,basho:null,story:0,from:z.pos,to:z.pos,gifts:[]};
     if(won){ z.tw++; var p=MM.mon.kanban(g); if(p)p.w=(p.w||0)+1; if(z.story<1){ z.story=1; out.story=1; } } else z.tl++;
     if(cu.promo){
       out.promo={won:!!won};
-      if(won){ z.pos=cu.foe; if(z.story<8){ z.story=Math.min(8,Math.max(z.story,danOf(z.pos).id+1)); out.story=z.story; } }
+      if(won){ z.pos=cu.foe; if(MM.breed)MM.breed.give(c,D().GIFT.promo,out.gifts,"昇進");
+        if(z.story<8){ z.story=Math.min(8,Math.max(z.story,danOf(z.pos).id+1)); out.story=z.story; } }
     }else{
       if(won)z.w++; else z.l++; z.n++;
       if(z.n>=R().bouts){
@@ -124,6 +127,7 @@
         else if(z.w<=3&&from<60)to=Math.min(60,from+R().down);    /* 負け越しは1枚さがる(最下位と番付の外ではさがらない) */
         if(from===1)to=1;                                        /* 横綱はさがらない */
         out.basho={w:z.w,l:z.l,from:from,to:to,delta:from-to,no:z.basho};
+        if(MM.breed)MM.breed.give(c,D().GIFT.basho[z.w],out.gifts,z.w+"勝");          /* 勝ち越しのごほうび(育成どうぐ・配合券) */
         z.hist.push({b:z.basho,w:z.w,l:z.l,from:from,to:to}); while(z.hist.length>30)z.hist.shift();
         z.pos=to; z.w=0; z.l=0; z.n=0; z.basho++;
       }
@@ -141,6 +145,6 @@
   /* 段が上がるほど街がにぎやかになる(ホームの景色用。スライス6で使う) */
   function townLevel(c){ return danOf(Z(c).pos).id; }
 
-  MM.banzuke={ defaults:defaults, norm:norm, Z:Z, danOf:danOf, isPromo:isPromo, leftToday:leftToday, foes:foes, nextFoe:nextFoe,
+  MM.banzuke={ perDay:perDay, defaults:defaults, norm:norm, Z:Z, danOf:danOf, isPromo:isPromo, leftToday:leftToday, foes:foes, nextFoe:nextFoe,
     forecast:forecast, foePower:foePower, foeShow:foeShow, state:state, start:start, round:round, finish:finish, settleAbandoned:settleAbandoned, townLevel:townLevel };
 })();

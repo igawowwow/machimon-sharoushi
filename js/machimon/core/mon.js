@@ -41,7 +41,8 @@
   /* ================= セーブ ================= */
   function defaults(){
     return { v:2, on:0, nid:1, mons:[], kan:"", sub:[], shard:0, pity:0, pulls:0, free:"", dex:{}, hall:[],
-             bt:0, items:{}, hn:[], hnf:{}, bz:null, mig:0, mf:0, shiny:0, rel:0 };
+             bt:0, btd:"", items:{}, hn:[], hnf:{}, bz:null, mig:0, mf:0, shiny:0, rel:0,
+             st:0, brd:0, gn:[0,0], rv:null, cd:null, ms:null, boost:{xp:0,ef:0} };
   }
   function normMon(p){
     p=obj(p); if(!p||!D().kindById[p.k])return null;
@@ -65,8 +66,17 @@
     o.free=typeof s.free==="string"?s.free.slice(0,12):"";
     var dx=obj(s.dex)||{}; for(var k in dx){ if(D().kindById[k])o.dex[k]=int(dx[k],0,0,7); }
     o.hall=(Array.isArray(s.hall)?s.hall:[]).slice(0,20).map(function(x){ return String(x||"").replace(/[<>"]/g,"").slice(0,20); });
-    o.bt=int(s.bt,0,0,9999); o.items=obj(s.items)||{};
-    o.hn=(Array.isArray(s.hn)?s.hn:[]).map(String).slice(0,60); o.hnf=obj(s.hnf)||{};
+    o.bt=int(s.bt,0,0,9999); o.btd=typeof s.btd==="string"?s.btd.slice(0,12):"";
+    var it=obj(s.items)||{}; for(var ik in it){ if(D().itemById[ik]){ var iv=int(it[ik],0,0,D().ITEM_CAP); if(iv>0)o.items[ik]=iv; } }
+    /* かくれ相性は「族|族」の組。旧版の形(子系統の組)は捨てて作り直す */
+    o.hn=(Array.isArray(s.hn)?s.hn:[]).map(String).filter(function(x){ return /^[0-8]\|[0-8]$/.test(x); }).slice(0,20);
+    var hf=obj(s.hnf)||{}; o.hn.forEach(function(x){ if(hf[x])o.hnf[x]=1; });
+    o.st=s.st?1:0; o.brd=int(s.brd,0,0,1e9);
+    var gn=Array.isArray(s.gn)?s.gn:[]; o.gn=[int(gn[0],0,0,1e9),int(gn[1],0,0,1e9)];
+    var rv=obj(s.rv); o.rv=rv?{d:String(rv.d||"").slice(0,12),need:int(rv.need,0,0,999),done:int(rv.done,0,0,9999)}:null;
+    var cd=obj(s.cd); o.cd=cd?{d:String(cd.d||"").slice(0,12),n:int(cd.n,0,0,9999)}:null;
+    var ms=obj(s.ms); if(ms){ o.ms={}; for(var mk in ms){ if(/^m[0-8]_[1-3]$/.test(mk)&&ms[mk])o.ms[mk]=1; } }
+    var bs=obj(s.boost)||{}; o.boost={xp:int(bs.xp,0,0,999),ef:int(bs.ef,0,0,999)};
     o.bz=(MM.banzuke&&MM.banzuke.norm)?MM.banzuke.norm(s.bz):(obj(s.bz)||null);
     o.mig=s.mig?1:0; o.mf=s.mf?1:0; o.shiny=int(s.shiny,0,0,1e9); o.rel=int(s.rel,0,0,1e9);
     return o;
@@ -79,8 +89,21 @@
       if(!mm.g2.mons.length)mm.g2.mons.push(roll(c,mm.g2,{rar:0}));        /* だれも居ない状態を作らない */
       if(seen)seen.add(mm.g2);
     }
+    if(mm.g2.hn.length<D().BREED.hidden)rollHidden(c,mm.g2);
+    if(!mm.g2.ms)initMs(c,mm.g2);
     kanban(mm.g2);
     return mm.g2;
+  }
+  /* かくれ相性: 表の相性(GD.NICKS)に無い族の組から、セーブごとに決める。配合してはじめて分かる */
+  function rollHidden(c,g){
+    var pool=[], a, b, N=GD().NICKS, pub={};
+    N.forEach(function(x){ pub[Math.min(x[0],x[1])+"|"+Math.max(x[0],x[1])]=1; });
+    for(a=0;a<9;a++)for(b=a+1;b<9;b++){ var k=a+"|"+b; if(!pub[k]&&g.hn.indexOf(k)<0)pool.push(k); }
+    while(g.hn.length<D().BREED.hidden&&pool.length)g.hn.push(pool.splice(Math.floor(c.rand()*pool.length),1)[0]);
+  }
+  /* 習熟の節目のごほうびは「これから こえた段」だけ。はじめて開いた時点でこえている段は、もらった扱いにする */
+  function initMs(c,g){
+    g.ms={}; try{ var st=MM.keiko.stepsOf(MM.learn.masteryBySub(c)); for(var s=0;s<9;s++)for(var t=1;t<=st[s];t++)g.ms["m"+s+"_"+t]=1; }catch(e){}
   }
   /* 最初の起動: 旧セーブがあれば引っ越し、無ければ最初の1体から */
   function boot(c){
@@ -97,6 +120,15 @@
     return fresh(c);
   }
   function fresh(c){ var g=defaults(); g.on=1; var p=roll(c,g,{rar:0}); g.mons.push(p); g.kan=p.i; mark(g,p); return g; }
+  /* 最初の1体をえらぶ(オープニング)。3つのタマゴのどれか。まだ選んでいない まっさらなセーブでだけ効く */
+  function starter(c,idx){
+    var g=W(c); if(g.st||g.mig)return kanban(g);
+    var kid=D().STARTERS[Math.max(0,Math.min(D().STARTERS.length-1,idx|0))], p=roll(c,g,{kind:kid});
+    for(var i=0;i<5;i++)p.tl[i]=3+Math.floor(c.rand()*4);      /* 才能 3〜6(合計15〜30=ふつう) */
+    p.tr=[]; delete p.sh;
+    g.mons=[p]; g.kan=p.i; g.sub=[]; g.dex={}; g.st=1; mark(g,p);
+    return p;
+  }
   /* 旧セーブ全体を別のキーへ1回だけ写す(戻せるように)。写しがある状態なら true */
   function backupOnce(){
     try{ var ls=G.localStorage; if(!ls)return false;
@@ -124,7 +156,7 @@
     gd.mb.forEach(function(m){ if(m.own&&g.hall.length<10)g.hall.push(m.n); });
     var coin=int(mm.res&&mm.res.g,0,0,1e12), over=Math.max(0,coin-5000);
     g.shard=Math.min(300,Math.floor(over/1000))+3*(int(mm.tix,0,0,9999)+int(gd.medal,0,0,1e6));
-    g.pulls=gd.pulls; g.shiny=gd.shiny; g.hn=gd.hn.slice(); g.hnf=JSON.parse(JSON.stringify(gd.hnf||{}));
+    g.pulls=gd.pulls; g.shiny=gd.shiny; g.st=1;
     if(!g.mons.length){ var kd0=D().kindsByRar[0][0]; var st=normMon({i:"a"+(g.nid++),k:kd0.id,lv:1,tl:[5,5,5,5,5],na:"n0"}); g.mons.push(st); mark(g,st); }
     var s=sorted(g); g.kan=s[0].i; g.sub=s.slice(1,3).map(function(x){ return x.i; });
     return { g2:g, coins:Math.min(coin,5000), shards:g.shard };
@@ -151,17 +183,28 @@
   var CDF=null;
   function cdf(){
     if(CDF)return CDF; var d=[1], i, j, k;
-    for(i=0;i<5;i++){ var n=[]; for(j=0;j<d.length;j++)for(k=0;k<=10;k++)n[j+k]=(n[j+k]||0)+d[j]; d=n; }
-    var tot=Math.pow(11,5), acc=0; CDF=[];
+    var W=D().TALENT_W, w1=0; for(k=0;k<W.length;k++)w1+=W[k];
+    for(i=0;i<5;i++){ var n=[]; for(j=0;j<d.length;j++)for(k=0;k<=10;k++)n[j+k]=(n[j+k]||0)+d[j]*W[k]; d=n; }
+    var tot=Math.pow(w1,5), acc=0; CDF=[];
     for(i=d.length-1;i>=0;i--){ acc+=d[i]; CDF[i]=acc/tot; }   /* CDF[s] = 合計が s 以上になる確率 */
     return CDF;
   }
   function rank(p){ var s=talent(p), t=cdf()[s]; return { sum:s, max:50, top:Math.max(1,Math.round(t*100)) }; }
   /* 「看板と同じLv・同じけいこ値まで育てたら」のつよさ。Lv1の新入りとLv30の看板を、同じ土俵で比べるため */
   function atLv(p,lv,ef){ var q={k:p.k,lv:lv,tl:p.tl,na:p.na,tr:p.tr,ef:ef||p.ef}; return power(q); }
+  /* 看板をゆずり受けたときの Lv と けいこ値: Lvはそのまま、けいこ値は9割を引きつぐ(自分のほうが多い能力は自分のまま) */
+  function handover(p,k){
+    var keep=D().KEIKO.keep, ef=[], tot=0, i;
+    for(i=0;i<5;i++){ ef.push(Math.max(p.ef[i]||0,Math.floor((k.ef[i]||0)*keep*100)/100)); tot+=ef[i]; }
+    if(tot>D().EF_TOTAL){ var f=D().EF_TOTAL/tot; for(i=0;i<5;i++)ef[i]=Math.floor(ef[i]*f*100)/100; }
+    return { lv:Math.max(p.lv,k.lv), xp:p.lv>=k.lv?p.xp:k.xp, ef:ef };
+  }
+  /* ▲▼ = 「いま この子を看板にしたら、つよさ が いくつ変わるか」(Lv1の新入りでも、そのまま比べられる) */
   function pot(g,p){ var k=kanban(g); if(!k)return {v:power(p),d:0,top:false,none:true}; if(k===p)return {v:power(p),d:0,top:true,none:false};
-    var L=Math.max(p.lv,k.lv), v=atLv(p,L,k.ef), kv=atLv(k,L,k.ef); return {v:v,d:v-kv,top:false,none:false}; }   /* 両方を同じLv・同じけいこ値(看板のもの)にそろえて比べる */
-  function need(lv){ return 40+64*lv; }                         /* 次のLvまでの経験 */
+    var h=handover(p,k), v=atLv(p,h.lv,h.ef); return {v:v,d:v-power(k),top:false,none:false}; }
+  function need(lv){ return D().XP_NEED[0]+D().XP_NEED[1]*lv; }   /* 次のLvまでの経験 */
+  /* 才能1つを ふる(出やすさは D.TALENT_W) */
+  function rollTalent(r){ var W=D().TALENT_W, tot=0, i; for(i=0;i<W.length;i++)tot+=W[i]; var x=r()*tot; for(i=0;i<W.length;i++){ x-=W[i]; if(x<0)return i; } return W.length-1; }
   function adult(p){ return p.lv>=D().LV_ADULT; }
   function spId(p){ return adult(p)?p.k:p.k+"c"; }              /* 絵のid(こども=小物なし) */
 
@@ -171,7 +214,7 @@
     if(o.kind&&D().kindById[o.kind])kd=D().kindById[o.kind];
     else { var pool=D().kindsByRar[Math.max(0,Math.min(4,o.rar||0))]; if(o.fam!=null){ var pf=pool.filter(function(k){ return k.f===o.fam; }); if(pf.length)pool=pf; } kd=pool[Math.floor(r()*pool.length)]; }
     var p={ i:"a"+(g.nid++), k:kd.id, n:kd.name, lv:1, xp:0, tl:[], na:D().natures[Math.floor(r()*D().natures.length)].id, tr:[], ef:[0,0,0,0,0], a:[], w:0 };
-    for(var i=0;i<5;i++)p.tl.push(Math.floor(r()*(D().TALENT_MAX+1)));
+    for(var i=0;i<5;i++)p.tl.push(rollTalent(r));
     if(r()<GD().TRAIT_RATE[Math.min(4,kd.rar)])p.tr.push(MM.garden.rollTrait(r,kd.rar));
     if(r()<(o.parents?D().RATE2.shinyBred:D().RATE2.shiny))p.sh=1;
     if(o.parents)p.a=[o.parents[0].i,o.parents[1].i];
@@ -182,7 +225,14 @@
   /* 看板(いちばん前に立つ1体)。決まっていなければ最強を立てる */
   function kanban(g){ var p=byId(g,g.kan); if(!p&&g.mons.length){ p=sorted(g)[0]; g.kan=p.i; } return p; }
   function diff(g,p){ var k=kanban(g), v=power(p); if(!k)return {v:v,d:0,top:false,none:true}; return {v:v,d:v-power(k),top:k===p,none:false}; }
-  function setKan(c,id){ var g=W(c), p=byId(g,id); if(!p)return false; g.kan=id; g.sub=g.sub.filter(function(x){ return x!==id; }); return true; }
+  /* 看板をかえる。新しい看板は、前の看板の Lv と けいこ値の9割を引きつぐ(乗りかえで何十日ぶんも失わないように) */
+  function setKan(c,id){
+    var g=W(c), p=byId(g,id), k=kanban(g); if(!p)return false; if(k===p)return {from:power(p),to:power(p),same:true};
+    var from=k?power(k):0;
+    if(k){ var h=handover(p,k); p.lv=h.lv; p.xp=Math.min(h.xp,need(p.lv)-1); p.ef=h.ef; }
+    g.kan=id; g.sub=[]; mark(g,p);
+    return {from:from,to:power(p),lv:p.lv};
+  }
   function toggleSub(c,id){ var g=W(c), p=byId(g,id); if(!p||g.kan===id)return {err:"看板はひかえにできない"};
     var i=g.sub.indexOf(id); if(i>=0){ g.sub.splice(i,1); return {on:0}; }
     if(g.sub.length>=2)return {err:"ひかえは2体まで"}; g.sub.push(id); return {on:1}; }
@@ -212,27 +262,14 @@
     var g=W(c), p=byId(g,id); if(!p)return {err:"いない"};
     if(g.kan===id)return {err:"看板は手放せない(先にほかの子を看板にしてね)"};
     if(g.mons.length<=1)return {err:"最後の1体は手放せない"};
-    var n=D().SHARD[rarOf(p)]||1; g.shard+=n; g.rel++;
+    var n=shardOf(p); g.shard+=n; g.rel++;
     g.mons=g.mons.filter(function(x){ return x.i!==id; }); g.sub=g.sub.filter(function(x){ return x!==id; });
     return {shard:n};
   }
 
-  /* ---------- 育つ(1回答ごと。core/economy.js の grant から呼ばれる) ----------
-     ★コインも経験も「正解」からしか出ない。2秒未満のまぐれ当たりは何も出さない。
-     ★けいこ値の入り方はスライス5(けいこ3択)で作り直す前提の仮の形。 */
-  function lvCap(c,p,mast){
-    var m=(mast||MM.learn.masteryBySub(c))[GD().families[kindOf(p).f].sub]||0;
-    return m>=0.7?50:(m>=0.4?40:30);
-  }
-  /* けいこの出題(仮の形): 4問に1問は本試験形式。それ以外の半分は「看板の族の科目」から出す
-     (Lvの上限がその科目の習熟で決まるので、看板を育てたい人がその科目を進められるように)。n=これまでに出した数 */
-  function pickQ(c,n){
-    var ids=null, all=[0,1,2,3,4,5,6,7,8], k=kanban(W(c));
-    if(n%4===3){ try{ ids=MM.garden.pickExam(c,1); }catch(e){ ids=null; } }
-    if((!ids||!ids.length)&&k&&n%2===0)ids=MM.learn.pick(1,c,{sub:GD().families[kindOf(k).f].sub});
-    if(!ids||!ids.length)ids=MM.learn.pick(1,c,{subs:all});
-    return ids[0];
-  }
+  /* ---------- 育つ ----------
+     けいこの中身(3択・けいこ値・Lvの上限・配合券)は core/keiko.js。ここは Lv と けいこ値 を足す道具だけ持つ。 */
+  function lvCap(c,p,mast){ return MM.keiko.lvCap(c,mast).cap; }       /* 全科目の習熟で決まる(どの個体も同じ) */
   function addXp(p,xp,cap){
     var ups=0; if(p.lv>=cap){ p.xp=Math.min(p.xp+xp,need(p.lv)-1); return 0; }
     p.xp+=xp;
@@ -245,31 +282,13 @@
     var add=Math.max(0,Math.min(v,D().EF_MAX-p.ef[i],D().EF_TOTAL-tot)); if(add<=0)return 0;
     p.ef[i]=r2(p.ef[i]+add); return add;
   }
-  function onAnswer(rw,gain,c){
-    var g=W(c), out={coin:0,xp:0,ups:[],ef:{},kan:null};
-    gain.g=0; gain.xp=0; gain.ke=0; gain.mat=0; gain.tama=0; gain.mon=out;
-    if(!rw.ok||rw.fluke)return out;
-    var hard=(rw.timing>=2||rw.ng), due=(rw.timing>=1.6);
-    var base=hard?30:(due?20:10);
-    var f=(rw.novelty==null?1:rw.novelty)*(rw.timing<=0.3?0.3:1);     /* 同じ日のくり返し・覚えた問題の連打はほぼ無価値 */
-    out.coin=Math.round(base*f); out.xp=out.coin; gain.g=out.coin;
-    var k=kanban(g), mast=MM.learn.masteryBySub(c); out.kan=k;
-    if(k&&out.xp>0){
-      var was=adult(k), u=addXp(k,out.xp,lvCap(c,k,mast)); if(u){ out.ups.push({p:k,n:u,grown:!was&&adult(k)}); mark(g,k); }
-      g.sub.forEach(function(id){ var s=byId(g,id); if(!s)return; var w2=adult(s), u2=addXp(s,Math.round(out.xp/2),lvCap(c,s,mast)); if(u2){ out.ups.push({p:s,n:u2,grown:!w2&&adult(s)}); mark(g,s); } });
-      if(f>=1){
-        var e=function(key,v){ var a=addEf(k,key,v); if(a)out.ef[key]=r2((out.ef[key]||0)+a); };
-        if(hard)e("s",0.1); else if(due)e("j",0.1); else if(rw.seen===false)e("o",0.1);
-        if((c.mm.combo||0)>0&&c.mm.combo%5===0)e("h",0.2);
-        try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&MM.garden.isExam(q))e("m",0.15); }catch(e2){}
-      }
-    }
-    return out;
-  }
+  function onAnswer(rw,gain,c){ return MM.keiko.onAnswer(rw,gain,c); }
+  function shardOf(p){ return D().SHARD[rarOf(p)]||1; }
 
   MM.mon={ KEYS:KEYS, BACKUP_KEY:BACKUP_KEY, defaults:defaults, normalize:normalize, normMon:normMon, W:W, fresh:fresh, migrateV1toV2:migrateV1toV2, backupOnce:backupOnce,
     kindOf:kindOf, rarOf:rarOf, rarInfo:rarInfo, natOf:natOf, stat:stat, stats:stats, power:power, talent:talent, rank:rank, need:need, adult:adult, spId:spId,
     atLv:atLv, pot:pot, roll:roll, byId:byId, sorted:sorted, kanban:kanban, diff:diff, setKan:setKan, toggleSub:toggleSub, mark:mark,
     rollRar:rollRar, freeReady:freeReady, pityLeft:pityLeft, canPull:canPull, pull:pull, release:release,
-    lvCap:lvCap, pickQ:pickQ, addXp:addXp, addEf:addEf, onAnswer:onAnswer, TRAIT_FX:TRAIT_FX };
+    lvCap:lvCap, addXp:addXp, addEf:addEf, onAnswer:onAnswer, TRAIT_FX:TRAIT_FX,
+    handover:handover, starter:starter, rollTalent:rollTalent, shardOf:shardOf, natMul:natMul, cdf:cdf };
 })();

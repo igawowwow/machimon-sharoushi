@@ -11,6 +11,7 @@
   var NAMES=["マチモンタウン","ろうむ村","ヴィレの街"];
 
   UI.screens.intro=function(p){
+    if(UI.v2on&&UI.v2on()&&UI.screens.op2)return UI.screens.op2(p);      /* 新しい遊びのオープニング(ui/more2.js) */
     var page=(p&&p.page)||1, esc=UI.esc;
     if(page===1){
       return '<div class="mm-intro mm-intro-1" onclick="MM.ui.go(\'intro\',{page:2})">'

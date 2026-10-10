@@ -27,16 +27,23 @@
     if(fc.verdict==="fast")return ['mm-bz-warn','△ はやく正解すれば とどく(あと つよさ +'+fmt(fc.gap)+' で楽になる)'];
     return ['mm-v2-dn','▼ いまは全問正解でも勝てない(あと つよさ +'+fmt(fc.gap)+')'];
   }
+  UI.bzVerdict=verdict;
+  /* ホーム用の短い言い方(次の相手まで あといくつ) */
+  function verdictShort(fc){
+    if(fc.verdict==="sure")return ['mm-v2-up','◎ つぎの相手に まちがえても勝てる'];
+    if(fc.verdict==="can")return ['mm-v2-up','▲ つぎの相手に 正解すれば勝てる'];
+    if(fc.verdict==="fast")return ['mm-bz-warn','△ つぎの相手まで あと つよさ <b>+'+fmt(fc.gap)+'</b>'];
+    return ['mm-v2-dn','▼ つぎの相手まで あと つよさ <b>+'+fmt(fc.gap)+'</b>'];
+  }
   function foeSprite(foe,size){ return '<span class="mm-gi mm-bz-flip">'+MM.px(foe.kind,size)+'</span>'; }
   function foeName(foe){ var rv=D().bzRival(foe.rival); return esc(rv.name)+' '+foe.role; }
 
   /* ホームに出す1枚: いまの番付・星取り・次の相手と見込み */
   UI.bzHome=function(c){
     BZ().settleAbandoned(c);
-    var st=BZ().state(c), fc=BZ().forecast(c,st.foe), v=verdict(fc);
-    return '<button class="mm-bz-home" onclick="MM.ui.go(\'bz\')"><span class="mm-bz-home-r">'+rankText(st)+'</span>'
-      +'<span class="mm-bz-home-s">'+(st.promo?'<b class="mm-bz-promo">昇進の一番</b>':'第'+st.basho+'場所 '+stars(st))+'</span>'
-      +'<span class="mm-bz-home-f">つぎの相手 <b>'+esc(st.foe.name)+'</b> <span class="mm-sub">'+foeName(st.foe)+'</span> つよさ <b>'+fmt(BZ().foePower(st.foe))+'</b></span>'
+    var st=BZ().state(c), fc=BZ().forecast(c,st.foe), v=verdictShort(fc);
+    return '<button class="mm-bz-home" onclick="MM.ui.go(\'bz\')"><span class="mm-bz-home-r">'+rankText(st)+' '+(st.promo?'<b class="mm-bz-promo">昇進の一番</b>':stars(st))+'</span>'
+      +'<span class="mm-bz-home-f">つぎの相手 '+foeSprite(st.foe,22)+' <b>'+esc(st.foe.name)+'</b> つよさ <b>'+fmt(BZ().foePower(st.foe))+'</b></span>'
       +'<span class="mm-bz-home-v '+v[0]+'">'+v[1]+'</span></button>';
   };
 
@@ -47,8 +54,8 @@
     var h='<div class="mm-wrap">'+UI.resBar2(c)+'<div class="mm-h">🏆 番付</div>';
     h+='<div class="mm-q mm-bz-top"><div class="mm-bz-home-r">'+rankText(st)+'</div>'
       +'<div class="mm-bz-home-s">'+(st.promo?'<b class="mm-bz-promo">昇進の一番</b> 勝てば '+D().danOf(st.pos-1).name+' へ':'第'+st.basho+'場所 '+stars(st)+' <span class="mm-sub">'+st.w+'勝'+st.l+'敗・あと'+st.bashoLeft+'番</span>')+'</div>'
-      +'<div class="mm-sub mm-bz-rule">7番で1場所。4勝で1枚、5勝で2枚、6勝で3枚、全勝で5枚あがる。3勝以下は1枚さがる。</div></div>';
-    h+='<button class="mm-cta" '+(st.left>0?'':'disabled')+' onclick="MM.ui.go(\'bzPre\')">'+(st.left>0?(st.promo?'🚪 昇進の一番へ ▶':'つぎの取組へ ▶')+'<span class="mm-sub">きょうは あと'+st.left+'番 ・ 相手 '+esc(st.foe.name)+'(つよさ '+fmt(BZ().foePower(st.foe))+')</span>':'きょうの取組は おわり<span class="mm-sub">1日'+D().BASHO.perDay+'番まで。あした また来てね</span>')+'</button>';
+      +'<div class="mm-sub mm-bz-rule">7番で1場所。4勝で1枚、5勝で2枚、6勝で3枚、全勝で5枚あがる。3勝以下は1枚さがる。<br>勝ち越すと 🎁育成どうぐ、昇進すると 🎟配合券 も もらえる。</div></div>';
+    h+='<button class="mm-cta" '+(st.left>0?'':'disabled')+' onclick="MM.ui.go(\'bzPre\')">'+(st.left>0?(st.promo?'🚪 昇進の一番へ ▶':'つぎの取組へ ▶')+'<span class="mm-sub">きょうは あと'+st.left+'番 ・ 相手 '+esc(st.foe.name)+'(つよさ '+fmt(BZ().foePower(st.foe))+')</span>':'きょうの取組は おわり<span class="mm-sub">1日'+st.perDay+'番まで。あした また来てね</span>')+'</button>';
     h+='<div class="mm-v2-verdict '+v[0]+'" style="text-align:center">'+v[1]+'</div>';
     /* 60枚を上から。自分の位置に色。今場所の相手に印 */
     var meRow='<div class="mm-bz-row mm-bz-me" id="mmBzMe"><b class="mm-bz-pos">'+(st.ranked?st.pos:'—')+'</b>'+UI.v2p.sprite(k,30)+'<span class="mm-bz-nm"><b>'+esc(k.n)+'</b><span class="mm-sub">'+esc(c.mm.name||"わたしの街")+'</span></span><span class="mm-bz-pw">'+fmt(M().power(k))+'</span></div>';
@@ -63,7 +70,7 @@
         +(isNext?'<i class="mm-bz-tag">つぎ</i>':((!st.promo&&marks[b.pos])?'<i class="mm-bz-tag mm-bz-tag2">今場所</i>':''))+'<span class="mm-bz-pw">'+fmt(BZ().foePower(b))+'</span></div>';
     });
     if(!st.ranked)h+=meRow;
-    h+='</div></div>'+UI.tabs2("bz");
+    h+='</div>'+UI.back2("h2","ホームへ")+'</div>'+UI.tabs2("");
     try{ setTimeout(function(){ try{ var e=G.document.getElementById("mmBzMe"); if(e&&e.scrollIntoView&&UI.route.screen==="bz"&&!UI.bzS.noScroll)e.scrollIntoView({block:"center"}); }catch(e2){} },60); }catch(e){}
     return h;
   };
@@ -118,6 +125,7 @@
       +'<div class="mm-bz-duel mm-bz-duel-'+(r.win?'win':'lose')+'"><div class="mm-bz-duel-k">'+ks.icon+' '+ks.name+' <span class="mm-sub">'+r.base+' → '+how+'</span></div>'
       +'<div class="mm-bz-duel-n"><span><small>じぶん</small><b>'+r.me+'</b></span><i>'+(r.win?'＞':'＜')+'</i><span><small>'+esc(foe.name)+'</small><b>'+r.foe+'</b></span></div>'
       +'<div class="mm-bz-duel-r">'+(r.win?'この1本 とった！':'この1本 とられた…')+'</div></div>'
+      +UI.v2p.gifts(r.gain&&r.gain.mon&&r.gain.mon.gifts)+((r.gain&&r.gain.mon&&r.gain.mon.ticket)?'<div class="mm-gbloom mm-v2-gift">🎟 <b>配合券を1枚</b> もらった</div>':'')
       +UI.qz.explainHtml(q,v,s.sen)
       +'<button class="mm-cta" onclick="MM.ui.bzNext()">'+(r.over?'結果へ ▶':'つぎの一本 ▶')+'</button>';
     s.over=r.over; UI.render();
@@ -141,6 +149,7 @@
     if(r.basho){ var b=r.basho; h+='<div class="mm-gbloom mm-bz-move'+(b.delta<0?' mm-bz-down':'')+'">第'+b.no+'場所 <b>'+b.w+'勝'+b.l+'敗</b> → '
       +(b.delta>0?'⬆ '+b.delta+'枚あがった！('+(b.from>60?'番付の外':b.from+'枚目')+' → <b>'+b.to+'枚目</b>)':(b.delta<0?'⬇ 1枚さがった('+b.from+'枚目 → '+b.to+'枚目)':'そのまま('+(b.to>60?'番付の外':b.to+'枚目')+')'))+'</div>'; }
     else if(!r.promo)h+='<div class="mm-q mm-bz-top"><div class="mm-bz-home-s">第'+st.basho+'場所 '+stars(st)+' <span class="mm-sub">'+st.w+'勝'+st.l+'敗・あと'+st.bashoLeft+'番</span></div></div>';
+    h+=UI.v2p.gifts(r.gifts);
     if(r.story)h+='<div class="mm-gbloom">📖 物語が1話 ひらいた(第'+r.story+'話)</div>';
     if(!r.won)h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>'+(r.rounds.some(function(x){ return !x.ok; })?'正解がふえれば とれる本数がふえるモン。':'つよさで負けたモン。けいこで育てて出直そう！')+'</span></div>';
     h+='<button class="mm-cta" onclick="MM.ui.go(\'bz\')">番付へ ▶</button><button class="small-btn mm-gback" onclick="MM.ui.go(\'h2\')">ホームへ</button></div>';
