@@ -375,4 +375,62 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     let guard=0; while(UI.v2.quiz&&UI.route.screen==="k2"&&guard++<40){ const s=UI.v2.quiz; if(s.fb){ if(guard===2)chk("k2(答えたあと)",UI.screens.k2()); UI.k2Next(); continue; } const q=win.qById(s.qid); if(q.sentaku){ for(let i=0;i<q.blanks.length;i++)UI.k2Ans(q.blanks[i].ok); } else UI.k2Ans(q.choices&&q.choices.length&&q.format!=="true_false"?0:true); }
     ok(UI.route.screen==="k2r"&&UI.v2.quiz.n===10,"10問で けいこの結果へ"); chk("k2r",UI.screens.k2r()); UI.v2.quiz=null; UI.ctx=base; }
 }
+/* ================= スライス6: ホームの一本化・オープニング・自動プレイ ================= */
+{
+  const {mkCtx,mkRand}=module.exports; const KE=MM.keiko, BZ=MM.banzuke; const {banHit,rpgHit}=require("./lib-load.js");
+  const chk=(name,h)=>{ const u=h.indexOf("undefined"), n=h.indexOf("NaN"), b=banHit(h), rp=rpgHit(h); ok(h.length>200&&u<0&&n<0&&!b&&!rp,"render "+name+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(b?" 禁止語:"+b:"")+(rp?" RPGの言葉:"+rp:"")); };
+  const text=(h)=>h.replace(/<[^>]*>/g,"");
+  /* ---------- 初回起動 → オープニング → 最初の問題(2タップ) ---------- */
+  const ST={q:{},rq:[],mm:null}; win.gameState=ST; const base=UI.ctx; UI.ctx=()=>MM.state.ctx({ST,rand:mkRand(31)});
+  UI.open(); ok(UI.route.screen==="intro","初回起動はオープニングから");
+  const op=UI.screens.intro(UI.route.params); chk("オープニング",op);
+  ok((op.match(/class="mm-v2-eggbtn"/g)||[]).length===3&&op.indexOf("街が育つんだモン")<0&&op.indexOf("横綱")>0,"オープニングは1画面: 物語3行と タマゴ3つ(旧い文言は出ない)");
+  let taps=0; UI.opPick(1); taps++;
+  const g=M.W(UI.ctx()), k=M.kanban(g);
+  ok(UI.route.screen==="intro"&&UI.route.params.page===2&&g.st===1&&g.mons.length===1&&k.k===D.STARTERS[1]&&M.rarOf(k)===0&&ST.mm.ms.intro===1,"1タップめ: えらんだタマゴから最初の1体(N)が生まれる");
+  ok(k.tl.every(t=>t>=3&&t<=6)&&k.tr.length===0,"最初の1体の才能は ふつう(3〜6)");
+  chk("生まれた子",UI.screens.intro(UI.route.params));
+  UI.opGo(); taps++;
+  ok(taps===2&&UI.route.screen==="k2"&&UI.v2.quiz&&UI.v2.quiz.qid!=null&&UI.screens.k2().indexOf("MM.ui.k2Ans")>0,"2タップめで最初の問題が出る(初回起動から2タップ)");
+  { const s=UI.v2.quiz, q=win.qById(s.qid), p0=M.power(k); s.t0=Date.now()-5000; const right=(typeof q.a==="boolean")?q.a:!!q.answer; UI.k2Ans(right);
+    ok(k.lv===2&&M.power(k)>p0,"最初の正解で Lv2・つよさ の数字が増える("+p0+" → "+M.power(k)+")"); UI.v2.quiz=null; }
+  ok(M.starter(UI.ctx(),2)===k&&g.mons.length===1,"最初の1体は えらび直せない");
+  UI.open(); ok(UI.route.screen==="h2","2回目からはホームへ");
+  /* ---------- ホーム ---------- */
+  const h=UI.screens.h2(), t=text(h); chk("h2(ホーム)",h);
+  ok(h.indexOf('class="mm-v2-kan')>0&&t.indexOf("つよさ")>0&&t.indexOf(String(M.power(k)))>0,"ホームの真ん中に看板マチモンと つよさ");
+  ok(t.indexOf("番付の外")>0&&t.indexOf("つぎの相手")>0&&/勝てる|あと つよさ/.test(t),"ホームに 番付の位置 と「次の相手まで あといくつ」");
+  const btns=(h.match(/<button[^>]*>/g)||[]).length, tabs=h.slice(h.indexOf("<nav")), menu=h.slice(0,h.indexOf("<nav"));
+  ok(["けいこ","タマゴ","配合","品評会"].every(w=>text(menu).indexOf(w)>0)&&(menu.match(/class="mm-gmenu[^"]*"[^>]*>(.*?)<\/div>/)[1].match(/<button/g)||[]).length===3&&menu.indexOf("mm-v2-keiko")>0,"ホームのボタンは4つ(けいこ／タマゴ／配合／品評会)");
+  ok((tabs.match(/<button/g)||[]).length===4&&["ホーム","なかま","図鑑","きろく"].every(w=>tabs.indexOf(w)>0),"下のタブは4つ(ホーム／なかま／図鑑／きろく)");
+  ok(btns<=12,"ホームの押せるものは12こ以下("+btns+")");
+  /* 番付が上がると街の景色がにぎやかになる */
+  { const c=UI.ctx(), z=BZ.Z(c), cnt=[], seen=new Set(); for(let i=0;i<6;i++)M.pull(Object.assign(c,{rand:mkRand(40+i)}),true)&&(g.free="");
+    [61,55,50,44,32,22,8,1].forEach(pos=>{ z.pos=pos; const sc=UI.scene2(c,g,M.kanban(g)); cnt.push((sc.match(/class="mm-bld/g)||[]).length+(sc.match(/class="mm-walker/g)||[]).length); seen.add(sc); });
+    ok(seen.size===8&&cnt.every((v,i)=>i===0||v>=cnt[i-1])&&cnt[7]>cnt[0]+6,"段が上がるほど 街の建物と なかま が増える("+cnt.join("→")+")"); z.pos=61; }
+  /* ほかの画面 */
+  chk("z2(図鑑)",UI.screens.z2()); ok(text(UI.screens.z2()).indexOf("/105")>0&&(UI.screens.z2().match(/class="mm-dex mm-v2-dex/g)||[]).length===105,"図鑑は105種 × はんこ3つ");
+  chk("r2(きろく)",UI.screens.r2()); ok(D.ITEMS.every(it=>UI.screens.r2().indexOf(it.name)>0)&&UI.screens.r2().indexOf("Lvの上限")>0,"きろくに 育成どうぐ12種 と Lvの上限(9科目)");
+  chk("n2",UI.screens.n2()); chk("n2d",UI.screens.n2d({id:g.mons[1].i})); chk("t2",UI.screens.t2()); chk("k2m",UI.screens.k2m()); UI.b2Open(); chk("b2",UI.screens.b2()); UI.bzS.noScroll=1; chk("bz",UI.screens.bz()); chk("bzPre",UI.screens.bzPre());
+  ["garden","gContest","town","build","zukan","record","gGacha"].forEach(sn=>UI.go(sn)); ok(UI.route.screen==="h2","旧い画面(街・建設・ガチャ・旧図鑑・旧記録)へは行けない");
+  ok(Object.keys(UI.v2ok).every(sn=>UI.screens[sn]),"登録した画面はすべて在る("+Object.keys(UI.v2ok).length+")");
+  UI.ctx=base;
+
+  /* ---------- 自動で遊ばせる(1日60問・正答率75%・180日。配合・けいこ込み。つり合わせの仕上げはスライス8) ---------- */
+  { const r=require("./sim-v2.js").run({seed:42,days:180,marks:[7,30,90,180]}), at=r.at;
+    console.log("  自動プレイ:",[7,30,90,180].map(d=>d+"日 "+at[d].dan+at[d].pos+"枚目 つよさ"+at[d].pw+" SSR以上"+at[d].ssr+"体 図鑑"+at[d].dex+" 配合"+at[d].breeds+" 習熟"+at[d].mast.join(",")).join("\n             "),"\n             横綱",r.yoko||"—","日目 / 才能40・45・50までの配合",r.t40,r.t45,r.t50);
+    ok(at[7].pos>=49&&at[7].pos<=58,"7日: 序二段あたり ("+at[7].dan+at[7].pos+"枚目)");
+    ok(at[30].pos>=34&&at[30].pos<=47,"30日: 幕下あたり ("+at[30].dan+at[30].pos+"枚目)");
+    ok(at[90].pos>=9&&at[90].pos<=32,"90日: 十両の上〜前頭 ("+at[90].dan+at[90].pos+"枚目)");
+    ok(at[180].pos<=14,"180日: 前頭の上〜横綱 ("+at[180].dan+at[180].pos+"枚目)"+(r.yoko?" 横綱 "+r.yoko+"日目":""));
+    ok(!r.yoko||r.yoko>=120,"横綱は早くても4か月より先");
+    ok(at[30].ssr<=4&&at[90].ssr<=12&&at[30].lg===0&&at[90].lg===0,"SSR以上は 30日で数体・90日で十体ほどまで("+at[30].ssr+"・"+at[90].ssr+"・180日 "+at[180].ssr+")、LGは90日では出ない");
+    ok(at[30].pw<at[90].pw&&at[90].pw<=at[180].pw&&at[180].pw<1450,"看板のつよさは伸び続け、上限に張りつかない("+at[30].pw+" → "+at[90].pw+" → "+at[180].pw+")");
+    ok(at[30].dex>=35&&at[30].dex<=65&&at[180].dex<105,"図鑑: 30日で "+at[30].dex+"種・180日で "+at[180].dex+"種(105種はうまらない)");
+    [30,90,180].forEach(d=>{ const m=at[d].mast, sh=at[d].share, sn=at[d].seen; ok(Math.max(...m)-Math.min(...m)<=6&&Math.max(...sn)-Math.min(...sn)<=6&&Math.max(...sh)<=18,d+"日: 9科目の習熟がそろう("+m.join(",")+"%)・1科目に出題が偏らない(最大"+Math.max(...sh)+"%)"); });
+    ok(at[30].lv<=at[30].cap&&at[180].cap===50,"まんべんなく解けば Lvの上限は Lv50 まで開く(30日 Lv"+at[30].lv+"/"+at[30].cap+"・180日 Lv"+at[180].lv+"/"+at[180].cap+")");
+    ok(r.t45===0||r.t45>=8,"才能45以上は 配合を重ねてから("+r.t40+"・"+r.t45+"・"+r.t50+"回目)");
+    ok(at[180].tickets>=150&&at[180].breeds>=100,"配合券は ほぼ毎日1枚("+at[180].tickets+"枚・配合"+at[180].breeds+"回)");
+    const js=JSON.stringify(r.ST.mm.g2); ok(js.indexOf("NaN")<0&&js.length<60000,"セーブの大きさ "+js.length+" バイト・NaNなし"); }
+}
 if(require.main===module)console.log(process.exitCode?"FAILED":"ALL OK (v2)");

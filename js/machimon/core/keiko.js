@@ -99,7 +99,7 @@
     var o=(s.kind==="new")?{sub:s.sub}:{subs:all}, ids;
     if(wantEx){ var ex=pickEx(c,s); if(ex!=null)return ex; }
     o.filter=f(null); ids=L().pick(1,c,o);
-    return ids.length?ids[0]:null;
+    return ids.length?ids[0]:pickEx(c,s);          /* ふだんの問題が尽きていたら、本試験形式の のこりを出す */
   }
   /* 本試験形式(択一・個数・選択式)は ふだんの問題の表(Q)とは別にある。その けいこ の条件に合うものを1問 */
   function pickEx(c,s){
