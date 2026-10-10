@@ -160,6 +160,7 @@
     return { mult:Math.round(mult*1000)/1000, novelty:nov, timing:tim, combo:cmb,
              fluke:fluke, difficulty:difficulty(st), ok:!!ok,
              seen:seen(st), ng:!!st.ng,               /* この回答より前の状態(はじめて／前にまちがえた) */
+             due:seen(st)&&(st.due||0)<=c.today, late:overdue(st,c.today),   /* 期限の来た復習か／何日すぎていたか */
              /* 有効回答: まぐれ(2秒未満)は数に入れない=North Star の定義(Phase12)と一致 */
              effective:!!(ok&&!fluke&&mult>=0.5) };
   }

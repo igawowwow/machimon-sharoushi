@@ -32,7 +32,7 @@
     return (st.due||0)<=today?"rev":"other";
   }
   /* 答えたあとの rw(MM.learn.reward の戻り値=答える前の状態を持つ)から同じ分類を出す */
-  function classOfRw(rw){ if(rw.seen===false)return "new"; if(rw.ng)return "nig"; return rw.timing>=1.6?"rev":"other"; }
+  function classOfRw(rw){ if(rw.seen===false)return "new"; if(rw.ng)return "nig"; return rw.due?"rev":"other"; }
 
   /* 科目ごとの数(全体・解いたことがある・のこりの復習・のこりの苦手) */
   function census(c){
@@ -45,6 +45,9 @@
       if(doneToday(c,q.id))continue;
       if(cl==="rev"){ p.rev++; tot.rev++; } else if(cl==="nig"){ p.nig++; tot.nig++; }
     }
+    /* 本試験形式の問題は別の表にある。のこりの復習・苦手の数には入れる */
+    var ex=MM.garden.examIds();
+    for(i=0;i<ex.length;i++){ if(doneToday(c,ex[i]))continue; var c2=classOf(st[ex[i]],c.today); if(c2==="rev")tot.rev++; else if(c2==="nig")tot.nig++; }
     return { per:per, tot:tot };
   }
   /* あたらしい問題を出す科目 = いちばん進んでいない科目(解いた割合が低い順。同じなら科目の並び順) */
@@ -151,7 +154,7 @@
         if(f>=1){
           var mul=1; if(bst.ef>0){ mul=2; bst.ef--; out.boostEf=1; }
           var e=function(key,v){ var a=M().addEf(k,key,v*mul); if(a)out.ef[key]=r2((out.ef[key]||0)+a); };
-          if(kd){ out.late=(out.cls==="rev"&&rw.timing>=2); e(kd.stat,kd.ef*(out.late?K().lateMul:1)); }
+          if(kd){ out.late=(out.cls==="rev"&&(rw.late||0)>=K().lateDays); e(kd.stat,kd.ef*(out.late?K().lateMul:1)); }
           if((c.mm.combo||0)>0&&c.mm.combo%K().comboEvery===0)e("h",K().comboEf);
           try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&isExam(q))e("m",K().examEf); }catch(e2){}
         }

@@ -194,9 +194,10 @@
   function atLv(p,lv,ef){ var q={k:p.k,lv:lv,tl:p.tl,na:p.na,tr:p.tr,ef:ef||p.ef}; return power(q); }
   /* 看板をゆずり受けたときの Lv と けいこ値: Lvはそのまま、けいこ値は9割を引きつぐ(自分のほうが多い能力は自分のまま) */
   function handover(p,k){
-    var keep=D().KEIKO.keep, ef=[], tot=0, i;
-    for(i=0;i<5;i++){ ef.push(Math.max(p.ef[i]||0,Math.floor((k.ef[i]||0)*keep*100)/100)); tot+=ef[i]; }
-    if(tot>D().EF_TOTAL){ var f=D().EF_TOTAL/tot; for(i=0;i<5;i++)ef[i]=Math.floor(ef[i]*f*100)/100; }
+    var keep=D().KEIKO.keep, ef=[], inc=[], own=0, add=0, i;
+    for(i=0;i<5;i++){ var o=p.ef[i]||0; inc.push(Math.max(0,Math.floor((k.ef[i]||0)*keep*100)/100-o)); own+=o; add+=inc[i]; }
+    var f=add>0?Math.min(1,Math.max(0,D().EF_TOTAL-own)/add):0;          /* 合計の上限をこえるぶんは、引きつぐ側を減らす(自分のけいこ値は減らない) */
+    for(i=0;i<5;i++)ef.push(Math.floor(((p.ef[i]||0)+inc[i]*f)*100)/100);
     return { lv:Math.max(p.lv,k.lv), xp:p.lv>=k.lv?p.xp:k.xp, ef:ef };
   }
   /* ▲▼ = 「いま この子を看板にしたら、つよさ が いくつ変わるか」(Lv1の新入りでも、そのまま比べられる) */

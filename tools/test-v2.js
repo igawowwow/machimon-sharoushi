@@ -300,4 +300,79 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     const bad=M.normalize({on:1,mons:[],items:{ito:"x",nope:5,mi:1e9},bt:-4,hn:["L00|L11","0|1","9|9"],gn:"q",boost:{xp:"a"}}); ok(bad.bt===0&&!bad.items.nope&&!bad.items.ito&&bad.items.mi===D.ITEM_CAP&&bad.hn.join()==="0|1"&&bad.gn.join()==="0,0"&&bad.boost.xp===0,"壊れた値は安全な値へ丸める(旧い形のかくれ相性は捨てる)"); }
   module.exports.fresh4=fresh; module.exports.put4=put;
 }
+/* ================= スライス5: けいこ3択・けいこ値・Lvの上限 ================= */
+{
+  const {mkCtx,mkRand,mon,fresh4:fresh,put4:put}=module.exports; const KE=MM.keiko, BR=MM.breed, K=D.KEIKO; const {banHit,rpgHit}=require("./lib-load.js");
+  const Q=win.Q, bySub=(s)=>Q.filter(q=>q.s===s);
+  const seenSt=(c,id,o)=>{ c.ST.q[id]=Object.assign({c:1,w:0,ng:false,s:0,bm:false,box:1,due:c.today-1,la:c.today-3,ease:2.3},o||{}); };
+  const ans=(c,id,ok)=>MM.economy.grant(MM.learn.commit(id,ok,4000,c),c);
+  const c=fresh(21), g=M.W(c), k=M.kanban(g);
+  /* 献立 */
+  let m=KE.menu(c); const L=(id)=>m.list.find(x=>x.id===id);
+  ok(m.list.map(x=>x.id).join()==="new,rev,nig"&&m.list.map(x=>x.stat).join()==="o,j,s"&&K.size===10,"けいこは3つ(あたらしい問題=ちから／復習=ねばり／苦手つぶし=ひらめき)・1回10問");
+  ok(L("new").left===Q.length&&L("rev").left===0&&L("nig").left===0&&KE.start(c,"rev").err&&KE.start(c,"nig").err,"期限の来た問題が0のとき 復習は選べない(苦手も同じ)");
+  /* 何が伸びるか */
+  const e0=()=>{ k.ef=[0,0,0,0,0]; c.mm.combo=0; };
+  const qNew=bySub(3)[0].id, qRev=bySub(3)[1].id, qLate=bySub(3)[2].id, qNig=bySub(3)[3].id, qEarly=bySub(3)[4].id;
+  seenSt(c,qRev); seenSt(c,qLate,{due:c.today-9,la:c.today-12}); seenSt(c,qNig,{ng:true,c:0,w:1,due:c.today}); seenSt(c,qEarly,{due:c.today+5,la:c.today-1});
+  ok(KE.classOf(c.ST.q[qNew],c.today)==="new"&&KE.classOf(c.ST.q[qRev],c.today)==="rev"&&KE.classOf(c.ST.q[qNig],c.today)==="nig"&&KE.classOf(c.ST.q[qEarly],c.today)==="other","問題の状態: まだ／期限の来た復習／前にまちがえた／期限前");
+  e0(); let gn=ans(c,qNew,true); ok(gn.g===10&&gn.mon.cls==="new"&&k.ef[2]===K.kinds[0].ef&&k.ef[3]===0&&k.ef[4]===0,"あたらしい問題の正解 → ちから(コイン10)");
+  e0(); gn=ans(c,qRev,true); ok(gn.g===20&&gn.mon.cls==="rev"&&k.ef[3]===0.12&&k.ef[2]===0,"復習の正解 → ねばり(コイン20)");
+  e0(); gn=ans(c,qLate,true); ok(gn.mon.late&&k.ef[3]===0.24,"7日以上ためた復習は けいこ値2倍");
+  e0(); gn=ans(c,qNig,true); ok(gn.g===30&&gn.mon.cls==="nig"&&k.ef[4]===0.12&&k.ef[2]===0&&k.ef[3]===0,"苦手つぶしの正解 → ひらめき(コイン30)");
+  e0(); gn=ans(c,qEarly,true); ok(gn.g<=5&&k.ef.every(v=>v===0),"期限前の問題は ほぼ何も出ない");
+  e0(); gn=ans(c,bySub(3)[5].id,false); ok(gn.g===0&&k.ef.every(v=>v===0)&&gn.mon.xp===0,"まちがいは何も出ない");
+  e0(); c.mm.combo=4; gn=ans(c,bySub(3)[6].id,true); ok(c.mm.combo===5&&k.ef[0]===K.comboEf,"連続正解5問ごとに いきおい");
+  e0(); const exId=MM.garden.examIds()[0]; gn=ans(c,exId,true); ok(k.ef[1]===K.examEf,"本試験形式の正解で かしこさ");
+  e0(); gn=ans(c,qNew,true); ok(gn.g<10&&k.ef.every(v=>v===0),"同じ日のくり返しでは けいこ値は入らない");
+  /* 1回10問・4問に1問は本試験形式・あたらしい問題は1回=1科目 */
+  { const c2=fresh(22); let s=KE.start(c2,"new"); const sub0=s.sub, subs=new Set(), ex=[]; let n=0;
+    while(s.qid!=null){ const q=win.qById(s.qid); subs.add(q.s); ex.push(MM.garden.isExam(q)?1:0); const o=(n%3!==0); const gain=ans(c2,s.qid,o); KE.advance(c2,s,o,gain); n++; }
+    ok(n===10&&s.over&&s.n===10&&subs.size===1&&[...subs][0]===sub0,"1回は10問で終わる・あたらしい問題は1回=1科目");
+    ok(ex.join("")==="0001000100","4問に1問は本試験形式 ("+ex.join("")+")");
+    ok(s.coin>0&&s.xp>0&&s.hits===6,"1回ぶんの コイン・経験・正解数がまとまる");
+    const s2=KE.start(c2,"new"); ok(s2.sub!==sub0,"つぎの回は べつの科目(いちばん進んでいない科目)から出る");
+    ok(KE.menu(c2).list[2].left===0,"きょう まちがえた問題は、きょうの 苦手つぶし には出ない(あした出る)");
+    c2.dstr="d2"; c2.today+=1; MM.state.rollDay(c2); const m2=KE.menu(c2); ok(m2.list[2].left===4,"まちがえた問題は つぎの日から 苦手つぶし に入る("+m2.list[2].left+"問)");
+    const sn=KE.start(c2,"nig"); ok(!sn.err&&KE.classOf(c2.ST.q[sn.qid],c2.today)==="nig","苦手つぶしは 前にまちがえた問題だけ"); }
+  /* 勉強が1科目にかたよらない */
+  { const c2=fresh(23), cnt=[0,0,0,0,0,0,0,0,0]; for(let i=0;i<45;i++){ const s=KE.start(c2,"new"); while(s.qid!=null){ cnt[win.qById(s.qid).s]++; const gain=ans(c2,s.qid,true); KE.advance(c2,s,true,gain); } c2.mm.qx={}; }
+    const per=KE.census(c2).per.map(p=>p.seen/p.n); ok(Math.min(...cnt)>=40&&Math.max(...cnt)<=60,"あたらしい問題45回(450問): どの科目も40〜60問("+cnt.join(",")+")");
+    ok(Math.max(...per)-Math.min(...per)<0.06,"解いた割合の差は科目間で6ポイント未満"); }
+  { const full=(subs,v)=>{ const o={}; for(let i=0;i<9;i++)o[i]=subs.includes(i)?v:0; return o; }, T=D.LVCAP.steps, b=D.LVCAP.base, all=[0,1,2,3,4,5,6,7,8];
+    ok(KE.lvCap(c,full([],0)).cap===b&&KE.lvCap(c,full([0],1)).cap===b+3&&KE.lvCap(c,full([0,1,2],1)).cap===b+9,"Lvの上限: 1科目だけ仕上げても +3 どまり(1科目 Lv"+(b+3)+"・3科目 Lv"+(b+9)+")");
+    ok(KE.lvCap(c,full(all,T[0])).cap===b+9&&KE.lvCap(c,full(all,T[1])).cap===b+18&&KE.lvCap(c,full(all,T[2])).cap===50&&KE.lvCap(c,full(all,T[2]-0.001)).cap===b+18,"全科目が段をこえるたびに +9、9科目そろって Lv50");
+    const nx=KE.lvCap(c,Object.assign(full(all,T[0]),{4:T[0]-0.01})).next; ok(nx.sub===4&&nx.to===T[0],"つぎに上げる科目を教える(いちばん近い段)");
+    const a=mon({i:"p1",k:"k001"}), z=mon({i:"p2",k:"k081"}); ok(M.lvCap(c,a)===M.lvCap(c,z),"Lvの上限は看板の族と関係ない(看板の科目だけ解いても強くならない)"); }
+  /* Lvと経験 */
+  { const p=mon({i:"x1"}); M.addXp(p,10,50); ok(p.lv===2,"最初の正解1問で Lv2 になる"); let tot=0; for(let l=1;l<50;l++)tot+=M.need(l); ok(tot>100000&&tot<140000,"Lv50までの経験は約12万("+tot+")"); }
+  /* 配合券: きょうの復習をやりきった日だけ・1日1枚 */
+  { const c2=fresh(24), g2=M.W(c2); bySub(0).slice(0,12).forEach(q=>seenSt(c2,q.id)); const t0=KE.ticketState(c2);
+    ok(t0.need===12&&t0.done===0&&!t0.ready&&g2.bt===0,"きょうの復習 = その日 期限の来ていた問題(12問)");
+    for(let i=0;i<15;i++)ans(c2,bySub(1)[i].id,true); ok(g2.bt===0&&!KE.ticketState(c2).ready,"あたらしい問題を何問といても、復習が残っていれば配合券は出ない");
+    const s=KE.start(c2,"rev"); let got=0, n=0; while(s.qid!=null){ const gain=ans(c2,s.qid,n%2===0); if(gain.mon.ticket)got++; KE.advance(c2,s,true,gain); n++; }
+    ok(g2.bt===0&&KE.ticketState(c2).done===10,"復習10問(まちがいも「やった」に入る)。まだ2問のこり");
+    const s3=KE.start(c2,"rev"); n=0; let tk=0; while(s3.qid!=null){ const gain=ans(c2,s3.qid,true); if(gain.mon.ticket)tk++; KE.advance(c2,s3,true,gain); n++; }
+    ok(n===2&&tk===1&&g2.bt===1&&s3.ticket===1&&KE.ticketState(c2).got,"復習をやりきった瞬間に 配合券1枚");
+    for(let i=20;i<40;i++)ans(c2,bySub(1)[i].id,true); ok(g2.bt===1,"配合券は1日1枚まで");
+    c2.dstr="next"; c2.today+=3; MM.state.rollDay(c2); const t1=KE.ticketState(c2); ok(!t1.got&&t1.need>0,"日付が変わると また もらえる(きょうの復習 "+t1.need+"問)");
+    const c3=fresh(25), g3=M.W(c3); for(let i=0;i<9;i++)ans(c3,bySub(2)[i].id,true); const b9=g3.bt; ans(c3,bySub(2)[9].id,false); ok(b9===0&&g3.bt===1,"復習が無い日は 10問といたら1枚(最初の日)");
+    const c4=fresh(26); bySub(0).slice(0,80).forEach(q=>seenSt(c4,q.id)); ok(KE.ticketState(c4).need===K.revQuota,"たまりすぎた日の「きょうの復習」は"+K.revQuota+"問まで"); }
+  /* 看板の乗りかえで失うものの上限 */
+  { const c2=fresh(27), g2=M.W(c2), old=M.kanban(g2); old.lv=30; old.xp=500; old.ef=[40,20,100,90,50];
+    const nw=put(c2,{k:"k004",tl:[8,8,8,8,8]}), same=M.atLv(nw,30,old.ef), pv=M.pot(g2,nw), r=M.setKan(c2,nw.i);
+    ok(g2.kan===nw.i&&nw.lv===30&&nw.xp===500,"看板をゆずる: Lv と経験は そのまま引きつぐ");
+    ok(nw.ef.every((v,i)=>Math.abs(v-old.ef[i]*K.keep)<0.011)&&old.ef.join()==="40,20,100,90,50","けいこ値は9割を引きつぐ(前の看板のぶんは減らない)");
+    ok(same-M.power(nw)<=D.EF_TOTAL*(1-K.keep)+3&&same-M.power(nw)>=0,"乗りかえで失うのは つよさ "+(same-M.power(nw))+" だけ(上限 "+D.EF_TOTAL*(1-K.keep)+"＝けいこ値の1割)");
+    ok(pv.v===M.power(nw)&&r.to===pv.v&&pv.d===pv.v-r.from,"▲▼の数字は、看板にしたあとの つよさ と同じ");
+    M.setKan(c2,old.i); M.setKan(c2,nw.i); M.setKan(c2,old.i); ok(old.ef.join()==="40,20,100,90,50"&&nw.ef.reduce((a,b)=>a+b,0)<=270.01,"行ったり来たりしても けいこ値は増えない");
+    const strong=put(c2,{k:"k004",lv:40,ef:[100,100,100,0,0]}); M.setKan(c2,strong.i); ok(strong.lv===40&&strong.ef.reduce((a,b)=>a+b,0)<=D.EF_TOTAL+0.01&&strong.ef.join()==="100,100,100,0,0","引きついでも けいこ値の合計は"+D.EF_TOTAL+"をこえない"); }
+  /* 画面 */
+  { win.gameState=c.ST; const base=UI.ctx; UI.ctx=()=>c; g.items.cho=1;
+    const chk=(name,h)=>{ const u=h.indexOf("undefined"), n=h.indexOf("NaN"), b=banHit(h), rp=rpgHit(h); ok(h.length>200&&u<0&&n<0&&!b&&!rp,"render "+name+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(b?" 禁止語:"+b:"")+(rp?" RPGの言葉:"+rp:"")); };
+    const hm=UI.screens.k2m(); chk("k2m",hm); ok(["あたらしい問題","復習","苦手つぶし","ちから","ねばり","ひらめき"].every(w=>hm.indexOf(w)>0)&&(hm.match(/class="mm-v2-kbtn/g)||[]).length===3,"けいこを えらぶ画面: ボタン3つと、のびる能力");
+    UI.k2Go("new"); ok(UI.route.screen==="k2"&&UI.v2.quiz.qid!=null,"えらぶと すぐ問題"); chk("k2(問題)",UI.screens.k2());
+    let guard=0; while(UI.v2.quiz&&UI.route.screen==="k2"&&guard++<40){ const s=UI.v2.quiz; if(s.fb){ if(guard===2)chk("k2(答えたあと)",UI.screens.k2()); UI.k2Next(); continue; } const q=win.qById(s.qid); if(q.sentaku){ for(let i=0;i<q.blanks.length;i++)UI.k2Ans(q.blanks[i].ok); } else UI.k2Ans(q.choices&&q.choices.length&&q.format!=="true_false"?0:true); }
+    ok(UI.route.screen==="k2r"&&UI.v2.quiz.n===10,"10問で けいこの結果へ"); chk("k2r",UI.screens.k2r()); UI.v2.quiz=null; UI.ctx=base; }
+}
 if(require.main===module)console.log(process.exitCode?"FAILED":"ALL OK (v2)");
