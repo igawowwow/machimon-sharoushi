@@ -276,7 +276,7 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
   const na0=k9.na; BR.useItem(c,"happa",k9.i); ok(k9.na!==na0,"きがえの葉: 性格を ふり直す");
   k9.ef=[10,40,5,0,0]; BR.useItem(c,"wasure",k9.i); ok(k9.ef.join()==="10,0,5,0,0","わすれ草: いちばん多い けいこ値を0に");
   BR.useItem(c,"cho",""); BR.useItem(c,"mochi",""); ok(g.boost.ef===10&&g.boost.xp===10,"けいこ帳・ちから餅: つぎの10問が2倍");
-  { const id=MM.learn.pick(1,c,{subs:[0],filter:(q,st)=>!MM.learn.seen(st)})[0], lv0=k9.lv; k9.lv=1; k9.xp=0; k9.ef=[0,0,0,0,0]; const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); k9.lv=Math.max(lv0,k9.lv);
+  { const id=MM.learn.pick(1,c,{subs:[0],filter:(q,st)=>!MM.learn.seen(st)})[0], lv0=k9.lv; k9.lv=1; k9.tr=[]; k9.xp=0; k9.ef=[0,0,0,0,0]; const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); k9.lv=Math.max(lv0,k9.lv);
     ok(gain.mon.xp===20&&gain.g===10&&Math.abs(gain.mon.ef.o-0.24)<1e-9&&g.boost.ef===9&&g.boost.xp===9,"2倍のあいだは 経験20・けいこ値0.24(コインは増えない)"); }
   /* ごほうび: 順番で決まる・乱数なし */
   { const c2=fresh(12), g2=M.W(c2), out=[]; const cr=c2.rand; let used=0; c2.rand=()=>{ used++; return 0.5; }; BR.give(c2,{t0:6,t1:8,bt:1},out,"x"); c2.rand=cr;
@@ -374,6 +374,169 @@ const mon=(o)=>M.normMon(Object.assign({i:"t1",k:"k001",lv:1,xp:0,tl:[5,5,5,5,5]
     UI.k2Go("new"); ok(UI.route.screen==="k2"&&UI.v2.quiz.qid!=null,"えらぶと すぐ問題"); chk("k2(問題)",UI.screens.k2());
     let guard=0; while(UI.v2.quiz&&UI.route.screen==="k2"&&guard++<40){ const s=UI.v2.quiz; if(s.fb){ if(guard===2)chk("k2(答えたあと)",UI.screens.k2()); UI.k2Next(); continue; } const q=win.qById(s.qid); if(q.sentaku){ for(let i=0;i<q.blanks.length;i++)UI.k2Ans(q.blanks[i].ok); } else UI.k2Ans(q.choices&&q.choices.length&&q.format!=="true_false"?0:true); }
     ok(UI.route.screen==="k2r"&&UI.v2.quiz.n===10,"10問で けいこの結果へ"); chk("k2r",UI.screens.k2r()); UI.v2.quiz=null; UI.ctx=base; }
+}
+/* ================= スライス7: 特性36・組み合わせ10・物語・図鑑・かけら交換 ================= */
+{
+  const {mkCtx,mkRand,mon,fresh4:fresh,put4:put}=module.exports; const KE=MM.keiko, BR=MM.breed, BZ=MM.banzuke, K=D.KEIKO, B=D.BREED, R=D.BASHO; const {banHit,rpgHit}=require("./lib-load.js");
+  const T=D.TRAITS, TB=D.traitById, Q=win.Q, KEYS=["h","m","o","j","s"];
+  const chk=(name,h)=>{ const u=h.indexOf("undefined"), n=h.indexOf("NaN"), b=banHit(h), rp=rpgHit(h); ok(h.length>200&&u<0&&n<0&&!b&&!rp,"render "+name+" ("+h.length+")"+(u>=0?" undefined@"+h.slice(Math.max(0,u-60),u+10):"")+(n>=0?" NaN@"+h.slice(Math.max(0,n-60),n+5):"")+(b?" 禁止語:"+b:"")+(rp?" RPGの言葉:"+rp:"")); };
+  /* ---------- 表 ---------- */
+  const cats={a:0,b:0,k:0,h:0}; T.forEach(t=>cats[t.cat]++);
+  ok(T.length===36&&cats.a===10&&cats.b===12&&cats.k===8&&cats.h===6,"特性36 = 能力10・品評会12・育成8・配合6");
+  ok(new Set(T.map(t=>t.id)).size===36&&new Set(T.map(t=>t.name)).size===36&&new Set(T.map(t=>t.icon)).size===36,"特性の id・名前・印が重ならない");
+  ok(["gold","shiki","sprout","phoenix","giant","rainbow","lucky","star","sage","cosmos"].every(id=>TB[id]),"旧版からある10個の id は残っている(セーブの特性が消えない)");
+  ok(T.every(t=>t.desc.length<=22&&Object.keys(t.fx).length>=1),"説明は一言(22文字まで) "+T.filter(t=>t.desc.length>22).map(t=>t.name).join());
+  ok(D.COMBOS.length===10&&D.COMBOS.every(cb=>TB[cb.a]&&TB[cb.b]&&cb.a!==cb.b&&cb.name&&cb.desc)&&new Set(D.COMBOS.map(cb=>[cb.a,cb.b].sort().join())).size===10,"組み合わせは10組");
+  /* ---------- 測る道具 ---------- */
+  const base=mon({});
+  /* 五番勝負の1本ぶん。能力はどれも100・相手の数字は100÷0.85 にそろえ、特性の倍率だけを見る */
+  const bout=(tr,o)=>{ o=o||{}; const c=fresh(700+(bout.n=(bout.n||0)+1)), g=M.W(c), k=M.kanban(g); k.tr=tr.slice(); const s=BZ.start(c), foe=D.bzAt(s.foe);
+    KEYS.forEach(x=>{ s.mine[x]=100; }); s.under=!!o.under; s.i=o.i||0; s.l=o.l||0; s.w=o.w||0; s.rounds=[]; for(let j=0;j<s.i;j++)s.rounds.push({win:false}); if(o.last)s.rounds[s.rounds.length-1]={win:o.last>0};
+    const r=BZ.round(c,s,o.ok!==false,o.ms==null?20000:o.ms); return {me:r.me,foe:r.foe,foeBase:BZ.foeShow(foe,R.order[s.i-1]),names:r.names,fc:s.fc}; };
+  /* けいこの1問ぶん */
+  const st0=(c,id,o)=>{ c.ST.q[id]=Object.assign({c:1,w:0,ng:false,s:0,bm:false,box:1,due:c.today-1,la:c.today-3,ease:2.3},o||{}); };
+  const keiko=(tr,o)=>{ o=o||{}; const c=fresh(900+(keiko.n=(keiko.n||0)+1)), g=M.W(c), k=M.kanban(g); k.tr=tr.slice(); k.lv=o.lv||40; k.xp=0; k.ef=[0,0,0,0,0];
+    let id; if(o.exam)id=MM.garden.examIds()[0]; else id=Q.filter(q=>q.s===2)[3].id;
+    if(o.cls==="rev")st0(c,id); else if(o.cls==="nig")st0(c,id,{ng:true,c:0,w:1,due:c.today});
+    if(o.combo)c.mm.combo=o.combo-1;
+    const gain=MM.economy.grant(MM.learn.commit(id,true,4000,c),c); return {xp:gain.mon.xp,coin:gain.g,ef:gain.mon.ef,k}; };
+  /* 配合を N 回 */
+  const brd=(trA,trB,fn,o)=>{ o=o||{}; const c=fresh(1100), g=M.W(c); g.hn=[]; const A=put(c,Object.assign({k:"k001",tl:[10,2,6,6,3],na:"n4",tr:trA},o.A||{})), Bp=put(c,Object.assign({k:"k021",tl:[4,8,6,6,9],na:"n5",tr:trB},o.B||{}));
+    const r=mkRand(o.seed||31), d=BR.kindDist(A,Bp,""), cp=BR.compat(g,A,Bp), N=o.n||6000; let n=0; for(let i=0;i<N;i++)if(fn(BR.make(r,g,A,Bp,"",d,cp)))n++; return n/N; };
+  const near=(a,b,e)=>Math.abs(a-b)<=(e==null?0.02:e);
+  const stat1=(tr,k)=>M.stat(mon({tr}),k)/M.stat(base,k);
+  /* ---------- 36種それぞれが 実際に効く ---------- */
+  const b0=bout([]), k0n=keiko([]), k0r=keiko([],{cls:"rev"}), k0g=keiko([],{cls:"nig"}), k0e=keiko([],{exam:1});
+  const hi0=brd([],[],p=>p.tl[0]===10), up0=brd([],[],p=>p.tl[2]===7), na0=brd([],[],p=>p.na==="n4"||p.na==="n5");
+  const CHK={
+    giant:()=>near(stat1(["giant"],"o"),1.15)&&stat1(["giant"],"j")===1,
+    nebari:()=>near(stat1(["nebari"],"j"),1.15)&&stat1(["nebari"],"o")===1,
+    hanayaka:()=>near(stat1(["hanayaka"],"h"),1.15)&&stat1(["hanayaka"],"m")===1,
+    pikatto:()=>near(stat1(["pikatto"],"s"),1.15)&&stat1(["pikatto"],"h")===1,
+    hakase:()=>near(stat1(["hakase"],"m"),1.15)&&stat1(["hakase"],"s")===1,
+    shokunin:()=>near(stat1(["shokunin"],"o"),1.08)&&near(stat1(["shokunin"],"s"),1.08)&&stat1(["shokunin"],"j")===1,
+    yutosei:()=>near(stat1(["yutosei"],"j"),1.08)&&near(stat1(["yutosei"],"m"),1.08)&&stat1(["yutosei"],"h")===1,
+    sokoage:()=>{ const p0=mon({tl:[5,5,5,1,5]}), p1=mon({tl:[5,5,5,1,5],tr:["sokoage"]}); return near(M.stat(p1,"j")/M.stat(p0,"j"),1.25,0.03)&&KEYS.filter(k=>k!=="j").every(k=>M.stat(p1,k)===M.stat(p0,k)); },
+    star:()=>near(M.power(mon({tr:["star"]}))/M.power(base),1.06,0.01),
+    cosmos:()=>near(M.power(mon({tr:["cosmos"]}))/M.power(base),1.10,0.01),
+    sente:()=>bout(["sente"]).me===120&&bout(["sente"],{i:1}).me===100,
+    nakaban:()=>bout(["nakaban"],{i:2}).me===120&&bout(["nakaban"]).me===100,
+    musubi:()=>bout(["musubi"],{i:4,w:2,l:2}).me===125&&bout(["musubi"],{i:3}).me===100,
+    dohyo:()=>bout(["dohyo"],{i:2,l:2}).me===125&&bout(["dohyo"],{i:2,l:1,w:1}).me===100,
+    phoenix:()=>bout(["phoenix"],{i:1,l:1,last:-1}).me===115&&bout(["phoenix"],{i:1,w:1,last:1}).me===100,
+    norinori:()=>bout(["norinori"],{i:1,w:1,last:1}).me===110&&bout(["norinori"],{i:1,l:1,last:-1}).me===100,
+    hayatochiri:()=>bout(["hayatochiri"],{ok:false}).me===70&&b0.me===100&&bout([],{ok:false}).me===50,
+    subayai:()=>bout(["subayai"],{ms:4000}).me===120&&bout([],{ms:4000}).me===110&&bout(["subayai"],{ms:20000}).me===100,
+    shiki:()=>bout(["shiki"],{ms:20000}).me===110&&bout(["shiki"],{ms:500}).me===100,
+    rainbow:()=>{ const x=bout(["rainbow"]); return x.foe===Math.round(x.foeBase/0.85*0.85*0.95)||near(x.foe/x.foeBase,0.95,0.03); },
+    oomono:()=>bout(["oomono"],{under:true}).me===106&&bout(["oomono"],{under:false}).me===100,
+    honban:()=>bout(["honban"],{i:3}).me===112&&bout(["honban"],{i:4,w:2,l:2}).me===112&&bout(["honban"],{i:2}).me===100,
+    fukushu:()=>keiko(["fukushu"],{cls:"rev"}).xp===Math.round(k0r.xp*1.5)&&keiko(["fukushu"]).xp===k0n.xp,
+    sage:()=>keiko(["sage"],{cls:"rev"}).xp===Math.round(k0r.xp*1.15),
+    sprout:()=>keiko(["sprout"],{lv:20,cls:"rev"}).xp===Math.round(k0r.xp*1.5)&&keiko(["sprout"],{lv:30,cls:"rev"}).xp===k0r.xp,
+    gold:()=>keiko(["gold"],{cls:"rev"}).coin===Math.round(k0r.coin*1.25)&&keiko(["gold"],{cls:"rev"}).xp===k0r.xp,
+    nigate:()=>near(keiko(["nigate"],{cls:"nig"}).ef.s,k0g.ef.s*2,1e-9)&&near(keiko(["nigate"]).ef.o,k0n.ef.o,1e-9),
+    shinmono:()=>near(keiko(["shinmono"]).ef.o,k0n.ef.o*1.5,1e-9)&&near(keiko(["shinmono"],{cls:"rev"}).ef.j,k0r.ef.j,1e-9),
+    nami:()=>keiko(["nami"],{combo:3}).ef.h===K.comboEf&&!keiko([],{combo:3}).ef.h&&keiko([],{combo:5}).ef.h===K.comboEf,
+    honshiken:()=>near(keiko(["honshiken"],{exam:1}).ef.m,k0e.ef.m*2,1e-9)&&k0e.ef.m===K.examEf,
+    tsutae:()=>near(brd(["tsutae"],[],p=>p.tl[0]===10),hi0+0.15*(1-D.TALENT_W[10]/D.TALENT_W.reduce((a,b)=>a+b,0)),0.025)&&near(brd([],["tsutae"],p=>p.tl[0]===10),brd(["tsutae"],[],p=>p.tl[0]===10),0.03),
+    lucky:()=>near(brd(["lucky"],[],p=>p.tl[2]===7)-up0,0.10*0.94,0.02),
+    oyayuzuri:()=>near(brd(["oyayuzuri"],[],p=>p.na==="n4"||p.na==="n5"),0.9+0.1*0.2,0.02)&&near(na0,0.6+0.4*0.2,0.02),
+    osusowake:()=>near(brd(["osusowake"],[],p=>p.tr.indexOf("osusowake")>=0),0.70)&&near(brd(["star"],[],p=>p.tr.indexOf("star")>=0),B.trait),
+    mezurashi:()=>{ const c=fresh(1200), a=put(c,{k:"k004",tr:["mezurashi"]}), b=put(c,{k:"k014"}), a0=put(c,{k:"k004"}); const p1=BR.kindDist(a,b,"").list.find(x=>x.only).p, p0=BR.kindDist(a0,b,"").list.find(x=>x.only).p; return near(p1,p0*1.5,1e-9)&&p0===B.only[2]; },
+    yarinaoshi:()=>{ const f=p=>p.tl[0]!==10&&p.tl[0]!==4&&p.tl[0]>=7; return brd(["yarinaoshi"],[],f)>brd([],[],f)*1.4; }
+  };
+  ok(T.every(t=>typeof CHK[t.id]==="function"),"36種すべてに 効果の検査がある "+T.filter(t=>!CHK[t.id]).map(t=>t.id).join());
+  T.forEach(t=>{ let r=false, e=""; try{ r=CHK[t.id](); }catch(x){ e=x.message; } ok(r,"特性「"+t.name+"」("+t.desc+")が 実際に効く "+e); });
+  /* ---------- 組み合わせ10組 ---------- */
+  const CB={
+    c01:()=>bout(["sente","giant"]).me===Math.round(100*1.2*1.1),
+    c02:()=>bout(["dohyo","nebari"],{i:2,l:2}).me===Math.round(100*1.25*1.1),
+    c03:()=>bout(["musubi","hakase"],{i:4,w:2,l:2}).me===Math.round(100*1.25*1.1),
+    c04:()=>bout(["nakaban","hanayaka"],{i:2}).me===132,
+    c05:()=>bout(["hayatochiri","sokoage"],{ok:false}).me===80,
+    c06:()=>near(M.power(mon({tr:["star","cosmos"]}))/M.power(base),1.06*1.10*1.04,0.01),
+    c07:()=>near(stat1(["shokunin","yutosei"],"h"),1.12)&&near(stat1(["shokunin","yutosei"],"o"),1.08),
+    c08:()=>keiko(["fukushu","sage"],{cls:"rev"}).xp===Math.round(k0r.xp*1.15*1.25*1.5),
+    c09:()=>near(brd(["tsutae","lucky"],[],p=>p.tl[2]===7)-brd(["lucky"],[],p=>p.tl[2]===7),0.05*0.9,0.02)&&near(brd(["tsutae"],["lucky"],p=>p.tl[2]===7),brd(["tsutae","lucky"],[],p=>p.tl[2]===7),0.02),
+    c10:()=>bout(["honban","honshiken"],{i:3}).me===Math.round(100*1.12*1.06)
+  };
+  D.COMBOS.forEach(cb=>{ let r=false, e=""; try{ r=CB[cb.id]()&&M.combosOf([cb.b,cb.a]).length===1&&M.combosOf([cb.a]).length===0; }catch(x){ e=x.message; }
+    ok(r,"組み合わせ「"+cb.name+"」("+TB[cb.a].name+"＋"+TB[cb.b].name+")が 実際に効く "+e); });
+  /* 見込み(◎▲△▼)は特性こみ。効いた特性の名前が出る */
+  { const x=bout(["sente","giant"]); ok(x.fc.rows[0].names.join().indexOf("先手")>=0&&x.fc.rows[0].names.join().indexOf("立ち合い一気")>=0&&x.fc.rows[1].names.length===0&&x.names.length>=2,"取組の前の見込みと1本ごとの画面に、効いている特性の名前が出る");
+    const c=fresh(1300), g=M.W(c), k=M.kanban(g); k.tr=["sente"]; const foe=BZ.state(c).foe, f1=BZ.forecast(c,foe,k); k.tr=[]; const f0=BZ.forecast(c,foe,k);
+    ok(f1.rows[0].me===Math.round(f0.rows[0].me*1.2)&&f1.rows[1].me===f0.rows[1].me,"見込みの数字は 特性こみ(先手=1本目だけ1.2倍)"); }
+  /* 特性のつき方 */
+  { const c=fresh(1400), g=M.W(c), cnt={}; const r=mkRand(9); for(let i=0;i<20000;i++){ const t=M.rollTrait(r,0); cnt[t]=(cnt[t]||0)+1; }
+    ok(Object.keys(cnt).length===36&&cnt.cosmos<cnt.star&&cnt.star<cnt.sage&&cnt.sage<cnt.giant,"特性の抽選: 36種すべて出る・めずらしいものほど出にくい(宇宙のタマゴ "+cnt.cosmos+" < スター性 "+cnt.star+" < 賢者の書 "+cnt.sage+" < 力持ち "+cnt.giant+")");
+    let two=0; const A=put(c,{k:"k001",tr:["sente"]}), Bp=put(c,{k:"k002",tr:["giant"]}), d=BR.kindDist(A,Bp,""), cp=BR.compat(g,A,Bp); for(let i=0;i<4000;i++){ if(BR.make(r,g,A,Bp,"",d,cp).tr.length===2)two++; }
+    ok(near(two/4000,B.trait*B.trait,0.02),"配合で 特性を2つとも継ぐことがある(組み合わせを 配合でねらえる) "+(two/40).toFixed(1)+"%");
+    const p=put(c,{k:"k001",tr:["sente"]}); g.items.ishi=1; const u=BR.useItem(c,"ishi",p.i); ok(p.tr.length===2&&p.tr[1]!=="sente"&&TB[u.trait],"ひらめきの石は いまと違う特性を1つ足す"); }
+  /* ---------- 図鑑のはんこ ---------- */
+  { const c=fresh(1500), g=M.W(c), old=M.kanban(g); old.lv=30; const nw=put(c,{k:"k004",tl:[7,7,7,7,7]});
+    M.mark(g,nw); M.setKan(c,nw.i); ok(nw.lv===30&&g.dex.k004===1,"看板にした瞬間には「おとなにした」は付かない(Lvを引きついでも)");
+    const ids=Q.filter(q=>q.s===4).map(q=>q.id); let n=0, at=0; while(!(g.dex.k004&2)&&n<60){ const gn=MM.economy.grant(MM.learn.commit(ids[n],true,4000,c),c); n++; if(gn.mon.adult)at=n; }
+    ok(n===D.ADULT_NEED&&at===n&&nw.kc===D.ADULT_NEED&&(g.dex.k004&3)===3,"看板として "+D.ADULT_NEED+"問 正解すると「おとなにした」("+n+"問目)");
+    const kid=put(c,{k:"k005",lv:1}); M.setKan(c,kid.i); kid.lv=3; kid.xp=0; g.dex.k005=1; for(let i=0;i<40;i++){ kid.lv=Math.min(kid.lv,5); MM.economy.grant(MM.learn.commit(ids[100+i],true,4000,c),c); }
+    ok(kid.kc===D.ADULT_NEED&&!(g.dex.k005&2),"Lv10より下では、何問正解しても付かない"); kid.lv=10; MM.economy.grant(MM.learn.commit(ids[150],true,4000,c),c); ok((g.dex.k005&2)===2,"Lv10に とどいた後の正解で付く");
+    const hi=put(c,{k:"k006",tl:[8,8,8,8,8]}); M.mark(g,hi); const lo=put(c,{k:"k007",tl:[8,8,8,8,7],sh:1}); M.mark(g,lo); ok(g.dex.k006===5&&g.dex.k007===1&&g.sdex.k007===1&&!g.sdex.k006,"才能40以上のはんこ・色ちがいのページ");
+    const rt=M.normalize(JSON.parse(JSON.stringify(g))); ok(rt.sdex.k007===1&&rt.dex.k004===g.dex.k004&&M.byId(rt,nw.i).kc===D.ADULT_NEED,"はんこ・色ちがい・正解数は 保存→読み直しで同じ");
+    win.gameState=c.ST; const b0=UI.ctx; UI.ctx=()=>c; const zd=UI.screens.z2d({id:"k004"}); chk("z2d(種類のページ)",zd); ok(["見つけた","おとなにした","才能40以上"].every(w=>zd.indexOf(w)>0)&&(zd.match(/mm-v2-strow mm-on/g)||[]).length===2,"種類のページに はんこ3つと条件");
+    chk("z2d(配合限定)",UI.screens.z2d({id:"k100"})); const zo=UI.screens.z2d({id:"k105"}); ok(zo.indexOf("生まれ方")>0&&zo.indexOf("×")>0&&zo.indexOf("？？？")>0,"配合限定の種類は、まだでも 生まれ方(族の組)が分かる");
+    chk("z2(色ちがい)",UI.screens.z2({tab:"s"})); ok((UI.screens.z2({tab:"s"}).match(/mm-gi-shiny/g)||[]).length===1,"色ちがいのページ: 見つけた種類だけ色ちがいの絵");
+    const zt=UI.screens.z2({tab:"tr"}); chk("z2(特性)",zt); ok(T.every(t=>zt.indexOf(t.name)>0&&zt.indexOf(t.desc.replace(/&/g,"&amp;"))>0)&&D.COMBOS.every(cb=>zt.indexOf(cb.name)>0),"特性の一覧に 36種と組み合わせ10組が ぜんぶ出る");
+    nw.tr=["sente"]; const nd=UI.screens.n2d({id:nw.i}); ok(nd.indexOf("1本目だけ ×1.2")>0&&nd.indexOf("立ち合い一気")>0,"個体の詳細: 特性のひとこと説明と、あと1つでそろう組み合わせ");
+    nw.tr=["sente","giant"]; ok(UI.screens.n2d({id:nw.i}).indexOf("mm-v2-combo")>0,"そろった組み合わせが 個体の詳細に出る"); chk("n2d(特性2つ)",UI.screens.n2d({id:nw.i}));
+    UI.ctx=b0; }
+  /* ---------- かけら交換 ---------- */
+  { const c=fresh(1600), g=M.W(c); win.gameState=c.ST; const b0=UI.ctx; UI.ctx=()=>c;
+    const S=BR.shop(c); ok(S.ur.length===9&&S.ssr.length===9&&S.items.length===12&&S.ur.every(x=>x.cost===1000&&x.kind.rar===4&&!x.kind.only)&&S.ssr.every(x=>x.cost===300&&x.kind.rar===3),"かけら交換: 好きなSSR 300・好きなUR 1,000(タマゴから出る9種ずつ)");
+    ok(S.items.every(x=>x.cost>=30&&x.cost<=100)&&D.ITEMS.every(t=>D.SHOP_ITEM[t.id]),"育成どうぐは 各30〜100 ("+S.items.map(x=>x.cost).join(",")+")");
+    g.shard=299; ok(BR.buyKind(c,"k009").err&&g.shard===299&&g.mons.length===1,"かけらが足りないと交換できない(減らない)");
+    g.shard=300; const r1=BR.buyKind(c,"k009"); ok(r1.mon&&r1.mon.k==="k009"&&g.shard===0&&g.mons.length===2&&(g.dex.k009&1)&&r1.isNew,"SSR: かけら300で その種類が なかまになる・図鑑に入る");
+    g.shard=1000; const r2=BR.buyKind(c,"k010"); ok(r2.mon&&M.rarOf(r2.mon)===4&&g.shard===0,"UR: かけら1,000");
+    g.shard=5000; ok(BR.buyKind(c,"k100").err&&BR.buyKind(c,"k001").err&&BR.buyKind(c,"zzz").err&&g.shard===5000,"配合限定・N〜SR・無い種類は交換できない");
+    const s0=g.shard; ok(!BR.buyItem(c,"ishi").err&&g.items.ishi===1&&g.shard===s0-D.SHOP_ITEM.ishi&&BR.buyItem(c,"nope").err,"どうぐ: かけらと交換");
+    g.shard=20; ok(BR.buyItem(c,"kawari").err&&g.shard===20,"どうぐも かけらが足りないと交換できない");
+    const cap=D.RATE2.cap; D.RATE2.cap=g.mons.length; g.shard=2000; ok(BR.buyKind(c,"k010").err&&g.shard===2000,"なかまがいっぱいのときは むかえられない(かけらは減らない)"); D.RATE2.cap=cap;
+    let neg=false; for(let i=0;i<200;i++){ BR.buyItem(c,D.ITEMS[i%12].id); BR.buyKind(c,i%2?"k009":"k010"); if(g.shard<0)neg=true; } ok(!neg&&g.shard>=0,"かけらは負にならない");
+    g.shard=450; const hk=UI.screens.z2({tab:"kk"}); chk("z2(かけら交換)",hk); ok(hk.indexOf("好きなUR")>0&&hk.indexOf("好きなSSR")>0&&D.ITEMS.every(t=>hk.indexOf(t.name)>0)&&(hk.match(/mm-v2-kkrow/g)||[]).length===30,"交換の画面: UR9・SSR9・どうぐ12");
+    const n0=g.mons.length; UI.kkKind("k019"); ok(UI.route.screen==="kkr"&&g.mons.length===Math.min(n0+1,D.RATE2.cap)&&g.shard===150,"交換すると 生まれた子の画面へ"); chk("kkr",UI.screens.kkr());
+    ok(UI.screens.n2().indexOf("かけら交換")>0,"なかま の画面から かけら交換へ行ける"); UI.ctx=b0; }
+  /* ---------- 物語 ---------- */
+  { const E=D.STORY.eps;
+    ok(E.length===8&&E.every((e,i)=>e.no===i+1&&e.title&&e.lines.length>=4&&e.lines.length<=6),"物語は全8話・1話4〜6行");
+    ok(E.every(e=>e.lines.every(l=>"nmby".indexOf(l.w)>=0&&l.t.length>=4&&l.t.length<=64)),"1行は長くても64文字");
+    const all=E.map(e=>e.title+e.lines.map(l=>l.t).join("")).join(""); ok(!banHit(all)&&!rpgHit(all),"8話すべてに禁止の言葉が無い "+banHit(all)+rpgHit(all));
+    const GATE={2:55,3:50,4:44,5:32,6:22,7:8,8:1}; ok(E.every(e=>e.no===1||D.bzAt(GATE[e.no]).rival===e.rival),"第2〜8話の語り手は、その段の関門を守る親方");
+    ok(E[4].lines.some(l=>l.t.indexOf("盗まれていません")>=0)&&E[4].lines.some(l=>l.t.indexOf("預")>=0)&&E[7].lines.filter(l=>l.w==="y").length>=3,"第5話で「盗まれたのではなく預けられた」・第8話は横綱が語る");
+    /* 段の昇進でひらく */
+    const c=fresh(1700), g=M.W(c), z=BZ.Z(c); win.gameState=c.ST; const b0=UI.ctx; UI.ctx=()=>c; let d=1;
+    const day=()=>{ d++; c.dstr="st"+d; c.today=26000+d; MM.state.rollDay(c); };
+    const fight=(winIt)=>{ if(BZ.leftToday(c)<=0)day(); const s=BZ.start(c), foe=D.bzAt(s.foe); KEYS.forEach(k=>{ s.mine[k]=foe.stats[k]*(winIt?3:0.1); }); let r; do{ r=BZ.round(c,s,true,20000); }while(r&&!r.over); return BZ.finish(c,s); };
+    ok(z.story===0&&UI.storyHome(c)===""&&UI.storyList(c).indexOf("？？？")>0&&UI.storyList(c).indexOf(E[0].title+"<")<0,"はじめは1話もひらいていない(題も見えない)");
+    UI.stS={ep:1,line:0}; ok(UI.screens.st().indexOf("mm-st-head")<0,"ひらいていない話は読めない");
+    const lose=fight(false); ok(z.story===0&&!lose.story,"負けではひらかない");
+    const w1=fight(true); ok(z.story===1&&w1.story===1,"はじめて勝つと 第1話");
+    const opens=[]; [56,51,45,33,23,9,2].forEach(pos=>{ z.pos=pos; z.n=0; z.w=0; z.l=0; const r=fight(true); opens.push(r.promo&&r.promo.won?r.story:-1); });
+    ok(opens.join()==="2,3,4,5,6,7,8"&&z.story===8&&z.pos===1,"昇進の一番に勝つたびに1話ずつ(序二段=2 … 横綱=8) "+opens.join());
+    z.story=3; g.sread=0; z.pos=45; const pl=fight(false); ok(z.story===3&&!pl.story,"昇進の一番に負けたら ひらかない");
+    /* 読む */
+    UI.bzS.res=w1; const hr=UI.screens.bzRes(); ok(hr.indexOf("物語が ひらいた")>0&&hr.indexOf("第1話「"+E[0].title+"」")>0,"取組の結果に「第1話を読む」ボタン");
+    ok(UI.storyHome(c).indexOf("第1話")>0&&UI.screens.h2().indexOf("あたらしい話")>0,"まだ読んでいない話は ホームに出る");
+    UI.storyRead(1,"h2"); let h1=UI.screens.st(); chk("st(1行目)",h1); ok((h1.match(/mm-st-now/g)||[]).length===1&&h1.indexOf(E[0].lines[1].t)<0&&h1.indexOf("とじる")<0,"1行目だけ出る");
+    let taps=0; while(UI.stS.line<E[0].lines.length-1&&taps<10){ UI.storyTap(); taps++; } h1=UI.screens.st(); chk("st(さいご)",h1);
+    ok(taps===E[0].lines.length-1&&E[0].lines.every(l=>h1.indexOf(UI.esc(l.t))>0)&&h1.indexOf("とじる")>0,"タップで1行ずつ進み、さいごに「とじる」("+taps+"タップ)");
+    UI.storyClose(); ok(g.sread===1&&UI.route.screen==="h2"&&UI.storyHome(c).indexOf("第2話")>0,"とじると 読んだ ことになり、つぎの話がホームに出る");
+    UI.storyRead(4); ok(UI.screens.st().indexOf("mm-st-head")<0,"まだひらいていない第4話は読めない");
+    g.sread=3; const hl=UI.storyList(c); ok(UI.storyHome(c)===""&&(hl.match(/class="mm-st-row"/g)||[]).length===3&&(hl.match(/mm-st-lock/g)||[]).length===5&&hl.indexOf(E[4].title+"<")<0&&hl.indexOf("十両に上がると")>0,"きろく: ひらいた3話は読み返せる・のこりは題を見せず「◯◯に上がると ひらく」");
+    ok(UI.screens.r2().indexOf("消えた看板")>0,"きろく の画面に 物語の一覧"); chk("r2(物語つき)",UI.screens.r2());
+    UI.storyRead(2,"r2"); for(let i=0;i<9;i++)UI.storyTap(); UI.storyClose(); ok(g.sread===3&&UI.route.screen==="r2","読み返しても 読んだ数は減らない・きろくへ もどる");
+    z.story=8; g.sread=7; UI.storyRead(8); for(let i=0;i<9;i++)UI.storyTap(); const h8=UI.screens.st(); chk("st(第8話)",h8); ok(h8.indexOf("おしまい")>0&&h8.indexOf(UI.esc(D.YOKOZUNA.boss))>0,"第8話は横綱が語り、「おしまい」で終わる");
+    const rt=M.normalize(JSON.parse(JSON.stringify(g))); ok(rt.sread===g.sread&&rt.bz.story===8,"物語の進みは 保存→読み直しで同じ");
+    UI.ctx=b0; }
+  ok(Object.keys(UI.v2ok).every(sn=>UI.screens[sn]),"登録した画面はすべて在る("+Object.keys(UI.v2ok).length+")");
 }
 /* ================= スライス6: ホームの一本化・オープニング・自動プレイ ================= */
 {

@@ -35,6 +35,8 @@
     if(fc.verdict==="fast")return ['mm-bz-warn','△ つぎの相手まで あと つよさ <b>+'+fmt(fc.gap)+'</b>'];
     return ['mm-v2-dn','▼ つぎの相手まで あと つよさ <b>+'+fmt(fc.gap)+'</b>'];
   }
+  /* 効いている特性の1行(「なぜ この数字か」) */
+  function trChip(row){ return (row.names&&row.names.length)?'<div class="mm-bz-trfx">特性 '+row.names.map(function(n){ return '<b>'+esc(n)+'</b>'; }).join(' ')+(row.tm&&row.tm!==1?' <span>'+row.base+' → ×'+(Math.round(row.tm*100)/100)+'</span>':'')+'</div>':''; }
   function foeSprite(foe,size){ return '<span class="mm-gi mm-bz-flip">'+MM.px(foe.kind,size)+'</span>'; }
   function foeName(foe){ var rv=D().bzRival(foe.rival); return esc(rv.name)+' '+foe.role; }
 
@@ -89,7 +91,9 @@
     fc.rows.forEach(function(r){ var s=D().kstat[r.k];
       h+='<div class="mm-bz-tr"><span class="mm-bz-sn">'+s.icon+' '+s.name+'</span>'
         +'<span class="mm-bz-bars"><span class="mm-bz-bar mm-bz-bar-me"><i style="width:'+Math.max(4,Math.round(r.me/mx*100))+'%"></i><b>'+r.me+'</b></span><span class="mm-bz-bar mm-bz-bar-foe"><i style="width:'+Math.max(4,Math.round(r.foe/mx*100))+'%"></i><b>'+r.foe+'</b></span></span>'
-        +mark(r.mark)+'</div>'; });
+        +mark(r.mark)+'</div>'+((r.names&&r.names.length)?'<div class="mm-bz-trfx mm-bz-trfx-l">特性 '+r.names.map(function(n){ return '<b>'+esc(n)+'</b>'; }).join(' ')+'</div>':''); });
+    var kt=k.tr.filter(function(id){ return D().traitById[id].cat==="b"; }).filter(function(id){ var fx=D().traitById[id].fx; return fx.behind2||fx.afterLoss||fx.afterWin||fx.miss||fx.fast||fx.slow; });
+    if(kt.length)h+='<div class="mm-bz-trfx mm-bz-trfx-l">取組の中で効く特性 '+kt.map(function(id){ var t=D().traitById[id]; return '<b>'+t.icon+esc(t.name)+'</b> <span>'+esc(t.desc)+'</span>'; }).join(' ／ ')+'</div>';
     h+='<div class="mm-bz-legend">'+["◎","▲","△","▼"].map(function(m){ return '<span>'+mark(m)+MARK[m][1]+'</span>'; }).join('')+'</div>';
     h+='<div class="mm-sub mm-bz-rule">能力1つにつき問題を1問。正解なら じぶんの数字をそのまま出せる(8秒以内なら1.1倍)。まちがえると半分。<b>3本とれば勝ち</b>。運は無い。</div></div>';
     h+='<button class="mm-cta" '+(st.left>0?'':'disabled')+' onclick="MM.ui.bzGo()">'+(st.left>0?'はっけよい！ ▶':'きょうの取組は おわり')+'</button>';
@@ -108,9 +112,9 @@
     var foe=D().bzAt(s.foe), q=G.qById(s.qids[Math.min(s.i,s.n-1)]);
     var h='<div class="mm-wrap">'+UI.resBar2(c)+'<div class="mm-bz-head"><span>'+(s.promo?'🚪 昇進の一番':'五番勝負')+' <b>'+Math.min(s.i+(s.fb?0:1),s.n)+'</b>/'+s.n+'本目</span>'+score(s)+'<span>'+s.w+' - '+s.l+'</span></div>';
     if(s.fb)return h+s.fb+'</div>';
-    var k=D().BASHO.order[s.i], ks=D().kstat[k], row=s.fc.rows[s.i];
+    var row=BZ().peek(s), ks=D().kstat[row.k];       /* いまの数字(とった・とられた後に効く特性こみ) */
     h+='<div class="mm-bz-duel"><div class="mm-bz-duel-k">'+ks.icon+' '+ks.name+' くらべ '+mark(row.mark)+'<span class="mm-sub">'+MARK[row.mark][1]+'</span></div>'
-      +'<div class="mm-bz-duel-n"><span><small>じぶん</small><b>'+row.me+'</b></span><i>対</i><span><small>'+esc(foe.name)+'</small><b>'+row.foe+'</b></span></div></div>';
+      +'<div class="mm-bz-duel-n"><span><small>じぶん</small><b>'+row.me+'</b></span><i>対</i><span><small>'+esc(foe.name)+'</small><b>'+row.foe+'</b></span></div>'+trChip(row)+'</div>';
     h+=UI.qz.qHtml(q,"MM.ui.bzAns",s.sen);
     return h+'</div>';
   };
@@ -124,7 +128,7 @@
     s.fb='<div class="mm-stamp '+(r.ok?'mm-stamp-ok':'')+'">'+(r.ok?'⭕ 正解！':'❌ ざんねん')+'</div>'
       +'<div class="mm-bz-duel mm-bz-duel-'+(r.win?'win':'lose')+'"><div class="mm-bz-duel-k">'+ks.icon+' '+ks.name+' <span class="mm-sub">'+r.base+' → '+how+'</span></div>'
       +'<div class="mm-bz-duel-n"><span><small>じぶん</small><b>'+r.me+'</b></span><i>'+(r.win?'＞':'＜')+'</i><span><small>'+esc(foe.name)+'</small><b>'+r.foe+'</b></span></div>'
-      +'<div class="mm-bz-duel-r">'+(r.win?'この1本 とった！':'この1本 とられた…')+'</div></div>'
+      +trChip(r)+'<div class="mm-bz-duel-r">'+(r.win?'この1本 とった！':'この1本 とられた…')+'</div></div>'
       +UI.v2p.gifts(r.gain&&r.gain.mon&&r.gain.mon.gifts)+((r.gain&&r.gain.mon&&r.gain.mon.ticket)?'<div class="mm-gbloom mm-v2-gift">🎟 <b>配合券を1枚</b> もらった</div>':'')
       +UI.qz.explainHtml(q,v,s.sen)
       +'<button class="mm-cta" onclick="MM.ui.bzNext()">'+(r.over?'結果へ ▶':'つぎの一本 ▶')+'</button>';
@@ -150,7 +154,7 @@
       +(b.delta>0?'⬆ '+b.delta+'枚あがった！('+(b.from>60?'番付の外':b.from+'枚目')+' → <b>'+b.to+'枚目</b>)':(b.delta<0?'⬇ 1枚さがった('+b.from+'枚目 → '+b.to+'枚目)':'そのまま('+(b.to>60?'番付の外':b.to+'枚目')+')'))+'</div>'; }
     else if(!r.promo)h+='<div class="mm-q mm-bz-top"><div class="mm-bz-home-s">第'+st.basho+'場所 '+stars(st)+' <span class="mm-sub">'+st.w+'勝'+st.l+'敗・あと'+st.bashoLeft+'番</span></div></div>';
     h+=UI.v2p.gifts(r.gifts);
-    if(r.story)h+='<div class="mm-gbloom">📖 物語が1話 ひらいた(第'+r.story+'話)</div>';
+    if(r.story&&UI.storyOpenBtn)h+=UI.storyOpenBtn(r.story);
     if(!r.won)h+='<div class="mm-say-card">'+MM.px("m01",24)+'<span>'+(r.rounds.some(function(x){ return !x.ok; })?'正解がふえれば とれる本数がふえるモン。':'つよさで負けたモン。けいこで育てて出直そう！')+'</span></div>';
     h+='<button class="mm-cta" onclick="MM.ui.go(\'bz\')">番付へ ▶</button><button class="small-btn mm-gback" onclick="MM.ui.go(\'h2\')">ホームへ</button></div>';
     if(r.won)setTimeout(function(){ sfx("fanfare"); },300);

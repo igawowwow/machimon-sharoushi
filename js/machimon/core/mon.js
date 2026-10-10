@@ -2,7 +2,7 @@
 /* ============================================================
    machimon/core/mon.js — 個体(種類×才能×性格×特性)と「つよさ」。新しい遊び(GD.V2)の土台。
    ★つよさの式(運なし・1つの数字):
-       能力k = 種類の基礎値k × (1+0.04×(Lv−1)) × (0.60+0.08×才能k) × 性格の補正k ＋ けいこ値k   (×特性の補正)
+       能力k = (種類の基礎値k × (1+0.04×(Lv−1)) × (0.60+0.08×才能k) × 性格の補正k ＋ けいこ値k) × 特性の補正
        つよさ = 5つの能力の合計
      才能の幅は 0.60〜1.40 倍。設計書の 0.70〜1.30 では「才能のいいNがふつうのSRを超える」が
      成り立たない(満点のNでも195 < SRの真ん中200)ので広げた。満点のN=210 > SRの真ん中200。
@@ -42,15 +42,15 @@
   function defaults(){
     return { v:2, on:0, nid:1, mons:[], kan:"", sub:[], shard:0, pity:0, pulls:0, free:"", dex:{}, hall:[],
              bt:0, btd:"", items:{}, hn:[], hnf:{}, bz:null, mig:0, mf:0, shiny:0, rel:0,
-             st:0, brd:0, gn:[0,0], rv:null, cd:null, ms:null, boost:{xp:0,ef:0} };
+             st:0, brd:0, gn:[0,0], rv:null, cd:null, ms:null, boost:{xp:0,ef:0}, sdex:{}, sread:0, buy:0 };
   }
   function normMon(p){
     p=obj(p); if(!p||!D().kindById[p.k])return null;
     var o={ i:String(p.i||"").slice(0,12), k:p.k, n:String(p.n||D().kindById[p.k].name).replace(/[<>"]/g,"").slice(0,20),
-            lv:int(p.lv,1,1,D().LV_MAX), xp:int(p.xp,0,0,1e7), tl:[], na:D().natureById[p.na]?p.na:"n0", tr:[], ef:[], a:[], w:int(p.w,0,0,1e7) };
+            lv:int(p.lv,1,1,D().LV_MAX), xp:int(p.xp,0,0,1e7), tl:[], na:D().natureById[p.na]?p.na:"n0", tr:[], ef:[], a:[], w:int(p.w,0,0,1e7), kc:int(p.kc,0,0,D().ADULT_NEED) };
     var tl=Array.isArray(p.tl)?p.tl:[], ef=Array.isArray(p.ef)?p.ef:[];
     for(var i=0;i<5;i++){ o.tl.push(int(tl[i],0,0,D().TALENT_MAX)); o.ef.push(r2(num(ef[i],0,0,D().EF_MAX))); }
-    (Array.isArray(p.tr)?p.tr:[]).slice(0,2).forEach(function(t){ if(GD().traitById[t]&&o.tr.indexOf(t)<0)o.tr.push(t); });
+    (Array.isArray(p.tr)?p.tr:[]).slice(0,2).forEach(function(t){ if(D().traitById[t]&&o.tr.indexOf(t)<0)o.tr.push(t); });
     if(Array.isArray(p.a))o.a=p.a.slice(0,2).map(function(x){ return String(x||"").slice(0,12); });
     if(p.sh)o.sh=1; if(p.first)o.first=1;
     return o.i?o:null;
@@ -79,6 +79,8 @@
     var bs=obj(s.boost)||{}; o.boost={xp:int(bs.xp,0,0,999),ef:int(bs.ef,0,0,999)};
     o.bz=(MM.banzuke&&MM.banzuke.norm)?MM.banzuke.norm(s.bz):(obj(s.bz)||null);
     o.mig=s.mig?1:0; o.mf=s.mf?1:0; o.shiny=int(s.shiny,0,0,1e9); o.rel=int(s.rel,0,0,1e9);
+    var sd=obj(s.sdex)||{}; for(var sk in sd){ if(D().kindById[sk]&&sd[sk])o.sdex[sk]=1; }
+    o.sread=int(s.sread,0,0,8); o.buy=int(s.buy,0,0,1e9);
     return o;
   }
   var seen=(typeof WeakSet==="function")?new WeakSet():null;
@@ -151,7 +153,7 @@
               tl:KEYS.map(function(k){ return Math.max(0,Math.min(10,Math.round((p[k]||0)/10))); }),
               na:D().natures[n%D().natures.length].id, tr:p.tr?[p.tr]:[], ef:[0,0,0,0,0], a:[], w:(p.r&&p.r.w)||0 };
       if(p.sh)m.sh=1; if(r5>=5)m.first=1;
-      m=normMon(m); if(m){ g.mons.push(m); mark(g,m); }
+      m=normMon(m); if(m){ g.mons.push(m); mark(g,m); if(adult(m))markAdult(g,m); }   /* 旧版で おとな まで育てた子は「おとなにした」のはんこ つき */
     });
     gd.mb.forEach(function(m){ if(m.own&&g.hall.length<10)g.hall.push(m.n); });
     var coin=int(mm.res&&mm.res.g,0,0,1e12), over=Math.max(0,coin-5000);
@@ -168,16 +170,48 @@
   function rarInfo(p){ return GD().RARITY[rarOf(p)]; }
   function natOf(p){ return D().natureById[p.na]||D().natures[0]; }
   function natMul(p,k){ var n=natOf(p); return n.up===k?1.1:(n.dn===k?0.9:1); }
-  /* 特性の補正(つよさに効くもの)。スライス7で36種に広げるときはここに足す */
+  /* ---------- 特性の効果 ----------
+     特性(と、2つそろった組み合わせ)の fx を1つにまとめる。まとめ方は効果ごとに決まっている:
+       かけ算=倍率 / max=「◯%になる」 / min=「◯問ごと」 / 足し算=確率の上のせ / 旗=あるか無いか */
   var TL_A=0.60, TL_B=0.08;
-  var TRAIT_FX={ star:{all:1.06}, cosmos:{all:1.10}, giant:{o:1.15} };
-  function trMul(p,k){ var m=1; for(var i=0;i<p.tr.length;i++){ var fx=TRAIT_FX[p.tr[i]]; if(!fx)continue; if(fx.all)m*=fx.all; if(fx[k])m*=fx[k]; } return m; }
-  function stat(p,k){
-    var kd=kindOf(p), i=KEYS.indexOf(k);
-    return Math.round((kd.base[k]*(1+0.04*(p.lv-1))*(TL_A+TL_B*p.tl[i])*natMul(p,k)+(p.ef[i]||0))*trMul(p,k));
+  var FX_MAX={miss:1,fast:1,bNat:1,bTr:1}, FX_MIN={combo:1}, FX_ADD={bHi:1,bUp:1}, FX_FLAG={slow:1,bRe:1};
+  function fxAdd(o,fx){ for(var k in fx){ var v=fx[k];
+    if(FX_FLAG[k])o[k]=1; else if(FX_MAX[k])o[k]=Math.max(o[k]||0,v); else if(FX_MIN[k])o[k]=o[k]?Math.min(o[k],v):v;
+    else if(FX_ADD[k])o[k]=(o[k]||0)+v; else o[k]=(o[k]||1)*v; } }
+  /* そろっている組み合わせ(特性idの配列から) */
+  function combosOf(tr){ var out=[], C=D().COMBOS; for(var i=0;i<C.length;i++)if(tr.indexOf(C[i].a)>=0&&tr.indexOf(C[i].b)>=0)out.push(C[i]); return out; }
+  var FXC=Object.create(null);
+  function fxOf(tr){
+    tr=tr||[]; if(!tr.length)return FX0; var key=tr.join("+"), o=FXC[key]; if(o)return o;
+    o={}; for(var i=0;i<tr.length;i++){ var t=D().traitById[tr[i]]; if(t)fxAdd(o,t.fx); }
+    combosOf(tr).forEach(function(cb){ fxAdd(o,cb.fx); });
+    return (FXC[key]=o);
   }
-  function stats(p){ var o={}; KEYS.forEach(function(k){ o[k]=stat(p,k); }); return o; }
-  function power(p){ var s=0; for(var i=0;i<KEYS.length;i++)s+=stat(p,KEYS[i]); return s; }
+  var FX0={};
+  /* 効いている特性・組み合わせの名前(fx のどれかのキーを持つもの)。画面で「なぜ この数字か」を見せる */
+  function fxNames(tr,keys){
+    var out=[]; function hit(fx){ for(var i=0;i<keys.length;i++)if(fx[keys[i]]!=null)return true; return false; }
+    (tr||[]).forEach(function(id){ var t=D().traitById[id]; if(t&&hit(t.fx))out.push(t.icon+t.name); });
+    combosOf(tr||[]).forEach(function(cb){ if(hit(cb.fx))out.push("✨"+cb.name); });
+    return out;
+  }
+  function stats(p){
+    var kd=kindOf(p), fx=fxOf(p.tr), o={}, lo=null, i, k, lvm=1+0.04*(p.lv-1);
+    for(i=0;i<KEYS.length;i++){ k=KEYS[i];
+      o[k]=(kd.base[k]*lvm*(TL_A+TL_B*p.tl[i])*natMul(p,k)+(p.ef[i]||0))*(fx.all||1)*(fx[k]||1);
+      if(lo===null||o[k]<o[lo])lo=k; }
+    if(fx.low)o[lo]*=fx.low;                       /* 底上げ: いちばん低い能力だけ */
+    for(i=0;i<KEYS.length;i++)o[KEYS[i]]=Math.round(o[KEYS[i]]);
+    return o;
+  }
+  function stat(p,k){ return stats(p)[k]; }
+  function power(p){ var st=stats(p), s=0; for(var i=0;i<KEYS.length;i++)s+=st[KEYS[i]]; return s; }
+  /* 特性の抽選: めずらしい特性ほど出にくい。高レアの種類ほど めずらしい特性が出やすい */
+  function rollTrait(r,ri,not){
+    var T=D().TRAITS.filter(function(t){ return !not||not.indexOf(t.id)<0; }), tot=0;
+    var w=T.map(function(t){ var x=Math.pow(0.45,t.rar)*(1+0.5*(ri||0)*(t.rar>=2?1:0)); tot+=x; return x; });
+    var x=r()*tot; for(var i=0;i<T.length;i++){ x-=w[i]; if(x<=0)return T[i].id; } return T[0].id;
+  }
   function talent(p){ var s=0; for(var i=0;i<5;i++)s+=p.tl[i]; return s; }
   /* 才能の合計が「その種類のなかで上位何%か」。0〜10の5つの和の分布から正確に出す */
   var CDF=null;
@@ -216,7 +250,7 @@
     else { var pool=D().kindsByRar[Math.max(0,Math.min(4,o.rar||0))]; if(o.fam!=null){ var pf=pool.filter(function(k){ return k.f===o.fam; }); if(pf.length)pool=pf; } kd=pool[Math.floor(r()*pool.length)]; }
     var p={ i:"a"+(g.nid++), k:kd.id, n:kd.name, lv:1, xp:0, tl:[], na:D().natures[Math.floor(r()*D().natures.length)].id, tr:[], ef:[0,0,0,0,0], a:[], w:0 };
     for(var i=0;i<5;i++)p.tl.push(rollTalent(r));
-    if(r()<GD().TRAIT_RATE[Math.min(4,kd.rar)])p.tr.push(MM.garden.rollTrait(r,kd.rar));
+    if(r()<D().TRAIT_RATE[Math.min(4,kd.rar)])p.tr.push(rollTrait(r,Math.min(4,kd.rar)));
     if(r()<(o.parents?D().RATE2.shinyBred:D().RATE2.shiny))p.sh=1;
     if(o.parents)p.a=[o.parents[0].i,o.parents[1].i];
     return p;
@@ -237,8 +271,17 @@
   function toggleSub(c,id){ var g=W(c), p=byId(g,id); if(!p||g.kan===id)return {err:"看板はひかえにできない"};
     var i=g.sub.indexOf(id); if(i>=0){ g.sub.splice(i,1); return {on:0}; }
     if(g.sub.length>=2)return {err:"ひかえは2体まで"}; g.sub.push(id); return {on:1}; }
-  /* 図鑑のはんこ: 1=見つけた 2=おとなにした 4=才能40以上 */
-  function mark(g,p){ var b=g.dex[p.k]||0; b|=1; if(adult(p))b|=2; if(talent(p)>=40)b|=4; g.dex[p.k]=b; }
+  /* 図鑑のはんこ: 1=見つけた 2=おとなにした 4=才能40以上。
+     「おとなにした」は markAdult だけが押す(看板として D.ADULT_NEED 問 正解・Lv10以上)。
+     看板をゆずり受けると Lv を引きつぐので、Lv だけで押すと「看板にした瞬間」に付いてしまうため。 */
+  function mark(g,p){ var b=g.dex[p.k]||0; b|=1; if(talent(p)>=40)b|=4; g.dex[p.k]=b; if(p.sh)g.sdex[p.k]=1; }
+  function markAdult(g,p){ g.dex[p.k]=(g.dex[p.k]||0)|3; }
+  /* 看板として正解した数を数え、条件がそろったら「おとなにした」。押した瞬間だけ true */
+  function kanCorrect(g,p){
+    var N=D().ADULT_NEED; if((p.kc||0)<N)p.kc=(p.kc||0)+1;
+    if(p.kc>=N&&adult(p)&&!((g.dex[p.k]||0)&2)){ markAdult(g,p); return true; }
+    return false;
+  }
 
   /* ---------- タマゴ ---------- */
   function rollRar(c){ var R=D().RATE2.rate, x=c.rand(), acc=0; for(var i=0;i<R.length;i++){ acc+=R[i]; if(x<acc)return i; } return 0; }
@@ -290,6 +333,6 @@
     kindOf:kindOf, rarOf:rarOf, rarInfo:rarInfo, natOf:natOf, stat:stat, stats:stats, power:power, talent:talent, rank:rank, need:need, adult:adult, spId:spId,
     atLv:atLv, pot:pot, roll:roll, byId:byId, sorted:sorted, kanban:kanban, diff:diff, setKan:setKan, toggleSub:toggleSub, mark:mark,
     rollRar:rollRar, freeReady:freeReady, pityLeft:pityLeft, canPull:canPull, pull:pull, release:release,
-    lvCap:lvCap, addXp:addXp, addEf:addEf, onAnswer:onAnswer, TRAIT_FX:TRAIT_FX,
+    lvCap:lvCap, addXp:addXp, addEf:addEf, onAnswer:onAnswer, fxOf:fxOf, fxNames:fxNames, combosOf:combosOf, rollTrait:rollTrait, markAdult:markAdult, kanCorrect:kanCorrect,
     handover:handover, starter:starter, rollTalent:rollTalent, shardOf:shardOf, natMul:natMul, cdf:cdf };
 })();

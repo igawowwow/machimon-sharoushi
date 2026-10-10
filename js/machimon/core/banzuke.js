@@ -3,6 +3,7 @@
    machimon/core/banzuke.js — 番付と五番勝負(1対1・運なし)
    ★五番勝負: 能力5つを1つずつ比べる。1つの能力につき問題を1問。
        正解 → 自分の能力をそのまま出す(2〜8秒の正解は×1.1) / 不正解 → ×0.5
+       品評会で効く特性(先手・土俵ぎわ など)は、ここの倍率にだけ かかる(traitMul)。
        相手 → 決まった能力×0.85(乱数なし)
      数字の大きいほうがその1本をとる。先に3本とったほうの勝ち。
      体力も、けずり合いも無い。「見せて比べる」だけ。
@@ -56,23 +57,38 @@
     return {foe:D().bzAt(foes(z)[Math.min(z.n,R().bouts-1)]),promo:false};
   }
   /* 見込み: ◎=まちがえてもとれる ▲=正解すればとれる △=はやく正解すればとれる ▼=正解してもとれない */
-  function foeShow(foe,k){ return Math.round(foe.stats[k]*R().foe); }
+  function foeShow(foe,k,fx){ return Math.round(foe.stats[k]*R().foe*((fx&&fx.foe)||1)); }
+  /* 品評会で効く特性の倍率(1本ぶん)。st={l:とられた本数, last:前の1本(1=とった −1=とられた 0=まだ), under:相手のほうが つよい}
+     戻り値 {m:倍率, keys:[効いた効果]}。乱数なし。 */
+  function traitMul(fx,i,st){
+    var m=1, keys=[]; function use(k){ if(fx[k]){ m*=fx[k]; keys.push(k); } }
+    use("r"+(i+1)); if(i>=R().rounds-R().exam)use("exam"); if(st.under)use("under");
+    if(st.l>=2)use("behind2"); if(st.last<0)use("afterLoss"); if(st.last>0)use("afterWin");
+    return {m:m,keys:keys};
+  }
+  function missMul(fx){ return Math.max(R().miss,fx.miss||0); }
+  function fastMul(fx){ return Math.max(R().fast,fx.fast||0); }
   /* 画面に出す相手のつよさ = 相手が実際に出してくる5つの数字の合計(自分の つよさ とそのまま比べられる) */
   function foePower(foe){ var s=0; R().order.forEach(function(k){ s+=foeShow(foe,k); }); return s; }
   function myShow(v,mult){ return Math.round(v*mult); }
+  function markOf(me,fo,fx){
+    if(myShow(me,missMul(fx))>fo)return "◎";
+    if(myShow(me,R().hit)>fo||(fx.slow&&myShow(me,fastMul(fx))>fo))return "▲";
+    if(myShow(me,fastMul(fx))>fo)return "△";
+    return "▼";
+  }
   function forecast(c,foe,p){
     p=p||MM.mon.kanban(MM.mon.W(c)); var st=MM.mon.stats(p), rows=[], sure=0, can=0, fast=0, ratios=[];
-    R().order.forEach(function(k){
-      var me=st[k], fo=foeShow(foe,k), mark;
-      if(myShow(me,R().miss)>fo){ mark="◎"; sure++; can++; }
-      else if(myShow(me,R().hit)>fo){ mark="▲"; can++; }
-      else if(myShow(me,R().fast)>fo){ mark="△"; fast++; }
-      else mark="▼";
+    var fx=MM.mon.fxOf(p.tr), pw=MM.mon.power(p), under=foePower(foe)>pw;
+    /* 見込みは「まだ1本も取っていない・取られていない」ときの数字(とった・とられた後に効く特性は、取組の中で足される) */
+    R().order.forEach(function(k,i){
+      var tm=traitMul(fx,i,{l:0,last:0,under:under}), me=st[k]*tm.m, fo=foeShow(foe,k,fx), mark=markOf(me,fo,fx);
+      if(mark==="◎"){ sure++; can++; } else if(mark==="▲")can++; else if(mark==="△")fast++;
       ratios.push((fo+1)/Math.max(1,me));
-      rows.push({k:k,me:me,foe:fo,mark:mark});
+      rows.push({k:k,me:Math.round(me),foe:fo,mark:mark,base:st[k],tm:tm.m,names:MM.mon.fxNames(p.tr,tm.keys.concat(fx.foe?["foe"]:[]))});
     });
     ratios.sort(function(a,b){ return a-b; });
-    var pw=MM.mon.power(p), gap=Math.max(0,Math.ceil(pw*(ratios[R().need-1]-1)));     /* あとどれだけ つよさ が要るか */
+    var gap=Math.max(0,Math.ceil(pw*(ratios[R().need-1]-1)));     /* あとどれだけ つよさ が要るか */
     var v=sure>=R().need?"sure":(can>=R().need?"can":(can+fast>=R().need?"fast":"no"));
     return { rows:rows, sure:sure, can:can, fast:fast, verdict:v, gap:v==="no"||v==="fast"?gap:0, mine:pw, foePower:foePower(foe) };
   }
@@ -95,19 +111,28 @@
     if(z.day.d!==c.dstr)z.day={d:c.dstr,n:0};
     z.day.n++; z.cur={foe:nf.foe.pos,promo:nf.promo?1:0};
     var st=MM.mon.stats(p);
-    return { foe:nf.foe.pos, promo:nf.promo, pid:p.i, qids:qs, n:n, i:0, w:0, l:0, mine:st, rounds:[], fc:forecast(c,nf.foe,p) };
+    return { foe:nf.foe.pos, promo:nf.promo, pid:p.i, qids:qs, n:n, i:0, w:0, l:0, mine:st, rounds:[], fc:forecast(c,nf.foe,p),
+             tr:p.tr.slice(), under:foePower(nf.foe)>MM.mon.power(p) };
+  }
+  /* つぎの1本の「いまの数字」(とった・とられた後に効く特性こみ)。画面はこれをそのまま出す */
+  function peek(s){
+    if(s.i>=s.n)return null;
+    var k=R().order[s.i], foe=D().bzAt(s.foe), fx=MM.mon.fxOf(s.tr||[]), last=s.rounds.length?(s.rounds[s.rounds.length-1].win?1:-1):0;
+    var tm=traitMul(fx,s.i,{l:s.l,last:last,under:!!s.under}), me=s.mine[k]*tm.m, fo=foeShow(foe,k,fx);
+    return { k:k, base:s.mine[k], tm:tm.m, me:Math.round(me), raw:me, foe:fo, mark:markOf(me,fo,fx), fx:fx,
+             names:MM.mon.fxNames(s.tr||[],tm.keys.concat(fx.foe?["foe"]:[])) };
   }
   /* 1本ぶん。ok=正解したか ms=かかった時間。乱数は使わない */
   function round(c,s,ok,ms){
     if(s.i>=s.n||s.w>=R().need||s.l>=R().need)return null;
-    var k=R().order[s.i], foe=D().bzAt(s.foe), qid=s.qids[s.i];
-    var quick=!!(ok&&typeof ms==="number"&&ms>=MM.learn.FLUKE_MS&&ms<R().fastMs);
-    var mult=ok?(quick?R().fast:R().hit):R().miss;
-    var me=myShow(s.mine[k],mult), fo=foeShow(foe,k), win=me>fo;
+    var pk=peek(s), k=pk.k, fx=pk.fx, qid=s.qids[s.i];
+    var quick=!!(ok&&typeof ms==="number"&&ms>=MM.learn.FLUKE_MS&&(ms<R().fastMs||fx.slow));     /* マイペース: ゆっくりでも「はやい正解」あつかい */
+    var mult=ok?(quick?fastMul(fx):R().hit):missMul(fx);
+    var me=myShow(pk.raw,mult), fo=pk.foe, win=me>fo;
     var rw=MM.learn.commit(qid,ok,ms,c), gain=MM.economy.grant(rw,c);       /* 学習の記録と ごほうび は ふだんの問題と同じ道を通す */
     if(win)s.w++; else s.l++;
     s.i++;
-    var r={k:k,ok:!!ok,quick:quick,mult:mult,base:s.mine[k],me:me,foe:fo,win:win,qid:qid,gain:gain,over:(s.w>=R().need||s.l>=R().need||s.i>=s.n)};
+    var r={k:k,ok:!!ok,quick:quick,mult:mult,base:s.mine[k],tm:pk.tm,names:pk.names.concat(MM.mon.fxNames(s.tr||[],ok?(quick?["fast","slow"]:[]):["miss"])),me:me,foe:fo,win:win,qid:qid,gain:gain,over:(s.w>=R().need||s.l>=R().need||s.i>=s.n)};
     s.rounds.push({k:k,ok:r.ok,me:me,foe:fo,win:win,mult:mult});
     return r;
   }
@@ -146,5 +171,5 @@
   function townLevel(c){ return danOf(Z(c).pos).id; }
 
   MM.banzuke={ perDay:perDay, defaults:defaults, norm:norm, Z:Z, danOf:danOf, isPromo:isPromo, leftToday:leftToday, foes:foes, nextFoe:nextFoe,
-    forecast:forecast, foePower:foePower, foeShow:foeShow, state:state, start:start, round:round, finish:finish, settleAbandoned:settleAbandoned, townLevel:townLevel };
+    forecast:forecast, foePower:foePower, foeShow:foeShow, state:state, start:start, round:round, peek:peek, traitMul:traitMul, finish:finish, settleAbandoned:settleAbandoned, townLevel:townLevel };
 })();

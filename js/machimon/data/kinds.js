@@ -107,6 +107,71 @@
     combo:[{n:10,t0:1},{n:20,t1:1}],                            /* その日はじめての 10連続・20連続正解 */
     mastery:{t1:1}                                              /* 科目の習熟が Lv上限の段をこえる */
   };
+  /* ---------- 特性36 ----------
+     cat: a=能力を上げる(10) b=品評会で効く(12) k=育成で効く(8) h=配合で効く(6)。rar=めずらしさ(大きいほど出にくい)。
+     fx は効果の中身。読む場所は決まっている: a→core/mon.js(つよさ) b→core/banzuke.js(五番勝負)
+     k→core/keiko.js(けいこ) h→core/breed.js(配合)。表示だけの特性は作らない(tools/test-v2.js が36種ぜんぶ確かめる)。
+     ★旧版からある10個の id(gold shiki sprout phoenix giant rainbow lucky star sage cosmos)は変えない(セーブが持っている)。 */
+  D.TRAITS=[
+    {id:"giant",   name:"力持ち",        icon:"🗻",cat:"a",rar:1,desc:"ちから ×1.15",fx:{o:1.15}},
+    {id:"nebari",  name:"ねばり腰",      icon:"🧱",cat:"a",rar:1,desc:"ねばり ×1.15",fx:{j:1.15}},
+    {id:"hanayaka",name:"はなやか",      icon:"🎉",cat:"a",rar:1,desc:"いきおい ×1.15",fx:{h:1.15}},
+    {id:"pikatto", name:"ピカッと",      icon:"💫",cat:"a",rar:1,desc:"ひらめき ×1.15",fx:{s:1.15}},
+    {id:"hakase",  name:"ものしり博士",  icon:"🎓",cat:"a",rar:1,desc:"かしこさ ×1.15",fx:{m:1.15}},
+    {id:"shokunin",name:"職人肌",        icon:"🔨",cat:"a",rar:1,desc:"ちから・ひらめき ×1.08",fx:{o:1.08,s:1.08}},
+    {id:"yutosei", name:"優等生",        icon:"🎒",cat:"a",rar:1,desc:"ねばり・かしこさ ×1.08",fx:{j:1.08,m:1.08}},
+    {id:"sokoage", name:"底上げ",        icon:"🪜",cat:"a",rar:2,desc:"いちばん低い能力 ×1.25",fx:{low:1.25}},
+    {id:"star",    name:"スター性",      icon:"⭐",cat:"a",rar:3,desc:"全能力 ×1.06",fx:{all:1.06}},
+    {id:"cosmos",  name:"宇宙のタマゴ",  icon:"🪐",cat:"a",rar:4,desc:"全能力 ×1.10",fx:{all:1.10}},
+
+    {id:"sente",   name:"先手",          icon:"🚀",cat:"b",rar:1,desc:"1本目だけ ×1.2",fx:{r1:1.2}},
+    {id:"nakaban", name:"中盤の主",      icon:"🏮",cat:"b",rar:1,desc:"3本目だけ ×1.2",fx:{r3:1.2}},
+    {id:"musubi",  name:"結びに強い",    icon:"🎀",cat:"b",rar:1,desc:"5本目だけ ×1.25",fx:{r5:1.25}},
+    {id:"dohyo",   name:"土俵ぎわ",      icon:"🪢",cat:"b",rar:1,desc:"2本とられた後 ×1.25",fx:{behind2:1.25}},
+    {id:"phoenix", name:"不死鳥",        icon:"🔥",cat:"b",rar:1,desc:"とられた次の1本 ×1.15",fx:{afterLoss:1.15}},
+    {id:"norinori",name:"のりのり",      icon:"🎶",cat:"b",rar:1,desc:"とった次の1本 ×1.1",fx:{afterWin:1.1}},
+    {id:"hayatochiri",name:"早とちり知らず",icon:"🙆",cat:"b",rar:2,desc:"まちがえても ×0.7で出せる",fx:{miss:0.7}},
+    {id:"subayai", name:"すばやい",      icon:"⚡",cat:"b",rar:2,desc:"はやい正解が ×1.2になる",fx:{fast:1.2}},
+    {id:"shiki",   name:"マイペース",    icon:"🐢",cat:"b",rar:1,desc:"ゆっくり正解でも ×1.1",fx:{slow:1}},
+    {id:"rainbow", name:"虹のオーラ",    icon:"🌈",cat:"b",rar:3,desc:"相手の数字を 5%さげる",fx:{foe:0.95}},
+    {id:"oomono",  name:"大物ぐい",      icon:"🐟",cat:"b",rar:1,desc:"相手のほうが つよいとき ×1.06",fx:{under:1.06}},
+    {id:"honban",  name:"本番に強い",    icon:"📝",cat:"b",rar:1,desc:"4・5本目(本試験形式) ×1.12",fx:{exam:1.12}},
+
+    {id:"fukushu", name:"復習じょうず",  icon:"📗",cat:"k",rar:1,desc:"復習の けいけん +50%",fx:{xpRev:1.5}},
+    {id:"sage",    name:"賢者の書",      icon:"📜",cat:"k",rar:2,desc:"けいけん +15%",fx:{xp:1.15}},
+    {id:"sprout",  name:"スクスク",      icon:"🌱",cat:"k",rar:1,desc:"Lv30まで けいけん +50%",fx:{xpLow:1.5}},
+    {id:"gold",    name:"黄金の手",      icon:"💰",cat:"k",rar:2,desc:"コイン +25%",fx:{coin:1.25}},
+    {id:"nigate",  name:"苦手つぶし名人",icon:"🧹",cat:"k",rar:1,desc:"苦手つぶしの けいこ値 2倍",fx:{efNig:2}},
+    {id:"shinmono",name:"新しもの好き",  icon:"🔍",cat:"k",rar:1,desc:"あたらしい問題の けいこ値 +50%",fx:{efNew:1.5}},
+    {id:"nami",    name:"波に乗る",      icon:"🌊",cat:"k",rar:1,desc:"連続正解 3問ごとに いきおい",fx:{combo:3}},
+    {id:"honshiken",name:"本試験ごのみ", icon:"🖋",cat:"k",rar:1,desc:"本試験形式の かしこさ 2倍",fx:{efExam:2}},
+
+    {id:"tsutae",  name:"子に伝える",    icon:"💝",cat:"h",rar:2,desc:"高いほうの才能を 継ぎやすい(+15%)",fx:{bHi:0.15}},
+    {id:"lucky",   name:"子宝",          icon:"🍀",cat:"h",rar:1,desc:"同じ才能の +1 が出やすい(+10%)",fx:{bUp:0.10}},
+    {id:"oyayuzuri",name:"親ゆずり",     icon:"🧬",cat:"h",rar:1,desc:"性格を 継ぎやすい(90%)",fx:{bNat:0.9}},
+    {id:"osusowake",name:"おすそわけ",   icon:"🤝",cat:"h",rar:1,desc:"特性を 継ぎやすい(70%)",fx:{bTr:0.7}},
+    {id:"mezurashi",name:"めずらし好き", icon:"🦄",cat:"h",rar:2,desc:"配合限定の種類が 1.5倍 出やすい",fx:{bOnly:1.5}},
+    {id:"yarinaoshi",name:"やり直し上手",icon:"🎰",cat:"h",rar:3,desc:"才能のふり直しは 2回ふって高いほう",fx:{bRe:1}}
+  ];
+  D.TRAIT_CATS=[{id:"a",name:"能力を上げる",icon:"💪"},{id:"b",name:"品評会で効く",icon:"🏆"},{id:"k",name:"けいこで効く",icon:"📚"},{id:"h",name:"配合で効く",icon:"💞"}];
+  D.traitById=Object.create(null); D.TRAITS.forEach(function(t){ D.traitById[t.id]=t; });
+  /* 特性2つの組み合わせ10組。2つとも持つと fx が上のせされる(配合は おや2体の特性を合わせて数える) */
+  D.COMBOS=[
+    {id:"c01",a:"sente",      b:"giant",    name:"立ち合い一気",  desc:"1本目が さらに ×1.1",fx:{r1:1.1}},
+    {id:"c02",a:"dohyo",      b:"nebari",   name:"うっちゃり",    desc:"2本とられた後が さらに ×1.1",fx:{behind2:1.1}},
+    {id:"c03",a:"musubi",     b:"hakase",   name:"結びの大一番",  desc:"5本目が さらに ×1.1",fx:{r5:1.1}},
+    {id:"c04",a:"nakaban",    b:"hanayaka", name:"中日の花",      desc:"3本目が さらに ×1.1",fx:{r3:1.1}},
+    {id:"c05",a:"hayatochiri",b:"sokoage",  name:"七転び八起き",  desc:"まちがえても ×0.8で出せる",fx:{miss:0.8}},
+    {id:"c06",a:"star",       b:"cosmos",   name:"星めぐり",      desc:"全能力 さらに ×1.04",fx:{all:1.04}},
+    {id:"c07",a:"shokunin",   b:"yutosei",  name:"五拍子そろう",  desc:"いきおい ×1.12",fx:{h:1.12}},
+    {id:"c08",a:"fukushu",    b:"sage",     name:"学びの虫",      desc:"けいけん さらに +25%",fx:{xp:1.25}},
+    {id:"c09",a:"tsutae",     b:"lucky",    name:"子育て名人",    desc:"+1 が さらに出やすい(+5%)",fx:{bUp:0.05}},
+    {id:"c10",a:"honban",     b:"honshiken",name:"本番の申し子",  desc:"4・5本目が さらに ×1.06",fx:{exam:1.06}}
+  ];
+  D.TRAIT_RATE=[0.06,0.10,0.18,0.30,0.50];      /* タマゴから生まれた子に特性が付く確率(N R SR SSR UR) */
+  D.ADULT_NEED=30;                               /* 図鑑の「おとなにした」: 看板として この数だけ正解する(Lv10以上で) */
+  /* かけら交換のねだん(育成どうぐ) */
+  D.SHOP_ITEM={ito:80,omamori:60,suzu:60,futago:100,utsushi:100,kawari:30,mi:80,ishi:100,happa:30,wasure:30,cho:40,mochi:40};
   /* 最初の1体: 3つのタマゴから1つ選ぶ(どれもN。才能は ふつう〜やや良い) */
   D.STARTERS=["k001","k061","k031"];
 

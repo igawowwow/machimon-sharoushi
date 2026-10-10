@@ -145,18 +145,23 @@
       var kd=D().keikoById[out.cls];
       var f=(rw.novelty==null?1:rw.novelty)*(rw.timing<=0.3?0.3:1);     /* 同じ日のくり返し・覚えた問題の連打はほぼ無価値 */
       var bst=g.boost||(g.boost={xp:0,ef:0});
-      out.coin=Math.round((kd?kd.coin:K().other)*f); out.xp=out.coin; gain.g=out.coin;
+      var k=M().kanban(g), fx=k?M().fxOf(k.tr):{}; out.kan=k;
+      var base=Math.round((kd?kd.coin:K().other)*f);
+      /* 育成で効く特性(看板のもの): けいけん・コイン・けいこ値 */
+      out.xp=Math.round(base*(fx.xp||1)*(out.cls==="rev"&&fx.xpRev?fx.xpRev:1)*(k&&k.lv<30&&fx.xpLow?fx.xpLow:1));
+      out.coin=Math.round(base*(fx.coin||1)); gain.g=out.coin;
       if(bst.xp>0&&out.xp>0){ out.xp*=2; bst.xp--; out.boostXp=1; }
-      var k=M().kanban(g); out.kan=k;
       if(k&&out.xp>0){
         var mast=L().masteryBySub(c), was=M().adult(k), u=M().addXp(k,out.xp,lvCap(c,mast).cap);
         if(u){ out.ups.push({p:k,n:u,grown:!was&&M().adult(k)}); M().mark(g,k); }
         if(f>=1){
           var mul=1; if(bst.ef>0){ mul=2; bst.ef--; out.boostEf=1; }
           var e=function(key,v){ var a=M().addEf(k,key,v*mul); if(a)out.ef[key]=r2((out.ef[key]||0)+a); };
-          if(kd){ out.late=(out.cls==="rev"&&(rw.late||0)>=K().lateDays); e(kd.stat,kd.ef*(out.late?K().lateMul:1)); }
-          if((c.mm.combo||0)>0&&c.mm.combo%K().comboEvery===0)e("h",K().comboEf);
-          try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&isExam(q))e("m",K().examEf); }catch(e2){}
+          if(kd){ out.late=(out.cls==="rev"&&(rw.late||0)>=K().lateDays);
+            e(kd.stat,kd.ef*(out.late?K().lateMul:1)*(out.cls==="nig"&&fx.efNig?fx.efNig:1)*(out.cls==="new"&&fx.efNew?fx.efNew:1)); }
+          if((c.mm.combo||0)>0&&c.mm.combo%(fx.combo||K().comboEvery)===0)e("h",K().comboEf);
+          try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&isExam(q))e("m",K().examEf*(fx.efExam||1)); }catch(e2){}
+          if(M().kanCorrect(g,k))out.adult=k;          /* 図鑑の「おとなにした」(看板として正解を重ねた) */
         }
         /* 科目の習熟が Lv上限の段をこえたら、とっておきのどうぐ(科目×段ごとに1回きり) */
         if(MM.breed){ var st=stepsOf(mast), ms=g.ms||(g.ms={});

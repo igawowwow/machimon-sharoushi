@@ -11,7 +11,7 @@
                  族の相性がある組は「ふり直し」が「高いほう」に置きかわる(=75%で高いほう)。
                  両親が同じ値のときだけ 5%(かくれ相性は10%)で +1。
        性格      親のどちらか60% / ふり直し40%
-       特性      親の特性を1つずつ35%で判定(生まれつきは1つまで)
+       特性      親の特性を1つずつ35%で判定(2つまで継げる)。配合で効く特性は、おや2体のぶんを合わせて数える
    ★予想は2行だけ: 「子の才能の見込み 32〜41／50」「いまの看板を超える確率 28%」。
      予想は決まった種の乱数で600回ためした結果(同じ組なら いつ見ても同じ数字)。
    ★育成どうぐ12種とごほうび。何が出るかは順番で決まる(乱数を使わない=品評会に運を持ちこまない)。
@@ -32,6 +32,8 @@
     var hid=fa!==fb&&g.hn.indexOf(key)>=0;
     return { key:key, pub:pub, hid:hid, known:!!(hid&&g.hnf[key]), any:pub||hid };
   }
+  /* 配合で効く特性: おや2体の特性を合わせて数える(組み合わせも、2体でそろえばよい) */
+  function pairFx(A,B2){ var tr=A.tr.concat(B2.tr).filter(function(t,i,a){ return a.indexOf(t)===i; }).sort(); return M().fxOf(tr); }
   /* ---------- 子の種類の確率 ---------- */
   function kindDist(A,B2,item){
     var ka=M().kindOf(A), kb=M().kindOf(B2), out=[], rem=1, map={};
@@ -40,7 +42,8 @@
     /* 配合限定: 2つの族がそろい、両親のレア度が条件以上。レア度の高いものから判定 */
     var on=D().kinds.filter(function(k){ return k.only&&pairKey(k.only.fams[0],k.only.fams[1])===pairKey(ka.f,kb.f)&&ka.f!==kb.f&&ka.rar>=k.only.need&&kb.rar>=k.only.need; })
       .sort(function(x,y){ return y.rar-x.rar; });
-    on.forEach(function(k){ var p=rem*B().only[k.rar]; add(k,p,true); rem-=p; });
+    var fxk=pairFx(A,B2);
+    on.forEach(function(k){ var p=rem*Math.min(0.9,B().only[k.rar]*(fxk.bOnly||1)); add(k,p,true); rem-=p; });
     var okA=ka.rar<=kb.rar;                       /* 子のレア度は おや2 より上がらない */
     var other=(item==="kawari")?0.30:B().kindOther, fam=okA?ka.f:kb.f;
     var pool=D().kinds.filter(function(k){ return !k.only&&k.f===fam&&k.rar<=Math.min(4,kb.rar)&&k.id!==ka.id&&k.id!==kb.id; });
@@ -58,19 +61,22 @@
   function itoIndex(A,B2){ var bi=0, bd=-1; for(var i=0;i<5;i++){ var d=Math.abs(A.tl[i]-B2.tl[i]); if(d>bd){ bd=d; bi=i; } } return bi; }
   /* 子を1体ぶん決める(idは付けない。乱数 r だけで決まる) */
   function make(r,g,A,B2,item,dist,cp){
-    var kd=pickKind(r,dist), T=D().TALENT_MAX, tl=[], ito=(item==="ito")?itoIndex(A,B2):-1, i;
+    var kd=pickKind(r,dist), T=D().TALENT_MAX, tl=[], ito=(item==="ito")?itoIndex(A,B2):-1, i, fx=pairFx(A,B2);
+    var pHi=B().hi+(fx.bHi||0), pUp=(cp.hid?B().upHidden:B().up)+(fx.bUp||0);
+    function reroll(){ var v=M().rollTalent(r); if(fx.bRe){ var v2=M().rollTalent(r); if(v2>v)v=v2; } return v; }
     for(i=0;i<5;i++){
       var a=A.tl[i], b=B2.tl[i], hi=Math.max(a,b), lo=Math.min(a,b), v;
       if(i===ito)v=hi;
-      else if(a===b&&r()<(cp.hid?B().upHidden:B().up))v=Math.min(T,a+1);
-      else { var x=r(); v=x<B().hi?hi:(x<B().hi+B().lo?lo:(cp.any?hi:M().rollTalent(r))); }
+      else if(a===b&&r()<pUp)v=Math.min(T,a+1);
+      else { var x=r(); v=x<pHi?hi:(x<pHi+B().lo?lo:(cp.any?hi:reroll())); }
       tl.push(v);
     }
-    var na=(item==="omamori")?A.na:(r()<B().nature?(r()<0.5?A.na:B2.na):D().natures[Math.floor(r()*D().natures.length)].id);
-    var tr=[], cand=A.tr.concat(B2.tr).filter(function(t,ix,arr){ return arr.indexOf(t)===ix; });
-    cand.forEach(function(t){ if(!tr.length&&r()<B().trait)tr.push(t); });
+    var na=(item==="omamori")?A.na:(r()<Math.max(B().nature,fx.bNat||0)?(r()<0.5?A.na:B2.na):D().natures[Math.floor(r()*D().natures.length)].id);
+    /* 特性: 親の特性を1つずつ判定(2つまで継げる = 組み合わせは配合でねらえる) */
+    var tr=[], cand=A.tr.concat(B2.tr).filter(function(t,ix,arr){ return arr.indexOf(t)===ix; }), pTr=Math.max(B().trait,fx.bTr||0);
+    cand.forEach(function(t){ if(tr.length<2&&r()<pTr)tr.push(t); });
     if(!tr.length&&item==="suzu"&&cand.length)tr.push(cand[Math.floor(r()*cand.length)]);
-    if(!tr.length&&r()<B().traitNew)tr.push(MM.garden.rollTrait(r,Math.min(4,kd.rar)));
+    if(!tr.length&&r()<B().traitNew)tr.push(M().rollTrait(r,Math.min(4,kd.rar)));
     var ps=(A.sh||B2.sh)?D().RATE2.shinyBred:D().RATE2.shiny;
     var p={ k:kd.id, n:kd.name, lv:1, xp:0, tl:tl, na:na, tr:tr, ef:[0,0,0,0,0], a:[A.i,B2.i], w:0 };
     if(r()<ps)p.sh=1;
@@ -137,7 +143,7 @@
     if(it.use==="b")return {err:"配合のときに使う どうぐ"};
     if(it.use==="m"&&!p)return {err:"だれに使うか えらんでね"};
     if(item==="mi"){ var lo=0; for(i=1;i<5;i++)if(p.tl[i]<p.tl[lo])lo=i; res.k=M().KEYS[lo]; res.from=p.tl[lo]; p.tl[lo]=M().rollTalent(r); res.to=p.tl[lo]; M().mark(g,p); }
-    else if(item==="ishi"){ if(p.tr.length>=2)return {err:"特性は2つまで"}; var t, guard=0; do{ t=MM.garden.rollTrait(r,Math.min(4,M().rarOf(p))); }while(p.tr.indexOf(t)>=0&&guard++<50); if(p.tr.indexOf(t)>=0)return {err:"うまくいかなかった"}; p.tr.push(t); res.trait=t; }
+    else if(item==="ishi"){ if(p.tr.length>=2)return {err:"特性は2つまで"}; var t=M().rollTrait(r,Math.min(4,M().rarOf(p)),p.tr); p.tr.push(t); res.trait=t; res.combo=M().combosOf(p.tr)[0]||null; }
     else if(item==="happa"){ var N=D().natures.filter(function(n){ return n.id!==p.na; }); res.from=p.na; p.na=N[Math.floor(r()*N.length)].id; res.to=p.na; }
     else if(item==="wasure"){ var hi=0; for(i=1;i<5;i++)if(p.ef[i]>p.ef[hi])hi=i; if(!(p.ef[hi]>0))return {err:"けいこ値が まだ無い"}; res.k=M().KEYS[hi]; res.from=p.ef[hi]; p.ef[hi]=0; }
     else if(item==="cho"){ g.boost.ef=Math.min(999,g.boost.ef+D().KEIKO.size); res.boost=g.boost.ef; }
@@ -148,6 +154,33 @@
   }
   function itemCount(g){ var n=0; for(var k in g.items)n+=g.items[k]; return n; }
 
+  /* ---------- かけら交換 ----------
+     好きなSSR 300 / 好きなUR 1,000(タマゴから出る種類だけ。配合限定は配合で) / 育成どうぐ 各30〜100。
+     かけらは「手放す」からしか増えない(コインでは買えない・課金も無い)。 */
+  function shop(c){
+    var g=M().W(c), C=D().SHARD_COST;
+    function kinds(rar,cost){ return D().kindsByRar[rar].map(function(k){ return {kind:k,cost:cost,has:!!((g.dex[k.id]||0)&1)}; }); }
+    return { shard:g.shard, full:g.mons.length>=D().RATE2.cap, ur:kinds(4,C.ur), ssr:kinds(3,C.ssr),
+             items:D().ITEMS.map(function(t){ return {item:t,cost:D().SHOP_ITEM[t.id],n:g.items[t.id]||0}; }) };
+  }
+  function buyKind(c,kid){
+    var g=M().W(c), kd=D().kindById[kid]; if(!kd||kd.only||kd.rar<3||kd.rar>4)return {err:"その種類は 交換できない"};
+    var cost=kd.rar===4?D().SHARD_COST.ur:D().SHARD_COST.ssr;
+    if(g.mons.length>=D().RATE2.cap)return {err:"なかまがいっぱい。だれかを手放してね"};
+    if(g.shard<cost)return {err:"かけらが足りない(あと"+(cost-g.shard)+")"};
+    g.shard-=cost; g.buy++;
+    var isNew=!g.dex[kd.id], p=M().roll(c,g,{kind:kd.id}); g.mons.push(p); if(p.sh)g.shiny++; M().mark(g,p);
+    return { mon:p, isNew:isNew, cost:cost };
+  }
+  function buyItem(c,id){
+    var g=M().W(c), it=D().itemById[id], cost=D().SHOP_ITEM[id]; if(!it||!cost)return {err:"そのどうぐは無い"};
+    if((g.items[id]||0)>=D().ITEM_CAP)return {err:"これ以上は 持てない"};
+    if(g.shard<cost)return {err:"かけらが足りない(あと"+(cost-g.shard)+")"};
+    g.shard-=cost; g.buy++; addItem(g,id,1);
+    return { item:id, cost:cost };
+  }
+
   MM.breed={ pairKey:pairKey, compat:compat, kindDist:kindDist, itoIndex:itoIndex, make:make, preview:preview, breed:breed,
-    give:give, nextGift:nextGift, addItem:addItem, useItem:useItem, itemCount:itemCount, tierList:tierList, lcg:lcg };
+    give:give, nextGift:nextGift, addItem:addItem, useItem:useItem, itemCount:itemCount, tierList:tierList, lcg:lcg,
+    pairFx:pairFx, shop:shop, buyKind:buyKind, buyItem:buyItem };
 })();
