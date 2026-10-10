@@ -48,7 +48,7 @@
       h+='</div><button class="mm-cta" onclick="MM.ui.introDone()">この名前で出発 ▶</button></div>';
       return h;
     }
-    return UI.screens.town();
+    return (UI.v2on&&UI.v2on())?UI.screens.h2():UI.screens.town();
   };
   function dots(i,n){ var s=""; for(var k=0;k<n;k++)s+='<i class="'+(k<=i?"mm-on":"")+'"></i>'; return s; }
 

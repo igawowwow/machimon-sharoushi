@@ -88,7 +88,9 @@
     return o;
   }
   var seen=(typeof WeakSet==="function")?new WeakSet():null;
+  function V2(){ return !!(GD().V2&&MM.mon); }
   function W(c){
+    if(V2())return MM.mon.W(c);       /* 新しい遊びのあいだは旧セーブ(mm.gd)を作らない・さわらない */
     var mm=c.mm;
     if(!mm.gd||!(seen&&seen.has(mm.gd))){ mm.gd=normalize(mm.gd); if(seen)seen.add(mm.gd); }
     var g=mm.gd;
@@ -138,7 +140,7 @@
 
   /* ---------- 名前・レアリティ ---------- */
   function sum(p){ var s=0; for(var i=0;i<KEYS.length;i++)s+=p[KEYS[i]]||0; return s; }
-  function rarity(p){ var R=GD().RARITY, s=sum(p), out=0; for(var i=0;i<R.length;i++)if(s>=R[i].min)out=i; return out; }
+  function rarity(p){ if(p&&p.k&&MM.mon)return MM.mon.rarOf(p); var R=GD().RARITY, s=sum(p), out=0; for(var i=0;i<R.length;i++)if(s>=R[i].min)out=i; return out; }
   function rarInfo(p){ return GD().RARITY[rarity(p)]; }
   function genName(r){ return pick(GD().NAME_A,r)+pick(GD().NAME_B,r); }
   function grade(v){ return v>=95?"SS":v>=85?"S":v>=75?"A":v>=62?"B":v>=48?"C":v>=35?"D":"E"; }
@@ -146,6 +148,7 @@
   /* ---------- タマゴを作る ---------- */
   /* o: {rar|band, fam, line, spec, parents:[A,B]} */
   function genSeed(c,g,o){
+    if(V2())return MM.mon.roll(c,g,o);
     var r=c.rand, GA=GD().GACHA;
     var fam=(o.fam!=null)?o.fam:Math.floor(r()*9);
     var lines=allLines(g).filter(function(l){ return l.f===fam; });
@@ -182,6 +185,7 @@
   function seasonTrait(g){ var ids=["shiki","rainbow","gold","phoenix"]; return ids[season(g.w)]; }
   /* ---------- ガチャ ---------- */
   function rollRar(c,g){
+    if(V2())return MM.mon.rollRar(c);
     var GA=GD().GACHA; if(g.pity>=GA.pity)return 2;
     var x=c.rand(),acc=0; for(var i=0;i<GA.rate.length;i++){ acc+=GA.rate[i]; if(x<acc)return i; } return 0;
   }
@@ -192,6 +196,7 @@
   function canPull(c,n,bid){ var g=W(c), bn=banner(bid||"normal"); return (wallet(c,g,bn)>=costOf(bn,n)||(bn.id==="normal"&&(c.mm.tix||0)>=n))&&g.seeds.length+(bn.id==="council"&&n>=10?1:n)<=seedCap(g); }
   function freeReady(c){ var g=W(c); return g.free!==c.dstr; }
   function pull(c,n,bid,free){
+    if(V2())return MM.mon.pull(c,!!free);
     var g=W(c), bn=banner(bid||"normal"), cost=costOf(bn,n), cnt=(bn.id==="council"&&n>=10)?1:n;
     if(free){ if(!freeReady(c))return {err:"無料ガチャは1日1回"}; bn=banner("normal"); n=1; cnt=1; cost=0; }
     if(g.seeds.length+cnt>seedCap(g))return {err:"タマゴ倉庫がいっぱい("+seedCap(g)+"個)。かえすか手放してね"};
@@ -274,6 +279,7 @@
   /* ---------- 1回答ごと(economy.grant から呼ばれる) ---------- */
   function onAnswer(rw,gain,c){
     if(!c||!c.mm)return null;
+    if(V2())return MM.mon.onAnswer(rw,gain,c);
     var g=W(c), ok=!!rw.ok, sub=-1;
     try{ var q=(typeof G.qById==="function"&&c.lastQid!=null)?G.qById(c.lastQid):null; if(q&&typeof q.s==="number")sub=q.s; }catch(e){}
     var out={grow:0,bloom:[],yield:0,week:null};
@@ -571,6 +577,7 @@
 
   /* ---------- 週送り(正解10問ごと) ---------- */
   function tick(c){
+    if(V2())return null;              /* 新しい遊びには暦(週送り)も寿命も無い */
     var g=W(c), out={bloom:[],dead:[],year:null,income:0};
     /* 今週まだ開かれていない大会をライバルだけで開催 */
     contestsOf(c,g.w).forEach(function(def){ if(!isDone(c,def.id))simRivalContest(c,def); });

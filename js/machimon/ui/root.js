@@ -30,18 +30,21 @@
     try{ if(G.location)G.location.reload(); }catch(e){}
   };
 
+  /* 新しい遊び(GD.V2)のあいだは、旧い画面へは行かせない(全部ホームへ寄せる) */
+  function v2(){ return !!(UI.v2on&&UI.v2on()); }
   UI.go=function(screen,params){
+    if(v2()&&!(UI.v2ok&&UI.v2ok[screen])){ screen="h2"; params={}; }
     UI.route={screen:screen,params:params||{}};
     UI.render();
   };
   UI.render=function(){
     var box=el(); if(!box)return;
-    var fn=UI.screens[UI.route.screen]||UI.screens.town;
+    var fn=UI.screens[UI.route.screen]||(v2()?UI.screens.h2:UI.screens.town);
     var html="";
     try{ html=fn(UI.route.params)||""; }
-    catch(e){ html='<div class="mm-wrap"><div class="mm-q">画面の表示に失敗しました。<br><button class="small-btn" onclick="MM.ui.go(\'town\')">街へ戻る</button></div></div>'; console.warn(e); }
+    catch(e){ html='<div class="mm-wrap"><div class="mm-q">画面の表示に失敗しました。<br><button class="small-btn" onclick="MM.ui.go(\'town\')">もどる</button></div></div>'; console.warn(e); }
     box.innerHTML=html;
-    try{ if(typeof G.setBgmScene==="function")G.setBgmScene((UI.route.screen==="boss"||(UI.route.screen==="gContest"&&UI.gd&&UI.gd.contest))?"mmboss":"mmtown"); }catch(e){}
+    try{ if(typeof G.setBgmScene==="function")G.setBgmScene((UI.route.screen==="boss"||UI.route.screen==="bzBout"||(UI.route.screen==="gContest"&&UI.gd&&UI.gd.contest))?"mmboss":"mmtown"); }catch(e){}
   };
 
   /* --- 共通パーツ --- */

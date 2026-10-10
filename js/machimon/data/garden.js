@@ -10,6 +10,10 @@
   var G=(typeof window!=="undefined")?window:globalThis;
   var MM=G.MM=G.MM||{}; var D=MM.DATA=MM.DATA||{}; var GD=D.garden={};
 
+  /* ★切り替えスイッチ: 新しい遊び(種類105・個体差・番付)は、これが真のときだけ動く。
+     偽のあいだは今の遊びが今のまま動く。スライス8で true にして提出する。 */
+  GD.V2=!!G.__MM_V2;        /* ふだんは false。画面の確認のときだけ、読み込み前に window.__MM_V2=1 を立てる */
+
   GD.WEEK_NEED=10;          /* 正解何問で1週進むか */
   GD.YEAR_WEEKS=48;         /* 1年=48週(4月始まり) */
   GD.SEASONS=["春","夏","秋","冬"];

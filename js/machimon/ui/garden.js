@@ -248,6 +248,8 @@
     if(q.trap)h+='<div class="mm-sub">⚠ ひっかけ: '+esc(q.trap)+'</div>';
     return h+'</div>';
   }
+  UI.qz={ qHtml:qHtml, judgeQ:judgeQ, senPick:senPick, explainHtml:explainHtml };   /* 問題の出し方・判定・解説は新旧の画面で共通 */
+  UI.passCard=passCard;
   UI.screens.gQuiz=function(){
     var c=UI.ctx(), s=UI.gd.quiz; if(!s)return UI.screens.garden();
     var q=(typeof G.qById==="function"&&s.qid!=null)?G.qById(s.qid):null;

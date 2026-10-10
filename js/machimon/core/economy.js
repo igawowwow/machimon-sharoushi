@@ -29,6 +29,8 @@
 
   /* 1回答ぶんの付与。rw は MM.learn.reward/commit の戻り値 */
   function grant(rw,c){
+    /* 新しい遊び(GD.V2): お金はコインだけ。経験・けいこ値は core/mon.js が決める */
+    if(MM.DATA.garden&&MM.DATA.garden.V2&&MM.mon){ var g2={g:0,xp:0,ke:0,mat:0,tama:0,lvUp:0}; MM.mon.onAnswer(rw,g2,c); c.mm.res.g+=g2.g; return g2; }
     var mult=rw.mult;
     var gain={g:0,xp:0,ke:0,mat:0,tama:0,lvUp:0};
     gain.g=Math.round(G_BASE*rw.difficulty*mult*coinBonus(c));

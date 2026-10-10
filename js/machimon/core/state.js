@@ -123,6 +123,8 @@
     out.wp=obj(s.wp)||null;
     /* ガーデン(core/garden.js)。未ロードなら生のまま持ち越す(garden側で遅延正規化) */
     try{ out.gd=(MM.garden&&MM.garden.normalize&&obj(s.gd))?MM.garden.normalize(s.gd):(obj(s.gd)||null); }catch(e){ out.gd=obj(s.gd)||null; }
+    /* 新しい遊び(core/mon.js)。未ロードなら生のまま持ち越す */
+    try{ out.g2=(MM.mon&&MM.mon.normalize&&obj(s.g2))?MM.mon.normalize(s.g2):(obj(s.g2)||null); }catch(e){ out.g2=obj(s.g2)||null; }
     out.ver=VER;
     return out;
   }
