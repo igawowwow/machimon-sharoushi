@@ -1,82 +1,36 @@
 /* ============================================================
-   css/machimon.css — MACHIMON 専用スタイル(名前空間は .mm- のみ)
-   ★通常時は低刺激(彩度・輝度を抑える)。演出はコンボ段階でのみ加算する
-     = 「静→動 / 暗→明 / 無音→音 / 小→大」のコントラストを作る(失敗⑨の遮断)。
-   ★既存画面のクラスには一切触れない。
+   css/machimon.css — 画面のスタイル(名前空間は .mm- のみ)
+   ★390px幅で、説明を読まなくても分かる大きさ。文字は10px未満にしない。
    ============================================================ */
 .mm-wrap{ padding:8px 10px 76px; color:var(--ink,#33303E); }
 
-/* --- リソースバー: 5種のみ。知識エネルギーだけ色と光で区別する --- */
+/* --- 上の帯: コイン・かけら・配合券 --- */
 .mm-res{ display:flex; gap:6px; flex-wrap:wrap; align-items:center;
   background:#fff; border:2px solid var(--ink,#33303E); border-radius:14px; padding:6px 8px; }
 .mm-res b{ font-size:13px; }
 .mm-res .mm-chip{ font-size:11px; padding:2px 6px; border-radius:9px; background:#F3F0E8; white-space:nowrap; }
-.mm-res .mm-ke{ background:linear-gradient(135deg,#FFF3C4,#FFE1EB); box-shadow:0 0 0 2px #FFC53C inset; font-weight:900; }
 
 /* --- 見出し・エリア --- */
 .mm-h{ font-weight:900; font-size:15px; margin:12px 0 6px; display:flex; align-items:center; gap:6px; }
 .mm-sub{ font-size:11px; color:#8A8494; }
-.mm-area{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:8px; margin:8px 0; }
-.mm-area.mm-locked{ background:#F3F0E8; opacity:.85; }
-.mm-gate{ width:100%; text-align:left; border:2px dashed #8A8494; border-radius:14px; background:#FBF8F1;
-  padding:10px; font-size:12px; min-height:44px; }
-.mm-gate.mm-can{ border-style:solid; border-color:#FFC53C; background:linear-gradient(135deg,#FFF9E0,#FFF); }
-
-/* --- スロット(建物) --- */
-.mm-slots{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
 .mm-slot{ border:2px solid var(--ink,#33303E); border-radius:12px; background:#FBF8F1; padding:8px;
   min-height:56px; text-align:left; font-size:12px; }
-.mm-slot.mm-empty{ border-style:dashed; color:#8A8494; text-align:center; }
 .mm-slot b{ display:block; font-size:13px; }
 .mm-slot .mm-on{ font-size:11px; color:#5B8DFF; }
 
-/* --- 事件(唯一アニメーションする要素。街の他は静止) --- */
-.mm-inc{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:14px;
-  background:#fff; padding:10px; margin:6px 0; min-height:44px; animation:mm-float 1.6s ease-in-out infinite; }
-.mm-inc .mm-badge{ font-size:10px; font-weight:900; color:#fff; border-radius:8px; padding:1px 6px; margin-right:6px; }
-.mm-inc .mm-line{ font-size:13px; font-weight:700; }
-@keyframes mm-float{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
-
-/* --- 事件(出題)画面 --- */
+/* --- 問題の画面 --- */
 .mm-q{ background:#fff; border:2px solid var(--ink,#33303E); border-radius:16px; padding:14px; margin:10px 0;
   font-size:15px; line-height:1.7; }
-.mm-say{ font-size:13px; font-weight:900; color:#8A6FD1; margin:6px 0; }
 .mm-ans{ display:flex; gap:10px; margin-top:14px; }
 .mm-ans button{ flex:1; min-height:64px; font-size:26px; font-weight:900; border-radius:16px;
   border:3px solid var(--ink,#33303E); background:#fff; box-shadow:0 4px 0 #33303E; }
 .mm-ans button:active{ transform:translateY(3px); box-shadow:0 1px 0 #33303E; }
-
-/* --- 報酬・コンボ(段階が上がった瞬間だけ強くする) --- */
-.mm-gain{ font-size:13px; font-weight:900; }
-.mm-combo{ position:fixed; right:10px; top:8px; font-size:11px; color:#8A8494; }
-.mm-fx1{ animation:mm-spark .35s ease-out; }
-.mm-fx2{ animation:mm-glow .5s ease-out; }
 .mm-fx3{ animation:mm-gold .8s ease-out; }
 @keyframes mm-spark{ from{ filter:brightness(1.25) } to{ filter:none } }
-@keyframes mm-glow{ from{ filter:brightness(1.4) saturate(1.3) } to{ filter:none } }
 @keyframes mm-gold{ 0%{ filter:brightness(1.6) saturate(1.6) } 100%{ filter:none } }
-
-/* --- マチモン --- */
-.mm-mons{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-.mm-mon{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px; text-align:left;
-  font-size:12px; min-height:44px; }
-.mm-mon b{ display:block; font-size:13px; }
 .mm-bar{ height:8px; border-radius:6px; background:#EDE9DF; overflow:hidden; margin-top:4px; }
 .mm-bar i{ display:block; height:100%; background:linear-gradient(90deg,#3ED6C0,#5B8DFF); }
-.mm-need{ font-size:11px; color:#8A8494; margin-top:3px; }
-.mm-need.mm-ok{ color:#3ED6C0; font-weight:900; }
-
-/* --- 孵化 --- */
-.mm-egg{ text-align:center; padding:40px 10px; font-size:64px; }
-.mm-egg.mm-crack{ animation:mm-shake .4s ease-in-out; }
-.mm-egg.mm-hush{ opacity:.35; }
-.mm-egg.mm-burst{ animation:mm-pop .6s ease-out; }
-@keyframes mm-shake{ 0%,100%{ transform:rotate(0) } 25%{ transform:rotate(-8deg) } 75%{ transform:rotate(8deg) } }
 @keyframes mm-pop{ 0%{ transform:scale(.9) } 60%{ transform:scale(1.25) } 100%{ transform:scale(1) } }
-
-/* --- ボス --- */
-.mm-hp{ height:14px; border-radius:8px; background:#EDE9DF; overflow:hidden; border:2px solid var(--ink,#33303E); }
-.mm-hp i{ display:block; height:100%; background:linear-gradient(90deg,#FF5A5A,#FF6B9D); transition:width .3s; }
 
 /* --- タブ --- */
 .mm-tabs{ position:fixed; left:0; right:0; bottom:0; display:flex; background:#fff;
@@ -88,12 +42,10 @@
 /* --- 記録 --- */
 .mm-row{ display:flex; justify-content:space-between; align-items:center; padding:6px 0;
   border-bottom:1px solid #EDE9DF; font-size:12px; }
-.mm-mast{ height:10px; border-radius:6px; background:#EDE9DF; overflow:hidden; width:110px; }
-.mm-mast i{ display:block; height:100%; background:linear-gradient(90deg,#FFC53C,#3ED6C0); }
 
 /* --- 動きを減らす設定を尊重(消さずに短縮=進行は止めない) --- */
 @media (prefers-reduced-motion: reduce){
-  .mm-inc,.mm-fx1,.mm-fx2,.mm-fx3,.mm-egg{ animation-duration:.01s !important; }
+  .mm-fx3{ animation-duration:.01s !important; }
 }
 
 /* --- 街の生活シーン(マチモンが歩き・建て・つぶやく) --- */
@@ -101,16 +53,12 @@
   overflow:hidden; margin:8px 0 4px; }
 .mm-sky-day{ background:linear-gradient(#BEE3F8 60%,#D8F0E0); }
 .mm-sky-eve{ background:linear-gradient(#F8CFA8 55%,#F0E0C8); }
-.mm-sky-night{ background:linear-gradient(#4A4A6E 55%,#6E6E92); }
 .mm-sun{ position:absolute; right:10px; top:6px; font-size:18px; }
 .mm-cloud{ position:absolute; font-size:16px; opacity:.8; animation:mm-drift 40s linear infinite; }
 @keyframes mm-drift{ from{ transform:translateX(0) } to{ transform:translateX(120px) } }
 .mm-ground{ position:absolute; left:0; right:0; bottom:0; height:26px;
   background:linear-gradient(#9BD18A,#7FB86F); border-top:2px solid #5E9450; }
 .mm-bld{ position:absolute; bottom:20px; font-size:30px; line-height:1; z-index:1; }
-.mm-bld-lv{ position:absolute; left:50%; transform:translateX(-50%); bottom:-13px;
-  font-size:8px; font-style:normal; font-weight:900; color:#fff; background:#33303E;
-  border-radius:6px; padding:0 4px; white-space:nowrap; }
 .mm-px{ image-rendering:pixelated; vertical-align:bottom; }
 
 /* 歩くマチモン: 左右にてくてく(端で向きを変える)+ぴょこぴょこ */
@@ -125,31 +73,9 @@
 .mm-hop{ display:inline-block; animation:mm-hop .46s ease-in-out infinite; }
 @keyframes mm-hop{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
 
-/* 働くマチモン: 建物のそばでゆれながら🔨を振る */
-.mm-worker{ position:absolute; bottom:16px; z-index:2; animation:mm-sway 2.6s ease-in-out infinite; }
-@keyframes mm-sway{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-2px) } }
-.mm-tool{ position:absolute; right:-12px; top:2px; font-size:13px; font-style:normal;
-  transform-origin:20% 80%; animation:mm-knock 1.1s ease-in-out infinite; }
-@keyframes mm-knock{ 0%,55%,100%{ transform:rotate(0) } 70%{ transform:rotate(-42deg) } 82%{ transform:rotate(8deg) } }
-
-/* 生活のつぶやき: ときどきふわっと出て消える */
-.mm-bub{ position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%);
-  max-width:150px; width:max-content; font-size:9px; font-style:normal; font-weight:700;
-  color:var(--ink,#33303E); background:#fff; border:1.5px solid var(--ink,#33303E);
-  border-radius:9px; padding:2px 6px; opacity:0; pointer-events:none; z-index:3;
-  animation:mm-bub 16s ease-in-out infinite; }
-@keyframes mm-bub{ 0%,72%{ opacity:0 } 76%,92%{ opacity:1 } 96%,100%{ opacity:0 } }
-
 @media (prefers-reduced-motion: reduce){
-  .mm-walker,.mm-worker,.mm-hop,.mm-tool,.mm-cloud{ animation:none !important; }
-  .mm-bub{ animation:none !important; opacity:1; }
+  .mm-walker,.mm-hop,.mm-cloud{ animation:none !important; }
 }
-
-/* マチモン一覧カード: 左に顔・右に情報の2カラム */
-.mm-mon{ display:flex; align-items:center; gap:8px; }
-.mm-mon-face{ flex:0 0 44px; text-align:center; }
-.mm-mon-info{ flex:1; min-width:0; }
-.mm-mon-info b,.mm-mon-info .mm-sub,.mm-mon-info .mm-need{ display:block; }
 
 /* 単体配布のロゴ(MACHIMONだけのゲームであることの旗印) */
 .mm-logo{ font-family:'DotGothic16',monospace; font-weight:900; font-size:18px;
@@ -162,14 +88,9 @@
 .mm-splash{ text-align:center; padding:120px 10px; }
 .mm-intro{ position:relative; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:14px; padding:24px 16px 40px; text-align:center; cursor:pointer; }
-.mm-intro-1{ background:linear-gradient(#BEE3F8 55%,#D8F0E0 80%,#9BD18A 80%); margin:-14px -14px; padding:24px 16px 60px; }
-.mm-intro-sky{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
 .mm-intro-logo{ font-family:'DotGothic16',monospace; font-weight:900; font-size:34px; letter-spacing:4px;
   color:var(--ink,#33303E); text-shadow:3px 3px 0 #FFC53C; line-height:1.1; }
 .mm-intro-logo span{ display:block; font-size:16px; letter-spacing:10px; color:#8A6FD1; text-shadow:none; margin-top:4px; }
-.mm-intro-tag{ font-weight:900; font-size:15px; }
-.mm-intro-mons{ display:flex; align-items:flex-end; gap:6px; margin-top:12px; }
-.mm-intro-ground{ height:0; }
 .mm-cta{ display:block; width:100%; max-width:360px; min-height:56px; font-size:17px; font-weight:900;
   border-radius:16px; border:3px solid var(--ink,#33303E); background:#FFC53C; box-shadow:0 5px 0 #33303E;
   color:var(--ink,#33303E); margin-top:8px; animation:mm-cta 1.4s ease-in-out infinite; }
@@ -178,200 +99,41 @@
 .mm-intro-stage{ padding:16px 0 4px; }
 .mm-talk{ width:100%; max-width:380px; background:#fff; border:3px solid var(--ink,#33303E); border-radius:18px;
   padding:14px 16px 26px; text-align:left; position:relative; box-shadow:0 4px 0 #33303E; }
-.mm-talk-name{ position:absolute; top:-14px; left:14px; background:#8A6FD1; color:#fff; font-weight:900; font-size:12px;
-  border-radius:10px; padding:2px 10px; border:2px solid var(--ink,#33303E); }
 .mm-talk-text{ font-size:16px; line-height:1.7; font-weight:700; }
-.mm-talk-next{ position:absolute; right:12px; bottom:6px; font-size:11px; color:#8A8494; animation:mm-hop 1s ease-in-out infinite; }
-.mm-intro-dots i{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#D9D4C7; margin:0 3px; }
-.mm-intro-dots i.mm-on{ background:#8A6FD1; }
 .mm-input{ width:100%; max-width:360px; min-height:52px; font-size:18px; font-weight:900; text-align:center;
   border:3px solid var(--ink,#33303E); border-radius:14px; padding:8px 12px; background:#fff; font-family:inherit; }
-.mm-chips{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-.mm-chipbtn{ border:2px solid var(--ink,#33303E); border-radius:20px; background:#fff; padding:6px 12px; font-size:12px; font-weight:700; }
-.mm-intro-4 .mm-burst{ animation:mm-pop .7s ease-out; }
-
-/* コーチ(相棒の吹き出し) */
-.mm-coach{ display:flex; align-items:center; gap:8px; margin:8px 0 4px; background:#fff; border:2px solid #8A6FD1;
-  border-radius:16px; padding:8px 10px; box-shadow:0 3px 0 #8A6FD1; }
-.mm-coach-text{ font-size:13px; font-weight:900; line-height:1.5; flex:1; }
-.mm-coach-done{ border-color:#3ED6C0; box-shadow:0 3px 0 #3ED6C0; }
-
-/* つぎの目標 */
-.mm-goal{ background:linear-gradient(135deg,#FFF9E0,#FFF); border:2px solid var(--ink,#33303E); border-radius:14px;
-  padding:8px 10px; margin:6px 0 2px; font-size:12px; }
 .mm-goal-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.mm-goal-left b{ font-size:15px; color:#B58900; }
-
-/* ハイライト(コーチが指す要素): 脈打つ金枠 + 👆 */
-.mm-hl{ position:relative; box-shadow:0 0 0 3px #FFC53C, 0 0 18px #FFC53C !important; animation:mm-pulse 1.1s ease-in-out infinite !important; }
-.mm-hl::after{ content:"👆"; position:absolute; right:8px; top:-16px; font-size:22px; animation:mm-point .8s ease-in-out infinite; z-index:4; }
-@keyframes mm-pulse{ 0%,100%{ box-shadow:0 0 0 3px #FFC53C, 0 0 10px #FFC53C } 50%{ box-shadow:0 0 0 5px #FFD766, 0 0 24px #FFC53C } }
-@keyframes mm-point{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } }
-
-/* 事件カード v2: 顔 + 本文 + 解決ボタン */
-.mm-inc{ display:flex; align-items:center; gap:8px; }
-.mm-inc-face{ flex:0 0 40px; text-align:center; }
-.mm-inc-body{ flex:1; min-width:0; }
-.mm-inc-go{ flex:0 0 auto; font-size:11px; font-weight:900; color:#fff; background:#FF6B9D; border-radius:10px;
-  padding:6px 8px; border:2px solid var(--ink,#33303E); }
-.mm-more{ width:100%; min-height:40px; border:2px dashed #8A8494; border-radius:12px; background:#FBF8F1;
-  font-size:12px; color:#8A8494; margin:4px 0; }
 
 /* 街シーン v2: 大きめ・タマゴ・街の名前 */
 .mm-scene{ height:170px; }
 .mm-townname{ position:absolute; left:8px; top:6px; font-size:11px; font-weight:900; color:var(--ink,#33303E);
   background:rgba(255,255,255,.85); border:1.5px solid var(--ink,#33303E); border-radius:8px; padding:1px 8px; z-index:3; }
-.mm-egg-btn{ position:absolute; right:14px; bottom:18px; z-index:4; background:none; border:0; font-size:38px; line-height:1; padding:6px; border-radius:14px; }
-.mm-egg-wob{ display:inline-block; animation:mm-wob .9s ease-in-out infinite; transform-origin:50% 90%; }
-@keyframes mm-wob{ 0%,100%{ transform:rotate(-7deg) } 50%{ transform:rotate(7deg) } }
-.mm-egg-n{ position:absolute; right:0; top:0; font-size:10px; font-style:normal; font-weight:900; background:#33303E; color:#fff; border-radius:8px; padding:0 5px; }
-.mm-egg-tap{ position:absolute; left:50%; transform:translateX(-50%); bottom:-4px; font-size:9px; font-style:normal; font-weight:900;
-  background:#FF6B9D; color:#fff; border-radius:8px; padding:0 6px; white-space:nowrap; }
 
 /* 結果画面 v2 */
 .mm-stamp{ text-align:center; font-size:28px; font-weight:900; margin:10px 0 4px; animation:mm-stamp .45s cubic-bezier(.2,1.6,.4,1); }
-.mm-stamp-ok{ color:#FF6B9D; } .mm-stamp-ng{ color:#5B8DFF; }
+.mm-stamp-ok{ color:#FF6B9D; }
 @keyframes mm-stamp{ 0%{ transform:scale(2.2); opacity:0 } 60%{ transform:scale(.95); opacity:1 } 100%{ transform:scale(1) } }
 .mm-reward{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0; }
 .mm-pop{ display:inline-block; font-weight:900; font-size:15px; background:#fff; border:2px solid var(--ink,#33303E);
   border-radius:12px; padding:6px 10px; box-shadow:0 3px 0 #33303E; opacity:0; animation:mm-popin .5s cubic-bezier(.2,1.6,.4,1) forwards; }
 .mm-pop-ke{ background:linear-gradient(135deg,#FFF3C4,#FFE1EB); }
 @keyframes mm-popin{ 0%{ transform:translateY(16px) scale(.6); opacity:0 } 100%{ transform:none; opacity:1 } }
-.mm-combo-big{ text-align:center; font-weight:900; font-size:16px; color:#FF5A5A; margin:4px 0; animation:mm-stamp .5s cubic-bezier(.2,1.6,.4,1); }
 .mm-say-card{ display:flex; align-items:center; gap:8px; background:#fff; border:2px solid #8A6FD1; border-radius:14px;
   padding:8px 10px; margin:8px 0; font-size:13px; font-weight:700; }
-@media (prefers-reduced-motion: reduce){ .mm-cta,.mm-hl,.mm-hl::after,.mm-egg-wob,.mm-stamp,.mm-pop,.mm-combo-big{ animation:none !important; opacity:1; } }
-
-/* 大事件 */
-.mm-inc-big{ background:linear-gradient(135deg,#F3E8FF,#FFF); border-color:#7B2CBF; box-shadow:0 3px 0 #7B2CBF; }
-.mm-inc-big .mm-inc-go{ background:#7B2CBF; }
-.mm-bigbar{ display:flex; align-items:center; gap:6px; font-weight:900; font-size:13px; color:#7B2CBF; margin:4px 0 8px; }
-.mm-dot{ display:inline-block; width:14px; height:14px; border-radius:50%; background:#E6DDF5; border:2px solid #7B2CBF; margin-right:3px; }
-.mm-dot.mm-on{ background:#7B2CBF; box-shadow:0 0 8px #B388FF; }
-.mm-bigclear{ text-align:center; font-weight:900; font-size:16px; color:#7B2CBF; background:linear-gradient(135deg,#F3E8FF,#FFF3C4); border:2px solid #7B2CBF; border-radius:14px; padding:10px; margin:6px 0; animation:mm-stamp .5s cubic-bezier(.2,1.6,.4,1); }
-.mm-bigfail{ text-align:center; font-weight:900; font-size:13px; color:#FF5A5A; background:#FFF0F0; border:2px solid #FF5A5A; border-radius:14px; padding:8px; margin:6px 0; }
-
-/* ガチャ */
-.mm-gacha-hero{ text-align:center; padding:10px 0 4px; }
-.mm-gacha-ball{ font-size:64px; line-height:1; animation:mm-hop 1.2s ease-in-out infinite; }
-.mm-gacha-stage{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60dvh; }
-.mm-gacha-shake{ animation:mm-shake .25s ease-in-out infinite; }
-.mm-tix{ margin-top:6px; font-weight:900; color:#B58900; background:#FFF3C4; border-radius:10px; padding:4px 8px; display:inline-block; }
-.mm-gacha-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
-.mm-gacha-grid.mm-one{ grid-template-columns:1fr; }
-.mm-card{ position:relative; background:#fff; border:2px solid var(--ink,#33303E); border-radius:12px; padding:14px 4px 6px; text-align:center;
-  font-size:10px; opacity:0; animation:mm-popin .5s cubic-bezier(.2,1.6,.4,1) forwards; overflow:hidden; }
-.mm-card b{ display:block; font-size:11px; margin-top:2px; }
-.mm-one .mm-card{ padding:20px; font-size:14px; } .mm-one .mm-card b{ font-size:18px; }
-.mm-card-rar{ position:absolute; left:0; top:0; color:#fff; font-weight:900; font-size:9px; padding:1px 6px; border-radius:0 0 8px 0; }
-.mm-r2{ box-shadow:0 0 0 2px #8A6FD1 inset; } .mm-r3{ box-shadow:0 0 12px #FFC53C, 0 0 0 2px #FFC53C inset; background:linear-gradient(135deg,#FFF9E0,#FFF); }
-.mm-r4{ box-shadow:0 0 16px #FF5A5A, 0 0 0 2px #FF5A5A inset; background:linear-gradient(135deg,#FFE1EB,#FFF3C4); }
-.mm-new{ display:inline-block; font-size:9px; font-weight:900; color:#fff; background:#FF6B9D; border-radius:6px; padding:0 5px; }
-/* 祝福オーバーレイ */
-.mm-cele{ position:fixed; inset:0; z-index:200; background:rgba(51,48,62,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
-.mm-cele-conf{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-.mm-cele-conf i{ position:absolute; top:-12px; width:9px; height:14px; border-radius:2px; animation:mm-conf 2s linear forwards; }
-@keyframes mm-conf{ to{ transform:translateY(110vh) rotate(720deg); opacity:.8 } }
-.mm-cele-box{ background:#fff; border:3px solid var(--ink,#33303E); border-radius:20px; padding:24px 20px; text-align:center; max-width:340px; width:100%;
-  box-shadow:0 6px 0 #33303E; animation:mm-stamp .5s cubic-bezier(.2,1.6,.4,1); }
-.mm-cele-icon{ font-size:72px; line-height:1.1; animation:mm-drop .6s cubic-bezier(.2,1.6,.4,1); }
-@keyframes mm-drop{ 0%{ transform:translateY(-60px) scale(.6); opacity:0 } 100%{ transform:none; opacity:1 } }
-.mm-cele-title{ font-size:20px; font-weight:900; margin-top:8px; }
-.mm-cele-sub{ font-size:13px; font-weight:700; color:#8A6FD1; margin-top:4px; }
+@media (prefers-reduced-motion: reduce){ .mm-cta,.mm-stamp,.mm-pop{ animation:none !important; opacity:1; } }
 /* 図鑑 */
 .mm-dex-line{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px; margin:8px 0; }
-.mm-dex-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .mm-dex{ text-align:center; font-size:10px; padding:6px 2px; border-radius:10px; background:#FBF8F1; }
 .mm-dex b{ display:block; font-size:11px; }
 .mm-dex.mm-unk img{ filter:brightness(0) opacity(.35); }
-.mm-dex-done{ font-size:10px; font-weight:900; color:#3ED6C0; }
-
-.mm-quick{ display:flex; gap:6px; margin:6px 0; }
-.mm-quick button{ flex:1; min-height:40px; border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; font-size:12px; font-weight:900; box-shadow:0 2px 0 #33303E; }
 .mm-tabs button{ font-size:10px; }
 
 /* 世界が広がる: 階層ごとの街シーン */
 .mm-scene{ transition:height .6s ease; }
-.mm-sky-space{ background:linear-gradient(#141433 60%,#2E2E5E); }
-.mm-sky-space .mm-ground{ background:linear-gradient(#8E8EB8,#6E6E92); border-top-color:#5A5A80; }
-.mm-star{ position:absolute; width:3px; height:3px; border-radius:50%; background:#fff; animation:mm-twinkle 2.4s ease-in-out infinite; }
-@keyframes mm-twinkle{ 0%,100%{ opacity:.25 } 50%{ opacity:1 } }
-.mm-far{ position:absolute; left:0; right:0; bottom:24px; text-align:center; font-size:26px; letter-spacing:-4px; opacity:.45; filter:saturate(.6); white-space:nowrap; z-index:0; }
-.mm-deco{ position:absolute; bottom:20px; font-size:22px; z-index:1; opacity:.95; }
-.mm-car{ position:absolute; bottom:4px; font-size:16px; z-index:3; animation:mm-drive 9s linear infinite; }
-@keyframes mm-drive{ from{ left:-10% } to{ left:105% } }
-.mm-train{ position:absolute; bottom:44px; font-size:14px; z-index:0; opacity:.8; animation:mm-drive 14s linear infinite reverse; }
-.mm-world{ display:block; width:100%; text-align:left; background:#fff; border:2px solid var(--ink,#33303E); border-radius:14px; padding:6px 8px; margin:6px 0 2px; }
-.mm-world-row{ display:flex; justify-content:space-between; font-size:15px; margin-bottom:2px; }
-.mm-world-row i{ font-style:normal; }
-.mm-w-done{ opacity:.55; } .mm-w-now{ transform:scale(1.35); filter:drop-shadow(0 0 4px #FFC53C); } .mm-w-lock{ filter:grayscale(1) opacity(.35); }
-.mm-world-txt{ display:block; font-size:12px; }
 
-/* ============================================================
-   社労士ダービー(ウイニングポスト風): 暦・レース・厩舎・トラック
-   ============================================================ */
-.mm-derby-head{ border:2px solid var(--ink,#33303E); border-radius:14px; padding:8px 10px; margin:8px 0;
-  background:linear-gradient(135deg,#FFF9E0,#E8F4FF); display:flex; flex-direction:column; gap:2px; }
-.mm-derby-head>div:first-child{ display:flex; align-items:baseline; gap:8px; }
-.mm-derby-cal{ font-weight:900; font-size:16px; }
-.mm-grade{ display:inline-block; font-size:10px; font-weight:900; color:#fff; border-radius:6px; padding:1px 6px; margin-right:4px; vertical-align:middle; }
-.mm-race{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff;
-  padding:10px; margin:6px 0; min-height:44px; box-shadow:0 3px 0 #33303E; }
-.mm-race:active{ transform:translateY(2px); box-shadow:0 1px 0 #33303E; }
-.mm-race-g1{ background:linear-gradient(135deg,#FFF9E0,#FFF); border-color:#B58900; }
-.mm-race-off{ opacity:.6; box-shadow:none; }
-.mm-race-top{ display:flex; align-items:center; gap:4px; font-size:14px; }
-.mm-race-top b{ font-size:15px; }
-.mm-crown{ font-size:10px; font-weight:900; color:#B58900; margin-left:auto; }
-.mm-race .mm-sub{ display:block; margin-top:2px; }
-.mm-race-go{ display:block; text-align:right; font-weight:900; font-size:13px; color:#D8534F; margin-top:4px; }
-.mm-race-off .mm-race-go{ color:#8A8494; font-weight:700; }
-.mm-cta-rest{ background:#fff; animation:none; font-size:15px; }
-.mm-stable{ display:grid; grid-template-columns:1fr; gap:6px; }
-.mm-horse{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:2px solid var(--ink,#33303E);
-  border-radius:14px; background:#fff; padding:6px 8px; font-size:12px; min-height:56px; }
-.mm-horse-off{ opacity:.55; }
-.mm-horse-face{ flex:0 0 44px; text-align:center; position:relative; }
-.mm-mark{ position:absolute; right:-4px; top:-4px; font-size:14px; font-weight:900; color:#D8534F; background:#fff; border-radius:50%; width:20px; height:20px; line-height:20px; border:1.5px solid var(--ink,#33303E); }
-.mm-horse-info{ flex:1; display:flex; flex-direction:column; gap:1px; min-width:0; }
-.mm-horse-info b{ font-size:13px; }
-.mm-cond{ font-size:12px; font-weight:900; }
-.mm-spd{ display:block; height:6px; border-radius:4px; background:#EDE9DF; overflow:hidden; margin-top:3px; }
-.mm-spd i{ display:block; height:100%; background:linear-gradient(90deg,#FFC53C,#FF6B9D); }
-/* トラック: 左=名前列 / 中=走路(ゴール線つき) / 右=順位 */
-.mm-track{ border:2px solid var(--ink,#33303E); border-radius:14px; overflow:hidden; margin:8px 0;
-  background:repeating-linear-gradient(0deg,#9BD18A 0 27px,#8FC97E 27px 28px); padding:3px 0; }
-.mm-lane{ display:flex; align-items:center; height:28px; }
-.mm-lane-me{ background:rgba(255,255,255,.4); }
-.mm-lane-name{ flex:0 0 84px; padding-left:6px; font-size:9px; font-weight:900; color:#33303E; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.mm-lane-me .mm-lane-name{ opacity:1; color:#D8534F; }
-.mm-lane-run{ position:relative; flex:1; height:28px; border-right:3px dashed #fff; margin-right:4px; }
-.mm-runner{ position:absolute; top:1px; font-size:20px; font-style:normal; line-height:26px; transition:left .9s cubic-bezier(.2,.8,.3,1); z-index:2; }
-.mm-lane-rank{ flex:0 0 22px; text-align:center; font-size:9px; font-weight:900; color:#fff; background:#33303E; border-radius:6px; margin-right:6px; }
-.mm-last{ text-align:center; font-weight:900; color:#D8534F; margin:4px 0; animation:mm-hop .5s ease-in-out infinite; }
-.mm-board{ margin-top:6px; }
-.mm-board-row{ display:flex; gap:8px; align-items:center; padding:4px 6px; border-bottom:1px solid #EDE9DF; font-size:13px; }
-.mm-board-row b{ width:36px; }
-.mm-board-me{ background:linear-gradient(90deg,#FFF3C4,#fff); border-radius:8px; font-weight:900; }
-.mm-award{ display:flex; gap:10px; align-items:center; border:2px solid #B58900; border-radius:14px; background:linear-gradient(135deg,#FFF9E0,#fff); padding:10px; margin:6px 0; font-size:13px; }
-.mm-award-icon{ font-size:32px; }
-@media (prefers-reduced-motion: reduce){ .mm-runner{ transition:none; } .mm-last{ animation:none; } }
-
-/* 実況・因縁・血統 */
+/* 実況・因縁 */
 .mm-live{ border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; padding:6px 10px; font-size:13px; font-weight:900; margin:6px 0; animation:mm-spark .35s ease-out; }
 .mm-live-taunt{ background:linear-gradient(135deg,#FFE1EB,#fff); font-weight:700; }
-.mm-nemesis{ display:flex; gap:8px; align-items:center; border:2px solid #D8534F; border-radius:14px; background:linear-gradient(135deg,#FFE1EB,#fff); padding:8px 10px; margin:6px 0; font-size:13px; }
-.mm-nemesis-icon{ font-size:26px; }
-.mm-owner{ display:flex; flex-direction:column; gap:2px; border:2px solid #8A8494; border-radius:12px; background:#F3F0E8; padding:6px 10px; margin:4px 0; font-size:13px; }
-.mm-owner-beat{ border-color:#3E9B4F; background:linear-gradient(135deg,#DFF5EC,#fff); }
-.mm-sire{ margin-top:6px; font-size:13px; font-weight:900; color:#8A6FD1; }
-
-/* ================= ガーデン(タネ配合 × 植物街 × 品評会 × 街評議会) ================= */
-.mm-ghead{ border:2px solid var(--ink,#33303E); border-radius:16px; background:linear-gradient(135deg,#EFFBE6,#FFF6E5); padding:10px; margin:8px 0; }
-.mm-ghead-top{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; flex-wrap:wrap; font-size:14px; }
-.mm-gweek{ font-size:12px; margin:6px 0; }
-.mm-grank{ display:block; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; padding:6px 8px; font-size:13px; font-family:inherit; color:inherit; }
-.mm-grank span{ display:block; }
 .mm-gwater{ background:linear-gradient(135deg,#8FE3FF,#6FD6A8); margin-inline:auto; }
 .mm-gwater .mm-sub{ display:block; font-size:11px; font-weight:700; }
 .mm-gfree{ background:linear-gradient(135deg,#FFE27A,#FF9EC0); margin:6px auto; }
@@ -379,14 +141,6 @@
 .mm-gmenu button{ position:relative; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px 2px; font-size:12px; font-weight:900; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; min-height:64px; }
 .mm-gmenu button span{ display:block; font-size:24px; }
 .mm-gdot{ position:absolute; top:-6px; right:-4px; background:#FF5A5A; color:#fff; font-style:normal; font-size:10px; border-radius:10px; padding:1px 6px; font-weight:900; }
-.mm-gplots{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
-.mm-gplot{ position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; border:3px solid #8A8494; border-radius:14px; background:linear-gradient(#fff 55%,#EAD9B8); padding:6px 2px; font-family:inherit; color:inherit; min-height:104px; }
-.mm-gplot-empty{ border-style:dashed; background:#FBF8F1; justify-content:center; }
-.mm-gplot-dead{ filter:grayscale(.7); }
-.mm-gplot-name{ font-size:11px; font-weight:900; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.mm-gplot-st{ font-size:10px; color:#6B6578; }
-.mm-gplot-tags{ display:flex; gap:2px; align-items:center; font-size:11px; }
-.mm-bar-thin{ height:5px; width:80%; }
 .mm-gi{ display:inline-block; line-height:1.1; }
 .mm-gi-bud{ filter:saturate(.3) brightness(1.1); transform:scale(.8); }
 .mm-gi-bloom{ animation:mm-gsway 3s ease-in-out infinite; transform-origin:50% 100%; }
@@ -394,86 +148,20 @@
 @keyframes mm-gsway{ 0%,100%{ transform:rotate(-3deg) } 50%{ transform:rotate(3deg) } }
 .mm-grar{ display:inline-block; font-size:10px; font-weight:900; color:#fff; border-radius:6px; padding:0 5px; vertical-align:middle; }
 .mm-gtr{ display:inline-block; font-size:10px; font-weight:900; background:#FFF3C4; border:1px solid #E0B94A; border-radius:6px; padding:0 4px; margin-left:3px; vertical-align:middle; }
-.mm-gtr-sh{ background:linear-gradient(90deg,#FFE1EB,#E3F0FF,#FFF3C4); }
-.mm-gev{ font-size:12px; padding:8px; display:grid; gap:3px; }
-.mm-gcard{ border:3px solid #8A8494; border-radius:14px; background:#fff; padding:8px; margin:6px 0; }
-.mm-gcard-top{ display:flex; gap:8px; align-items:center; font-size:13px; }
-.mm-gmini{ font-size:12px; margin:4px 0; letter-spacing:.5px; }
 .mm-gbtns{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
 .mm-gbtns-col{ flex-direction:column; }
 .mm-cta-s{ flex:1; min-height:44px; border:2px solid var(--ink,#33303E); border-radius:12px; background:var(--yellow,#FFC53C); font-weight:900; font-size:14px; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; }
 .mm-cta-s:disabled,.mm-cta:disabled{ opacity:.45; box-shadow:none; animation:none; }
 .mm-gback{ width:100%; min-height:48px; margin-top:10px; }
 .mm-gdetail{ text-align:center; border:3px solid #8A8494; border-radius:18px; background:linear-gradient(#fff 60%,#EAD9B8); padding:10px; margin:8px 0; }
-.mm-gstat{ display:grid; grid-template-columns:78px 1fr 28px; gap:6px; align-items:center; font-size:12px; margin:3px 0; }
 .mm-gstat-bar{ position:relative; height:10px; border-radius:6px; background:#EDE9DF; overflow:hidden; }
 .mm-gstat-bar i{ position:absolute; left:0; top:0; bottom:0; background:#3ED6C0; border-radius:6px; }
-.mm-gstat-range i{ background:#9FD8FF; }
-.mm-gstat-range b{ position:absolute; top:-1px; width:3px; height:12px; background:#2F6BFF; }
-.mm-gped{ display:grid; gap:1px; margin-top:4px; }
-.mm-gmons{ display:flex; gap:4px; overflow-x:auto; padding:4px 0; }
-.mm-gmons button{ flex:0 0 auto; border:2px solid #D8D2C4; border-radius:10px; background:#fff; padding:2px 4px; font-size:9px; font-family:inherit; display:flex; flex-direction:column; align-items:center; }
-.mm-gmons .mm-act{ border-color:#3E9B4F; background:#E3F9D8; }
-.mm-gqhead{ display:flex; justify-content:space-between; font-size:12px; font-weight:900; margin-top:6px; }
-.mm-gstrip{ display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin:6px 0; }
 .mm-gbloom{ border:2px solid #3E9B4F; border-radius:12px; background:#EFFBE6; padding:8px; margin:6px 0; font-size:13px; animation:mm-stamp .45s cubic-bezier(.2,1.6,.4,1); }
-.mm-gdrop{ border-color:#E0B94A; background:#FFF9E0; }
-.mm-gbanner{ border:3px solid var(--ink,#33303E); border-radius:16px; padding:10px; margin:8px 0; background:#fff; }
-.mm-gbanner-pickup{ background:linear-gradient(135deg,#E3F0FF,#fff); }
-.mm-gbanner-season{ background:linear-gradient(135deg,#FFE1EB,#FFF3C4,#E3F9D8); }
-.mm-gbanner-council{ background:linear-gradient(135deg,#FFF3C4,#FFE7A0); }
-.mm-gbanner-t{ display:flex; align-items:center; gap:6px; font-size:15px; }
-.mm-gbanner-t span{ font-size:26px; }
-.mm-gcapwrap{ text-align:center; margin:10px 0; animation:mm-gcapout .3s ease-in .75s forwards; }
-.mm-gcap{ font-size:64px; display:inline-block; animation:mm-gshake .7s ease-in-out; }
-.mm-gcap-gold .mm-gcap{ filter:drop-shadow(0 0 10px #FFD84D); }
-.mm-gcap-rainbow .mm-gcap{ filter:drop-shadow(0 0 14px #FF6B9D) drop-shadow(0 0 20px #5B8DFF); }
-.mm-gcap-rainbow{ background:linear-gradient(90deg,#FFE1EB,#E3F0FF,#E3F9D8,#FFF3C4); border-radius:16px; }
-@keyframes mm-gshake{ 0%,100%{ transform:rotate(0) } 20%{ transform:rotate(-14deg) } 40%{ transform:rotate(14deg) } 60%{ transform:rotate(-10deg) } 80%{ transform:rotate(8deg) } }
-@keyframes mm-gcapout{ to{ opacity:.35; transform:scale(.8) } }
-.mm-greveal{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; }
-.mm-gres{ display:flex; flex-direction:column; align-items:center; gap:2px; border:3px solid #8A8494; border-radius:12px; background:#fff; padding:6px 2px; font-size:11px; opacity:0; animation:mm-gpop .35s cubic-bezier(.2,1.6,.4,1) forwards; }
-.mm-gres-n{ font-weight:900; text-align:center; }
-.mm-gres-t{ font-size:10px; font-weight:900; color:#B35CFF; }
 @keyframes mm-gpop{ from{ opacity:0; transform:scale(.4) } to{ opacity:1; transform:scale(1) } }
-.mm-gpair{ display:flex; align-items:stretch; gap:6px; margin:8px 0; }
-.mm-gx{ align-self:center; font-size:22px; font-weight:900; }
-.mm-gslot{ flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; border:3px solid #8A8494; border-radius:14px; background:#fff; padding:6px; font-size:12px; font-family:inherit; color:inherit; min-height:110px; }
-.mm-gslot-empty{ border-style:dashed; justify-content:center; background:#FBF8F1; }
-.mm-gpv{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:10px; margin:8px 0; }
-.mm-gpv-grade{ color:#fff; font-weight:900; font-size:20px; border-radius:12px; text-align:center; padding:6px; margin-bottom:6px; }
-.mm-gpv-grade small{ display:block; font-size:11px; }
-.mm-gth{ display:flex; flex-direction:column; border-bottom:1px dashed #EDE9DF; padding:3px 0; font-size:13px; }
-.mm-gprob{ display:flex; justify-content:space-around; gap:4px; font-size:12px; margin-top:6px; flex-wrap:wrap; }
-.mm-gtabs{ display:flex; gap:3px; overflow-x:auto; margin:4px 0; }
-.mm-gtabs button{ flex:0 0 auto; border:2px solid #D8D2C4; border-radius:10px; background:#fff; padding:4px 8px; font-size:14px; font-family:inherit; }
-.mm-gtabs .mm-act{ border-color:var(--ink,#33303E); background:#FFF3C4; }
-.mm-gcand{ position:relative; display:flex; gap:8px; align-items:center; width:100%; text-align:left; border:2px solid #D8D2C4; border-left:6px solid #8A8494; border-radius:12px; background:#fff; padding:6px 8px; margin:4px 0; font-family:inherit; color:inherit; font-size:13px; }
-.mm-gcand-on{ background:#FFF3C4; border-color:var(--ink,#33303E); }
-.mm-gcand-b{ display:flex; flex-direction:column; min-width:0; }
-.mm-gcont{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px; margin:6px 0; font-size:13px; }
-.mm-gcont-g1{ background:linear-gradient(135deg,#E3F0FF,#fff); border-width:3px; }
-.mm-gcont-done{ opacity:.55; }
-.mm-gentry{ display:block; width:100%; text-align:left; border:2px solid #D8D2C4; border-radius:10px; background:#FBF8F1; padding:6px 8px; margin-top:4px; font-family:inherit; color:inherit; font-size:13px; min-height:44px; }
-.mm-gentry:disabled{ opacity:.5; }
-.mm-award-me{ border-color:#D8534F; background:linear-gradient(135deg,#FFE1EB,#fff); }
-.mm-gtitles{ display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-.mm-gtitles div{ border:2px solid #EDE9DF; border-radius:10px; padding:5px; font-size:11px; display:flex; flex-direction:column; opacity:.6; background:#fff; }
-.mm-gtitles .mm-gt-on{ opacity:1; border-color:#E0B94A; background:#FFF9E0; }
 .mm-gtoast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:#33303E; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; font-weight:900; z-index:9999; max-width:88vw; text-align:center; animation:mm-gpop .25s ease-out; }
-@media (prefers-reduced-motion: reduce){ .mm-gi-bloom,.mm-gcap,.mm-gres,.mm-gcapwrap{ animation:none !important; opacity:1; } }
+@media (prefers-reduced-motion: reduce){ .mm-gi-bloom{ animation:none !important; opacity:1; } }
 .mm-gi-shiny{ filter:hue-rotate(160deg) saturate(1.4) drop-shadow(0 0 4px #FFD84D) drop-shadow(0 0 8px #FF9EC0); }
-.mm-gegg{ position:relative; display:inline-block; line-height:1; filter:drop-shadow(0 0 3px var(--rc,#8A8494)); }
-.mm-gegg i{ position:absolute; right:-6px; bottom:-4px; font-style:normal; }
 .mm-gi img,.mm-gi canvas,.mm-gi svg{ vertical-align:middle; }
-.mm-gdaily{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:8px; margin:8px 0; }
-.mm-gdl{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0; }
-.mm-gdm{ display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; column-gap:6px; align-items:center; text-align:left; border:2px solid #EDE9DF; border-radius:12px; background:#FBF8F1; padding:6px; font-family:inherit; color:inherit; font-size:11px; min-height:48px; }
-.mm-gdm span{ grid-row:1/3; font-size:20px; }
-.mm-gdm i{ font-style:normal; color:#6B6578; font-weight:900; }
-.mm-gdm-ok{ border-color:#FF5A5A; background:#FFE1EB; animation:mm-cta 1.4s ease-in-out infinite; }
-.mm-gdm-ok i{ color:#D8534F; }
-.mm-gdm-got{ opacity:.55; }
 .mm-gexam{ display:inline-block; font-size:11px; font-weight:900; color:#fff; background:#2F6BFF; border-radius:8px; padding:2px 8px; margin-top:6px; }
 .mm-gpass{ margin-top:8px; line-height:2; font-size:14px; }
 .mm-gblank{ display:inline-block; min-width:28px; text-align:center; border-bottom:3px solid #8A8494; padding:0 4px; margin:0 2px; }
@@ -494,3 +182,337 @@
 .mm-gres-r3{ background:linear-gradient(160deg,#F1E3FF,#FFE1EB); box-shadow:0 0 12px rgba(179,92,255,.5); }
 .mm-gres-r4{ background:linear-gradient(160deg,#FFF3C4,#FFE1A8); box-shadow:0 0 16px rgba(242,165,22,.7); }
 .mm-gres-r5{ background:linear-gradient(160deg,#FFE1EB,#E3F0FF,#FFF3C4); box-shadow:0 0 20px rgba(255,77,109,.8); }
+
+/* ================= つよさの数字と、看板との差の矢印 ================= */
+.mm-pw{ display:inline-flex; align-items:baseline; gap:4px; font-size:12px; font-weight:900; color:#33303E; white-space:nowrap; }
+.mm-pw b{ font-size:16px; }
+.mm-pw i{ font-style:normal; font-size:12px; font-weight:900; }
+.mm-pw-up{ color:#1F8A3B; font-style:normal; font-weight:900; }
+.mm-pw-dn{ color:#8A8494; font-style:normal; font-weight:900; }
+.mm-pw-top{ color:#B58900; }
+.mm-pw-col{ flex-direction:column; align-items:center; gap:0; font-size:10px; line-height:1.15; }
+.mm-pw-col b{ font-size:15px; }
+.mm-pw-big{ font-size:15px; margin:2px 0 4px; }
+.mm-pw-big b{ font-size:32px; line-height:1; }
+.mm-pw-big i{ font-size:15px; }
+
+/* ================= 新しい遊び(GD.V2): ホーム・なかま・詳細・タマゴ・けいこ ================= */
+.mm-v2-res .mm-chip{ font-size:13px; padding:4px 10px; }
+.mm-v2-res b{ font-size:15px; }
+.mm-v2-tabs button{ font-size:12px; min-height:56px; }
+.mm-v2-tabs span{ font-size:20px; }
+.mm-v2-rar{ font-size:12px; padding:1px 7px; }
+.mm-v2-hero{ display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; border:0; background:none; padding:2px 8px 4px; font-family:inherit; color:inherit; }
+.mm-v2-hero-name{ font-size:18px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+.mm-v2-lv{ display:flex; align-items:center; gap:8px; width:100%; max-width:260px; font-size:14px; }
+.mm-v2-lv b{ font-size:15px; white-space:nowrap; }
+.mm-v2-lv i{ font-style:normal; font-size:11px; color:#8A8494; white-space:nowrap; }
+.mm-v2-lv .mm-bar{ flex:1; margin-top:0; height:10px; }
+.mm-v2-max img{ filter:drop-shadow(0 0 4px #FFD34D) drop-shadow(0 0 8px #FFC53C); }
+.mm-v2-menu{ grid-template-columns:repeat(3,1fr); }
+.mm-v2-menu button{ font-size:15px; min-height:68px; }
+.mm-v2-menu .mm-gdot{ font-size:11px; }
+.mm-v2-hint{ font-size:12px; color:#6B6578; margin:0 0 6px; }
+.mm-v2-row{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:2px solid #D8D2C4; border-left:8px solid #8A8494; border-radius:14px;
+  background:#fff; padding:6px 10px 6px 6px; margin:5px 0; min-height:60px; font-family:inherit; color:inherit; }
+.mm-v2-row-b{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.mm-v2-row-n{ font-size:15px; display:flex; align-items:center; gap:5px; min-width:0; }
+.mm-v2-row-n b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-v2-row-s{ font-size:12px; color:#6B6578; }
+.mm-v2-row-p{ display:flex; flex-direction:column; align-items:flex-end; font-weight:900; }
+.mm-v2-row-p b{ font-size:20px; line-height:1.1; }
+.mm-v2-row-p i{ font-style:normal; font-size:12px; }
+.mm-v2-tag{ font-style:normal; font-size:11px; font-weight:900; border-radius:6px; padding:0 5px; background:#E3F0FF; border:1px solid #9FC4E8; white-space:nowrap; }
+.mm-v2-tag-k{ background:#FFF3C4; border-color:#E0B94A; }
+.mm-v2-detail{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.mm-v2-kind{ font-size:12px; }
+.mm-v2-stats{ padding:12px; }
+.mm-v2-talrow{ text-align:center; margin-bottom:6px; }
+.mm-v2-tal{ font-size:15px; font-weight:900; }
+.mm-v2-tal b{ font-size:22px; }
+.mm-v2-tal i{ font-style:normal; font-size:13px; color:#fff; background:#8A6FD1; border-radius:999px; padding:1px 9px; margin-left:4px; }
+.mm-v2-stat{ display:grid; grid-template-columns:92px 1fr 44px 36px; gap:6px; align-items:center; font-size:14px; margin:6px 0; }
+.mm-v2-stat>b{ text-align:right; font-size:16px; }
+.mm-v2-stat .mm-gstat-bar{ height:12px; overflow:visible; }
+.mm-v2-stat .mm-gstat-bar i{ border-radius:6px; }
+.mm-v2-kline{ position:absolute; top:-3px; width:3px; height:18px; background:#33303E; border-radius:2px; }
+.mm-v2-star{ font-style:normal; font-size:13px; font-weight:900; color:#8A8494; text-align:right; }
+.mm-v2-star-hi{ color:#B58900; }
+.mm-v2-nat{ font-size:14px; margin-top:6px; }
+.mm-v2-tr{ font-size:13px; padding:1px 6px; }
+.mm-v2-egg{ font-size:84px; text-align:center; line-height:1.2; }
+.mm-v2-note{ font-size:13px; line-height:1.7; padding:10px 12px; }
+.mm-v2-new{ font-size:14px; font-weight:900; color:#fff; background:#E8484F; border-radius:999px; padding:2px 14px; }
+.mm-v2-verdict{ font-size:15px; font-weight:900; border-radius:12px; padding:6px 12px; margin-top:4px; }
+.mm-v2-up{ background:#DFF5E3; color:#1F8A3B; }
+.mm-v2-dn{ background:#F0EEE8; color:#6B6578; }
+.mm-v2-strip{ display:flex; align-items:center; gap:8px; border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:6px 10px; margin:6px 0; }
+.mm-v2-strip-b{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
+.mm-v2-strip-n{ font-size:12px; color:#6B6578; white-space:nowrap; }
+
+/* ================= 番付・五番勝負(GD.V2) ================= */
+.mm-bz-home{ display:flex; flex-direction:column; gap:4px; width:100%; text-align:left; border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff;
+  padding:10px 12px; margin:8px 0; font-family:inherit; color:inherit; box-shadow:0 3px 0 #33303E; }
+.mm-bz-home-r{ font-size:16px; font-weight:900; }
+.mm-bz-home-r b{ font-size:22px; }
+.mm-bz-home-s{ font-size:14px; font-weight:900; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-home-f{ font-size:13px; }
+.mm-bz-home-f b{ font-size:15px; }
+.mm-bz-home-v{ font-size:14px; font-weight:900; border-radius:10px; padding:4px 8px; }
+.mm-bz-warn{ background:#FFF3C4; color:#8A6A00; }
+.mm-bz-promo{ color:#fff; background:#E8484F; border-radius:999px; padding:1px 10px; font-size:13px; }
+.mm-bz-stars{ display:inline-flex; gap:3px; font-size:18px; letter-spacing:0; }
+.mm-bz-stars i{ font-style:normal; font-weight:900; }
+.mm-bz-w{ color:#1F8A3B; font-style:normal; font-weight:900; } .mm-bz-l{ color:#33303E; font-style:normal; font-weight:900; } .mm-bz-n{ color:#C9C3B6; font-style:normal; }
+.mm-bz-top{ padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+.mm-bz-rule{ font-size:12px; line-height:1.6; }
+.mm-bz-list{ margin-top:10px; }
+.mm-bz-dan{ font-size:14px; font-weight:900; background:#33303E; color:#fff; border-radius:10px; padding:4px 10px; margin:10px 0 4px; }
+.mm-bz-row{ display:flex; align-items:center; gap:8px; background:#fff; border:2px solid #E4DED0; border-radius:12px; padding:4px 10px 4px 6px; margin:3px 0; min-height:44px; }
+.mm-bz-pos{ width:26px; text-align:center; font-size:14px; color:#6B6578; }
+.mm-bz-nm{ flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+.mm-bz-nm b{ font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-nm .mm-sub{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-pw{ font-size:16px; font-weight:900; min-width:44px; text-align:right; }
+.mm-bz-done{ opacity:.55; }
+.mm-bz-next{ border-color:#E8484F; background:#FFF1F1; opacity:1; }
+.mm-bz-me{ border:3px solid #B58900; background:linear-gradient(90deg,#FFF3C4,#fff); }
+.mm-bz-tag{ font-style:normal; font-size:11px; font-weight:900; color:#fff; background:#E8484F; border-radius:6px; padding:0 6px; white-space:nowrap; }
+.mm-bz-tag2{ background:#8A8494; }
+.mm-bz-flip img{ transform:scaleX(-1); }
+.mm-bz-vs{ display:flex; align-items:center; justify-content:space-around; gap:6px; margin:6px 0; }
+.mm-bz-side{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:15px; min-width:0; }
+.mm-bz-side b{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-x{ font-size:22px; font-weight:900; color:#E8484F; }
+.mm-bz-table{ padding:10px; }
+.mm-bz-tr{ display:grid; grid-template-columns:92px 1fr 44px; gap:6px; align-items:center; }
+.mm-bz-th{ display:flex; gap:14px; justify-content:center; font-size:12px; color:#6B6578; }
+.mm-bz-dot{ display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:4px; vertical-align:-1px; }
+.mm-bz-dot-me{ background:#3ED6C0; } .mm-bz-dot-foe{ background:#C9C3B6; }
+.mm-bz-tr{ margin:8px 0; }
+.mm-bz-sn{ font-size:14px; font-weight:900; white-space:nowrap; }
+.mm-bz-bars{ display:flex; flex-direction:column; gap:3px; }
+.mm-bz-bar{ position:relative; display:flex; align-items:center; gap:6px; height:16px; }
+.mm-bz-bar i{ display:block; height:12px; border-radius:6px; min-width:4px; }
+.mm-bz-bar b{ font-size:13px; white-space:nowrap; }
+.mm-bz-bar-me i{ background:#3ED6C0; } .mm-bz-bar-foe i{ background:#C9C3B6; } .mm-bz-bar-foe b{ color:#6B6578; }
+.mm-bz-mark{ display:inline-block; font-style:normal; font-weight:900; font-size:20px; width:36px; height:30px; line-height:30px; text-align:center; border-radius:8px; }
+.mm-bz-m3{ background:#DFF5E3; color:#1F8A3B; } .mm-bz-m2{ background:#E3F0FF; color:#2F6BFF; } .mm-bz-m1{ background:#FFF3C4; color:#8A6A00; } .mm-bz-m0{ background:#F0EEE8; color:#8A8494; }
+.mm-bz-legend{ display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; font-size:12px; margin-top:8px; border-top:1px dashed #D8D2C4; padding-top:8px; }
+.mm-bz-legend span{ display:flex; align-items:center; gap:4px; }
+.mm-bz-legend .mm-bz-mark{ font-size:14px; width:24px; height:22px; line-height:22px; }
+.mm-bz-head{ display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:900; margin:6px 2px; }
+.mm-bz-duel{ border:2px solid var(--ink,#33303E); border-radius:14px; background:#fff; padding:8px 10px; margin:6px 0; text-align:center; }
+.mm-bz-duel-k{ font-size:15px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-duel-k .mm-bz-mark{ font-size:15px; width:26px; height:24px; line-height:24px; }
+.mm-bz-duel-n{ display:flex; align-items:flex-end; justify-content:center; gap:14px; margin-top:4px; }
+.mm-bz-duel-n span{ display:flex; flex-direction:column; align-items:center; min-width:90px; }
+.mm-bz-duel-n small{ font-size:12px; color:#6B6578; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-bz-duel-n b{ font-size:30px; line-height:1.1; }
+.mm-bz-duel-n i{ font-style:normal; font-size:20px; font-weight:900; color:#8A8494; padding-bottom:4px; }
+.mm-bz-duel-win{ background:#EFFBE6; border-color:#3E9B4F; } .mm-bz-duel-lose{ background:#F3F0E8; }
+.mm-bz-duel-r{ font-size:16px; font-weight:900; margin-top:2px; }
+.mm-bz-rr{ display:grid; grid-template-columns:92px 26px 1fr 24px; gap:6px; align-items:center; font-size:14px; padding:5px 0; border-bottom:1px solid #EDE9DF; }
+.mm-bz-rn b{ font-size:16px; }
+.mm-bz-move{ font-size:15px; text-align:center; }
+.mm-bz-down{ border-color:#8A8494; background:#F3F0E8; }
+
+/* ================= スライス4〜6: ホーム・けいこ3択・配合・図鑑・きろく ================= */
+.mm-v2-res{ justify-content:center; flex-wrap:nowrap; gap:4px; padding:6px 4px; }
+.mm-res.mm-v2-res .mm-chip{ font-size:12px; padding:4px 7px; }
+.mm-res.mm-v2-res b{ font-size:14px; }
+.mm-v2-home .mm-res{ margin-bottom:0; }
+/* 街の景色(番付の段でにぎやかになる)。真ん中に看板マチモン */
+.mm-v2-scene{ display:block; width:100%; height:176px; padding:0; font-family:inherit; color:inherit; margin:6px 0 2px; }
+.mm-v2-sky0{ background:linear-gradient(#C9CCD6 60%,#D9D6CC); }
+.mm-v2-sky0 .mm-ground{ background:linear-gradient(#B9B49A,#A39E86); border-top-color:#8C876F; }
+.mm-v2-bld{ font-size:28px; bottom:22px; opacity:.92; }
+.mm-v2-kan{ position:absolute; left:50%; bottom:14px; margin-left:-52px; z-index:3; }
+.mm-v2-kan img{ filter:drop-shadow(0 3px 0 rgba(51,48,62,.25)); }
+.mm-v2-noren{ position:absolute; left:50%; top:8px; transform:translateX(-50%); font-size:12px; font-weight:900; color:#8A6A00; background:#FFF3C4; border:2px solid #E0B94A; border-radius:999px; padding:1px 12px; z-index:3; white-space:nowrap; }
+.mm-v2-noren-off{ color:#6B6578; background:#EDEBE4; border-color:#B9B4A6; border-style:dashed; }
+.mm-v2-fw{ position:absolute; top:8px; font-size:22px; animation:mm-hop 1.6s ease-in-out infinite; }
+.mm-v2-scene .mm-townname{ font-size:12px; }
+.mm-v2-keiko{ min-height:64px; font-size:19px; margin-top:6px; }
+.mm-v2-keiko .mm-sub{ font-size:13px; color:#33303E; }
+.mm-v2-keiko .mm-sub b{ font-size:15px; }
+.mm-bz-home{ padding:8px 12px; gap:3px; margin:4px 0; }
+.mm-bz-home-r{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mm-bz-home-f{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.mm-bz-home-v b{ font-size:17px; }
+.mm-v2-lv i{ font-size:12px; }
+.mm-v2-fc{ font-size:13px; font-weight:900; border-radius:10px; padding:4px 10px; margin-top:4px; }
+.mm-v2-efrow{ font-size:14px; margin-top:8px; padding-top:8px; border-top:1px dashed #D8D2C4; }
+.mm-v2-efrow b{ font-size:15px; margin:0 6px 0 2px; }
+.mm-v2-trow{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; font-size:13px; font-weight:900; color:#6B6578; }
+.mm-v2-trow i{ font-style:normal; white-space:nowrap; }
+.mm-v2-row-s .mm-v2-trow{ display:flex; flex-wrap:nowrap; gap:3px; font-size:10px; justify-content:flex-start; }
+.mm-v2-kanbtn{ display:flex; flex-direction:column; align-items:center; gap:2px; min-height:60px; padding:6px 8px; font-size:16px; }
+.mm-v2-kanbtn .mm-sub{ font-size:12px; color:#33303E; font-weight:700; }
+.mm-v2-kanbtn .mm-sub b{ font-size:15px; }
+.mm-v2-usebox{ border:2px dashed #B9B4A6; border-radius:14px; padding:8px; margin:6px 0; display:flex; flex-direction:column; gap:6px; }
+.mm-v2-use{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; min-height:52px; text-align:left; padding:6px 10px; font-size:14px; margin:4px 0; }
+.mm-v2-use .mm-sub{ font-size:12px; }
+.mm-v2-use-on{ background:#FFF3C4; border-color:#B58900; }
+.mm-v2-item{ display:inline-block; font-size:14px; font-weight:900; background:#fff; border:2px solid #E0B94A; border-radius:10px; padding:1px 8px; margin:2px; white-space:nowrap; }
+.mm-v2-gift{ font-size:14px; text-align:center; border-color:#E0B94A; background:#FFF9E0; }
+/* けいこを えらぶ */
+.mm-v2-kbtn{ display:flex; align-items:center; gap:10px; width:100%; min-height:84px; text-align:left; border:3px solid var(--ink,#33303E); border-radius:18px; background:#fff; box-shadow:0 4px 0 #33303E;
+  padding:8px 12px; margin:10px 0; font-family:inherit; color:inherit; }
+.mm-v2-kbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #33303E; }
+.mm-v2-kbtn:disabled{ opacity:.45; box-shadow:none; }
+.mm-v2-k-new{ background:linear-gradient(135deg,#FFE9C4,#fff); } .mm-v2-k-rev{ background:linear-gradient(135deg,#CFF3E6,#fff); } .mm-v2-k-nig{ background:linear-gradient(135deg,#FFE1EB,#fff); }
+.mm-v2-kicon{ font-size:34px; line-height:1; }
+.mm-v2-kbody{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.mm-v2-kbody>b{ font-size:19px; }
+.mm-v2-kdesc{ font-size:13px; color:#4A4658; }
+.mm-v2-kdesc b{ font-size:16px; color:#33303E; }
+.mm-v2-kstat{ display:flex; flex-direction:column; align-items:center; font-size:26px; line-height:1.1; min-width:58px; background:#fff; border:2px solid #D8D2C4; border-radius:12px; padding:4px 2px; }
+.mm-v2-kstat i{ font-style:normal; font-size:12px; font-weight:900; }
+.mm-v2-khint{ line-height:1.6; }
+.mm-v2-tk{ font-size:15px; padding:10px 12px; text-align:center; }
+.mm-v2-tk b{ font-size:17px; }
+.mm-v2-efbar{ display:flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; }
+.mm-v2-efbar b{ font-size:15px; }
+.mm-v2-efbar .mm-bar{ flex:1; margin-top:0; height:10px; }
+.mm-v2-efbar .mm-bar i{ background:linear-gradient(90deg,#FFC53C,#FF8A3D); }
+.mm-v2-strip .mm-pw-col{ font-size:11px; }
+/* 配合 */
+.mm-v2-slots{ display:flex; align-items:stretch; gap:6px; margin:8px 0; }
+.mm-v2-slot{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px; border:3px solid #8A8494; border-radius:16px; background:#fff; padding:8px 4px; font-family:inherit; color:inherit; min-height:170px; font-size:14px; }
+.mm-v2-slot>b{ font-size:15px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-v2-slot-l{ font-size:13px; font-weight:900; }
+.mm-v2-slot-l i{ font-style:normal; font-size:11px; font-weight:700; color:#fff; background:#8A8494; border-radius:999px; padding:1px 7px; margin-left:2px; white-space:nowrap; }
+.mm-v2-slot-empty{ border-style:dashed; justify-content:center; background:#FBF8F1; }
+.mm-v2-slot-plus{ font-size:40px; color:#B9B4A6; line-height:1; }
+.mm-v2-slot .mm-v2-trow{ font-size:11px; gap:3px; }
+.mm-v2-x{ align-self:center; font-size:22px; font-weight:900; color:#E85A9A; }
+.mm-v2-pv{ padding:12px; text-align:center; }
+.mm-v2-pv1{ font-size:16px; font-weight:900; }
+.mm-v2-pv1 b{ font-size:28px; }
+.mm-v2-pv2{ font-size:16px; font-weight:900; border-radius:12px; padding:6px 10px; margin:6px 0; }
+.mm-v2-pv2 b{ font-size:28px; }
+.mm-v2-pvk{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; font-size:14px; border-top:1px dashed #D8D2C4; padding-top:8px; margin-top:8px; text-align:left; }
+.mm-v2-pvkind{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.mm-v2-pvkind b{ font-size:16px; }
+.mm-v2-pvkind i{ font-style:normal; font-size:11px; font-weight:900; color:#fff; background:#E85A9A; border-radius:6px; padding:0 6px; }
+.mm-v2-compat{ font-size:13px; font-weight:900; color:#1F8A3B; background:#DFF5E3; border-radius:10px; padding:4px 8px; margin-top:6px; text-align:left; }
+.mm-v2-row-p .mm-sub{ font-size:11px; font-style:normal; font-weight:700; }
+/* オープニング */
+.mm-v2-op{ gap:8px; padding:20px 14px 30px; background:linear-gradient(#EDEBE4,#FFF8EC); min-height:100dvh; }
+.mm-v2-op .mm-intro-logo{ font-size:28px; }
+.mm-v2-op-scene{ height:110px; max-width:380px; }
+.mm-v2-op .mm-talk{ margin-top:4px; }
+.mm-v2-op .mm-talk-text{ font-size:15px; line-height:1.8; }
+.mm-v2-op-t{ font-size:18px; font-weight:900; margin-top:6px; }
+.mm-v2-eggs{ display:flex; gap:8px; width:100%; max-width:380px; }
+.mm-v2-eggbtn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; border:3px solid var(--ink,#33303E); border-radius:18px; background:#fff; box-shadow:0 4px 0 #33303E; padding:10px 2px; font-family:inherit; color:inherit; min-height:132px; animation:mm-cta 1.6s ease-in-out infinite; }
+.mm-v2-eggbtn:nth-child(2){ animation-delay:-.5s; } .mm-v2-eggbtn:nth-child(3){ animation-delay:-1s; }
+.mm-v2-eggbtn b{ font-size:14px; white-space:nowrap; }
+.mm-v2-eggbtn .mm-sub{ font-size:11px; }
+.mm-v2-eggpic{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:40px; border:2px solid var(--ink,#33303E); }
+/* 図鑑 */
+.mm-v2-dexrow{ display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+.mm-v2-dex{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 1px; min-width:0; }
+.mm-v2-dex b{ font-size:10px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mm-v2-st{ display:inline-flex; gap:1px; font-size:10px; }
+.mm-v2-st i{ font-style:normal; color:#D8D2C4; } .mm-v2-st i.mm-on{ color:#E8484F; }
+/* きろく */
+.mm-v2-cap{ padding:10px; }
+.mm-v2-caprow{ display:grid; grid-template-columns:104px 1fr 38px 36px; gap:6px; align-items:center; font-size:12px; margin:6px 0; }
+.mm-v2-caprow>span:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
+.mm-v2-capbar{ position:relative; height:12px; border-radius:6px; background:#EDE9DF; overflow:hidden; }
+.mm-v2-capbar i{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#FFC53C,#3ED6C0); }
+.mm-v2-capbar b{ position:absolute; top:0; bottom:0; width:2px; background:#33303E; opacity:.5; }
+.mm-v2-capn{ text-align:right; font-weight:900; font-size:13px; }
+.mm-v2-caprow .mm-v2-st{ font-size:12px; }
+.mm-v2-bag{ padding:8px 10px; }
+.mm-v2-bagrow{ display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #EDE9DF; }
+.mm-v2-bag0{ opacity:.5; }
+.mm-v2-bagi{ font-size:26px; width:34px; text-align:center; }
+.mm-v2-bagb{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:14px; }
+.mm-v2-bagb .mm-sub{ font-size:11px; line-height:1.4; }
+.mm-v2-bagn{ font-size:17px; }
+.mm-v2-name{ font-size:16px; min-height:48px; }
+@media (prefers-reduced-motion: reduce){ .mm-v2-eggbtn,.mm-v2-fw{ animation:none !important; } }
+.mm-cta>.mm-sub{ display:block; font-size:12px; font-weight:700; color:#33303E; }
+.mm-gbtns-col .small-btn,.mm-v2-detail+.mm-gbtns .small-btn{ min-height:46px; }
+.mm-v2-chips{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.mm-v2-chipbtn{ min-height:46px; border:2px solid var(--ink,#33303E); border-radius:12px; background:#fff; font-family:inherit; color:inherit; font-size:13px; font-weight:900; padding:4px 6px; text-align:left; }
+
+/* ===== スライス7: 特性36・図鑑・かけら交換・物語 ===== */
+.mm-v2-trbox{ border:2px solid var(--ink,#33303E); border-radius:16px; background:#fff; padding:8px 12px; margin:8px 0; text-align:left; width:100%; }
+.mm-v2-detail .mm-v2-trbox{ border:2px solid #E4DED0; margin:6px 0 0; }
+.mm-v2-trh{ display:flex; align-items:center; justify-content:space-between; font-size:14px; font-weight:900; }
+.mm-v2-link{ border:0; background:none; font-family:inherit; font-size:13px; font-weight:900; color:#2F6BFF; min-height:36px; padding:0 4px; }
+.mm-v2-trl{ display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #EDE9DF; }
+.mm-v2-trl:last-child{ border-bottom:0; }
+.mm-v2-tri{ font-size:24px; width:32px; text-align:center; flex:none; }
+.mm-v2-trb{ flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.35; }
+.mm-v2-trb b{ font-size:15px; }
+.mm-v2-trb i{ font-style:normal; font-size:13px; color:#4A4658; }
+.mm-v2-trc{ flex:none; font-size:11px; font-weight:900; color:#6B6578; white-space:nowrap; }
+.mm-v2-trlist{ padding:4px 12px; }
+.mm-v2-trlist .mm-v2-trl.mm-on{ background:linear-gradient(90deg,#FFF9E0,#fff); margin:0 -12px; padding-left:12px; padding-right:12px; }
+.mm-v2-trlist .mm-v2-trl.mm-on .mm-v2-trc{ color:#1F8A3B; }
+.mm-v2-combo{ font-size:13px; font-weight:700; color:#8A4A00; background:#FFF3C4; border:2px solid #E0B94A; border-radius:10px; padding:4px 8px; margin-top:6px; }
+.mm-v2-combo b{ font-size:14px; }
+.mm-v2-cohint{ margin:6px 0 0; line-height:1.5; }
+.mm-v2-shopbtn{ display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:48px; padding:6px 12px; font-size:15px; margin:0 0 8px; }
+.mm-v2-shopbtn .mm-sub{ font-size:12px; } .mm-v2-shopbtn .mm-sub b{ font-size:15px; color:#33303E; }
+.mm-v2-seg{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; background:#EDE9DF; border-radius:14px; padding:4px; margin:4px 0 8px; }
+.mm-v2-seg button{ min-height:44px; border:0; border-radius:10px; background:none; font-family:inherit; font-size:13px; font-weight:900; color:#6B6578; padding:0 2px; white-space:nowrap; }
+.mm-v2-seg button.mm-act{ background:#fff; color:#33303E; box-shadow:0 2px 0 #33303E; border:2px solid #33303E; }
+.mm-v2-zsum{ font-size:14px; font-weight:900; text-align:center; } .mm-v2-zsum b{ font-size:20px; }
+button.mm-v2-dex{ border:0; font-family:inherit; color:inherit; min-height:84px; cursor:pointer; }
+.mm-v2-sil img{ filter:brightness(0) opacity(.3); }
+.mm-v2-stbox{ padding:6px 12px; }
+.mm-v2-strow{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #EDE9DF; }
+.mm-v2-strow:last-child{ border-bottom:0; }
+.mm-v2-strow>span:nth-child(2){ flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.35; }
+.mm-v2-strow b{ font-size:15px; } .mm-v2-strow i{ font-style:normal; font-size:12px; color:#6B6578; }
+.mm-v2-stmark{ font-size:22px; color:#D8D2C4; width:26px; text-align:center; }
+.mm-v2-strow.mm-on .mm-v2-stmark{ color:#E8484F; }
+.mm-v2-stok{ font-size:16px; font-weight:900; color:#1F8A3B; width:18px; }
+.mm-v2-shrow .mm-v2-dex{ min-height:66px; justify-content:center; }
+.mm-v2-kkrow{ min-height:60px; }
+.mm-v2-kkrow:disabled{ opacity:.5; }
+.mm-v2-kkrow .mm-v2-row-p b{ font-size:16px; white-space:nowrap; }
+.mm-v2-kkrow .mm-v2-row-s{ line-height:1.4; }
+.mm-bz-trfx{ font-size:12px; color:#8A4A00; background:#FFF3C4; border-radius:8px; padding:3px 8px; margin-top:6px; line-height:1.5; }
+.mm-bz-trfx b{ font-size:13px; white-space:nowrap; } .mm-bz-trfx span{ color:#6B6578; font-size:12px; }
+.mm-bz-trfx-l{ text-align:left; margin:-2px 0 6px; }
+/* 物語 */
+.mm-st{ min-height:calc(100dvh - 40px); display:flex; flex-direction:column; cursor:pointer; padding-bottom:24px; }
+.mm-st-head{ display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; padding:14px 8px 12px; border-bottom:2px dashed #C9C3B6; margin-bottom:12px; }
+.mm-st-ser{ font-size:12px; font-weight:900; letter-spacing:.2em; color:#8A6A00; background:#FFF3C4; border:2px solid #E0B94A; border-radius:999px; padding:1px 14px; }
+.mm-st-head b{ font-size:22px; }
+.mm-st-body{ display:flex; flex-direction:column; gap:12px; }
+.mm-st-n{ font-size:16px; line-height:1.9; font-weight:700; color:#33303E; padding:2px 6px; text-align:center; }
+.mm-st-l{ display:flex; align-items:flex-start; gap:8px; }
+.mm-st-pic{ flex:none; width:48px; height:48px; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid #33303E; border-radius:14px; }
+.mm-st-b{ flex:1; min-width:0; display:flex; flex-direction:column; background:#fff; border:2px solid #33303E; border-radius:4px 16px 16px 16px; padding:8px 12px; box-shadow:0 3px 0 rgba(51,48,62,.18); }
+.mm-st-b b{ font-size:12px; color:#8A6FD1; }
+.mm-st-b span{ font-size:16px; line-height:1.8; font-weight:700; }
+.mm-st-wm .mm-st-b b{ color:#E85A9A; } .mm-st-wy .mm-st-b{ background:#FFF9E0; border-color:#B58900; } .mm-st-wy .mm-st-b b{ color:#8A6A00; }
+.mm-st-old{ opacity:.5; }
+.mm-st-dots{ display:flex; gap:6px; justify-content:center; margin:16px 0 6px; }
+.mm-st-dots i{ width:8px; height:8px; border-radius:50%; background:#D8D2C4; } .mm-st-dots i.mm-on{ background:#33303E; }
+.mm-st-tap{ text-align:center; font-size:13px; font-weight:900; color:#8A8494; animation:mm-hop 1s ease-in-out infinite; }
+.mm-st-end{ text-align:center; font-size:13px; color:#6B6578; margin:4px 0 8px; }
+.mm-st-open{ display:flex; flex-direction:column; align-items:center; gap:2px; background:#FFF3C4; }
+.mm-st-open .mm-sub{ font-size:14px; color:#33303E; }
+.mm-st-new{ display:block; width:100%; min-height:44px; border:2px solid #B58900; border-radius:14px; background:#FFF3C4; font-family:inherit; color:#33303E; font-size:14px; font-weight:700; padding:4px 10px; margin:4px 0; text-align:center; }
+.mm-st-new b{ font-size:15px; }
+.mm-st-list{ padding:4px 10px; }
+.mm-st-row{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; border:0; border-bottom:1px solid #EDE9DF; background:none; font-family:inherit; color:inherit; font-size:15px; text-align:left; padding:4px 2px; }
+.mm-st-row:last-child{ border-bottom:0; }
+.mm-st-row b{ flex:none; font-size:13px; color:#8A6A00; width:46px; }
+.mm-st-row span{ flex:1; min-width:0; font-weight:900; position:relative; }
+.mm-st-row>i{ flex:none; font-style:normal; font-size:12px; font-weight:900; color:#2F6BFF; }
+.mm-st-lock{ opacity:.6; } .mm-st-lock>i{ color:#6B6578; font-weight:700; }
+.mm-st-dot{ position:static; display:inline-block; margin-left:6px; font-size:11px; }
+.mm-v2-mig{ font-size:14px; line-height:1.7; text-align:center; border-color:#B58900; background:#FFF9E0; }
+.mm-v2-mig .small-btn{ display:block; margin:6px auto 0; min-height:44px; padding:4px 28px; font-size:15px; }
+/* 大きい iPhone(幅430前後)でも、主ボタンは ほかのカードと同じ幅にそろえる */
+.mm-wrap .mm-cta{ max-width:none; }

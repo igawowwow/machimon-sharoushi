@@ -1,14 +1,16 @@
 "use strict";
 /* ============================================================
    machimon/boot.js — マチモン社労士 単体アプリの土台
-   ★このアプリは「マチモン育成」だけで完結する。ほかの学習アプリのコード(物語・バトル・
-     装備・旧UI)は一切読み込まない。ここが状態・保存・日付・科目名を持つ唯一の場所。
+   ★このアプリは「育てる・かけ合わせる・番付をのぼる」だけで完結する。
+     ここが状態・保存・日付・科目名を持つ唯一の場所。
+   ★2.0 で遊びを作り直した。1.x のセーブを読みこむ前に、セーブ全体を別のキー(machimon-v1-backup)へ
+     1回だけ写す(戻せるように)。引っ越しそのものは core/mon.js。
    ★保存キーは machimon-v1。旧・共有セーブ(sr-quest-v3)しか無い端末では、初回だけ
      学習履歴(q)とマチモン(mm)を引き継ぐ(進捗を失わせない)。
    ============================================================ */
 (function(){
   var G=(typeof window!=="undefined")?window:globalThis;
-  var KEY="machimon-v1", OLD="sr-quest-v3";
+  var KEY="machimon-v1", OLD="sr-quest-v3", BACKUP="machimon-v1-backup";
 
   G.SUBJECTS=["労働基準法","労働安全衛生法","労災保険法","雇用保険法","労働保険徴収法","健康保険法","国民年金法","厚生年金保険法","労一・社一"];
 
@@ -22,7 +24,9 @@
   function load(){
     try{
       var raw=USE_LS?G.localStorage.getItem(KEY):null;
-      if(raw){ ST=Object.assign(defaults(),parse(raw)); }
+      if(raw){ ST=Object.assign(defaults(),parse(raw));
+        /* まだ 2.0 のセーブ(mm.g2)を持っていない = 1.x のセーブ。読みこんで形を変える前に、そのまま写しておく */
+        try{ var g2=ST.mm&&ST.mm.g2; if(!(g2&&g2.on)&&!G.localStorage.getItem(BACKUP))G.localStorage.setItem(BACKUP,raw); }catch(e2){} }
       else if(USE_LS){
         /* 旧・共有セーブからの引き継ぎ(学習履歴とマチモンだけ。他モードのデータは持ち込まない) */
         var o=G.localStorage.getItem(OLD);
@@ -54,7 +58,7 @@
     }
   }catch(e){}
 
-  /* 起動: マチモンの街を開く(DOM準備後) */
+  /* 起動(DOM準備後) */
   function start(){
     try{
       if(!G.MM||!G.MM.ui||!G.MM.ui.open){ setTimeout(start,50); return; }
