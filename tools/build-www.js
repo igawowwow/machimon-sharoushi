@@ -53,6 +53,11 @@ h = h.replace(/[ \t]*<script src="js\/native-live-update\.js"><\/script>\n?/g, "
 if (/fonts\.(googleapis|gstatic)\.com/.test(h)) throw new Error("index.html に Google Fonts への参照が残っている。");
 if (/native-live-update/.test(h)) throw new Error("index.html にライブアップデートの読み込みが残っている。");
 h = h.replace("<head>", '<head>\n<link rel="stylesheet" href="./fonts.css">');
+/* リリースの版(tools/ios-release.sh が APP_VERSION で渡す)。js/machimon/store-update.js が
+   App Store の版と比べるのに使う。渡されなければ書かない(=お知らせは出ない)。 */
+const APP_VER = String(process.env.APP_VERSION || "");
+if (APP_VER && !/^\d+(\.\d+)*$/.test(APP_VER)) throw new Error("APP_VERSION の形がおかしい: " + APP_VER);
+if (APP_VER) h = h.replace("<head>", '<head>\n<script>window.__mmAppVer="' + APP_VER + '";</script>');
 fs.writeFileSync(idx, h);
 
 const srcs = [...h.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
