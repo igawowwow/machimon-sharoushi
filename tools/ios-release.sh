@@ -31,7 +31,8 @@ VID=$(echo "$PLAN" | sed -n 's/^version_id=//p')
 echo "  ビルド ${BUILD} / バージョン ${VER}"
 
 step "3/6 www 組み立て + Capacitor 同期"
-npm run ios:sync
+APP_VERSION="$VER" npm run ios:sync
+grep -q "__mmAppVer=\"$VER\"" www/index.html || { echo "❌ www/index.html に版($VER)が入っていない"; exit 1; }
 
 step "4/6 アーカイブ(署名は書き出し時にクラウド署名)"
 rm -rf "$ARCHIVE" "$IPA_DIR"
