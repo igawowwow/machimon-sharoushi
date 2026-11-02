@@ -69,7 +69,19 @@
     h+='<div class="mm-v2-hint">どうぐは、場所の勝ち越し・昇進・連続正解・科目の習熟の ごほうび。🧩かけら とも交換できる(図鑑 → 交換)。</div></div>';
     /* 街の名前 */
     h+='<div class="mm-h" style="font-size:14px">🏠 街の名前</div><div class="mm-q mm-v2-note"><input id="mmTownName" class="mm-input mm-v2-name" maxlength="12" value="'+esc(c.mm.name||"マチモンタウン")+'"><button class="small-btn" style="min-height:48px;width:100%;margin-top:6px" onclick="MM.ui.r2Name()">この名前にする</button></div>';
+    /* ご意見・ご要望(共通ウィジェット。遊んでいる画面には出さず、ここから開く) */
+    h+='<div class="mm-h" style="font-size:14px">💬 ご意見・ご要望</div><div class="mm-q mm-v2-note"><div class="mm-v2-hint">使いにくい所・ほしい機能を 送れます。</div><button class="small-btn" style="min-height:48px;width:100%;margin-top:6px" onclick="MM.ui.r2Feedback()">送る</button></div>';
     return h+'</div>'+UI.tabs2("r2");
+  };
+  /* スクリプトは押した時に初めて読む(起動を重くしない・オフラインでも起動に影響しない) */
+  UI.r2Feedback=function(){
+    if(G.villeYoubou)return G.villeYoubou.open();
+    var d=G.document, s=d.createElement("script");
+    s.src="https://ville-youbou.vercel.app/widget.js";
+    s.setAttribute("data-app","machimon"); s.setAttribute("data-label","ご意見・ご要望"); s.setAttribute("data-hidden","1");
+    s.onload=function(){ if(G.villeYoubou)G.villeYoubou.open(); };
+    s.onerror=function(){ s.remove(); UI.toast("通信できませんでした。もう一度 おためしください"); };
+    d.head.appendChild(s);
   };
   UI.r2Name=function(){
     var el=G.document&&G.document.getElementById?G.document.getElementById("mmTownName"):null, c=UI.ctx();
